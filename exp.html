@@ -276,7 +276,14 @@
   </div>
 
   <div class="container" id="records-container" style="display:none;">
-    <!-- <button class="back-btn" type="button" onclick="showForm()">← Back</button> -->
+    <h2 style="text-align:center;margin-bottom:10px;">View Expenses</h2>
+    <form id="filter-form" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px;">
+      <input type="text" id="filter-name" placeholder="Name" style="flex:1;min-width:100px;">
+      <input type="date" id="filter-date" style="flex:1;min-width:120px;">
+      <button type="button" onclick="viewExpenses()">Filter</button>
+      <button type="button" onclick="clearFilters()">Clear</button>
+    </form>
+    <div id="total-expense" style="text-align:center;font-weight:bold;margin-bottom:15px;"></div>
     <div id="records"></div>
   </div>
 
@@ -402,29 +409,53 @@
 
     function viewExpenses() {
       const recordsDiv = document.getElementById('records');
+      const totalDiv = document.getElementById('total-expense');
       document.getElementById('form-container').style.display = 'none';
       document.getElementById('records-container').style.display = 'block';
       recordsDiv.innerHTML = '';
+
+      // Get filter values
+      const filterName = document.getElementById('filter-name')?.value.trim().toLowerCase();
+      const filterDate = document.getElementById('filter-date')?.value;
+
+      let total = 0;
       if (!db) return;
       const transaction = db.transaction(['expenses'], 'readonly');
       const store = transaction.objectStore('expenses');
       store.openCursor().onsuccess = function(event) {
         const cursor = event.target.result;
         if (cursor) {
-          const { date, name, category, description, amount } = cursor.value;
-          const recordDiv = document.createElement('div');
-          recordDiv.className = 'record';
-          recordDiv.innerHTML = `
-            <div class="record-header">${name} - ₹${amount}</div>
-            <div class="record-detail">Date: ${date}</div>
-            <div class="record-detail">Category: ${category}</div>
-            <div class="record-detail">Description: ${description}</div>
-          `;
-          recordsDiv.appendChild(recordDiv);
+          let { date, name, category, description, amount } = cursor.value;
+
+          // Convert stored dd-mm-yyyy to yyyy-mm-dd for comparison
+          let dbDate = date;
+          if (dbDate && dbDate.includes('-') && dbDate.split('-')[0].length === 2) {
+            const [dd, mm, yyyy] = dbDate.split('-');
+            dbDate = `${yyyy}-${mm}-${dd}`;
+          }
+
+          // Filter logic
+          if (
+            (!filterName || name.toLowerCase().includes(filterName)) &&
+            (!filterDate || dbDate === filterDate)
+          ) {
+            total += parseFloat(amount) || 0;
+            const recordDiv = document.createElement('div');
+            recordDiv.className = 'record';
+            recordDiv.innerHTML = `
+              <div class="record-header">${name} - ₹${amount}</div>
+              <div class="record-detail">Date: ${date}</div>
+              <div class="record-detail">Category: ${category}</div>
+              <div class="record-detail">Description: ${description}</div>
+            `;
+            recordsDiv.appendChild(recordDiv);
+          }
           cursor.continue();
         } else {
+          totalDiv.textContent = "Total Expense: ₹" + total.toFixed(2);
           if (!recordsDiv.hasChildNodes()) {
             recordsDiv.innerHTML = '<div class="no-records"><span style="font-size:2em;">📄</span><span>No records found.</span></div>';
+            totalDiv.textContent = "";
           }
         }
       };
