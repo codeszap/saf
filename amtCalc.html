@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Due Amount Calculator</title>
+
+  <!-- html2canvas CDN for capturing image -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+      margin: 0;
+      background: #f7f7f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 420px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .row .field {
+      flex: 1;
+    }
+
+    .button-group {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    button:nth-child(1) { background-color: #007bff; }
+    button:nth-child(2) { background-color: #17a2b8; }
+    button:nth-child(3) { background-color: #6c757d; }
+    button:nth-child(4) { background-color: #28a745; }
+
+    .result {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 18px;
+      color: #333;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 15px;
+      border-collapse: collapse;
+    }
+
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+
+    tr:last-child {
+      font-weight: bold;
+      background-color: #f1f1f1;
+    }
+
+    .title-heading {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    @media (max-width: 480px) {
+      .row {
+        flex-direction: column;
+      }
+
+      button {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Due Amount Calculator</h2>
+
+    <label for="title">Title</label>
+    <input type="text" id="title" placeholder="Ex: Bike EMI, Loan">
+
+    <div class="row">
+      <div class="field">
+        <label for="totalAmount">Total Amount</label>
+        <input type="number" id="totalAmount" placeholder="₹">
+      </div>
+      <div class="field">
+        <label for="monthlyDue">Monthly Due</label>
+        <input type="number" id="monthlyDue" placeholder="₹">
+      </div>
+    </div>
+
+    <label for="startDate">Start Date (Optional)</label>
+    <input type="date" id="startDate">
+
+    <div class="button-group">
+      <button onclick="calculate()">Calculate</button>
+      <button onclick="showBreakdown()">View</button>
+      <button onclick="clearFields()">Clear</button>
+      <button onclick="downloadImage()">Get Image</button>
+    </div>
+
+    <div class="result" id="result"></div>
+    <div id="breakdown"></div>
+  </div>
+
+  <script>
+    function calculate() {
+      const total = parseFloat(document.getElementById("totalAmount").value);
+      const monthly = parseFloat(document.getElementById("monthlyDue").value);
+
+      if (isNaN(total) || isNaN(monthly) || monthly <= 0) {
+        document.getElementById("result").innerText = "Please enter valid amounts.";
+        return;
+      }
+
+      const months = Math.ceil(total / monthly);
+      document.getElementById("result").innerText = `It will take ${months} months to complete the payment.`;
+    }
+
+    function showBreakdown() {
+      const title = document.getElementById("title").value.trim();
+      const total = parseFloat(document.getElementById("totalAmount").value);
+      const monthly = parseFloat(document.getElementById("monthlyDue").value);
+      const startDateStr = document.getElementById("startDate").value;
+      const breakdownDiv = document.getElementById("breakdown");
+
+      if (!title) {
+        breakdownDiv.innerHTML = `<p style="color:red;text-align:center;">Please enter a title.</p>`;
+        return;
+      }
+
+      if (isNaN(total) || isNaN(monthly) || monthly <= 0) {
+        breakdownDiv.innerHTML = `<p style="color:red;text-align:center;">Please enter valid amounts.</p>`;
+        return;
+      }
+
+      let remaining = total;
+      let month = 1;
+      let totalPaid = 0;
+
+      const startDateObj = startDateStr ? new Date(startDateStr) : null;
+      const createdAt = new Date();
+
+      const formattedCreatedAt = createdAt.toLocaleDateString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric'
+      });
+
+      let displayHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; font-size:16px;">
+          <div><strong>📌 Title:</strong> ${title}</div>
+          <div>
+            ${startDateObj ? `<strong>📅 Start:</strong> ${startDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}` : ""}
+          </div>
+        </div>
+        <div style="text-align:right; font-size:13px; color:#666; margin-top:5px;">
+          🕒 Created At: ${formattedCreatedAt}
+        </div>
+      `;
+
+      displayHTML += `<table><tr><th>Month</th><th>Paid Amount</th></tr>`;
+
+      while (remaining > 0) {
+        let paidThisMonth = remaining >= monthly ? monthly : remaining;
+        let monthLabel;
+
+        if (startDateObj) {
+          const dateClone = new Date(startDateObj);
+          dateClone.setMonth(dateClone.getMonth() + month - 1);
+          monthLabel = dateClone.toLocaleDateString('en-GB', {
+            day: '2-digit', month: 'short', year: 'numeric'
+          });
+        } else {
+          monthLabel = month;
+        }
+
+        displayHTML += `<tr><td>${monthLabel}</td><td>₹${paidThisMonth.toFixed(2)}</td></tr>`;
+        remaining -= paidThisMonth;
+        totalPaid += paidThisMonth;
+        month++;
+      }
+
+      const totalMonths = month - 1;
+      displayHTML += `<tr><td>Total</td><td>₹${totalPaid.toFixed(2)} in ${totalMonths} Months</td></tr>`;
+      displayHTML += `</table>`;
+
+      breakdownDiv.innerHTML = displayHTML;
+    }
+
+    function clearFields() {
+      document.getElementById("title").value = "";
+      document.getElementById("totalAmount").value = "";
+      document.getElementById("monthlyDue").value = "";
+      document.getElementById("startDate").value = "";
+      document.getElementById("result").innerText = "";
+      document.getElementById("breakdown").innerHTML = "";
+    }
+
+    function downloadImage() {
+      const target = document.getElementById("breakdown");
+
+      if (!target.innerHTML.trim()) {
+        alert("Please click 'View' first to generate the content.");
+        return;
+      }
+
+      html2canvas(target).then((canvas) => {
+        const link = document.createElement("a");
+        link.download = "due_breakdown.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    }
+  </script>
+
+</body>
+</html>
