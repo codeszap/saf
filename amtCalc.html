@@ -159,7 +159,9 @@
     </div>
 
     <div class="result" id="result"></div>
-    <div id="breakdown"></div>
+<div id="screenshot-wrapper" style="padding:20px;background:white;">
+  <div id="breakdown"></div>
+</div>
   </div>
 
   <script>
@@ -255,20 +257,20 @@
     }
 
     function downloadImage() {
-      const target = document.getElementById("breakdown");
+  const target = document.getElementById("screenshot-wrapper");
 
-      if (!target.innerHTML.trim()) {
-        alert("Please click 'View' first to generate the content.");
-        return;
-      }
+  if (!document.getElementById("breakdown").innerHTML.trim()) {
+    alert("Please click 'View' first to generate the content.");
+    return;
+  }
 
-      html2canvas(target).then((canvas) => {
-        const link = document.createElement("a");
-        link.download = "due_breakdown.png";
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      });
-    }
+  html2canvas(target).then((canvas) => {
+    const link = document.createElement("a");
+    link.download = "due_breakdown.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  });
+}
   </script>
 
 </body>
