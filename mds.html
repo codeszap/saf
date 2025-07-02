@@ -108,6 +108,7 @@
       font-weight: bold;
       cursor: pointer;
       font-size: 14px;
+      color: white;
     }
     .context-menu button:hover {
       background-color: #007bff;
@@ -186,22 +187,34 @@
 
   let selectedRow = null;
 
+  function formatDate(dateStr) {
+    const parts = dateStr.split("-");
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  }
+
+  function compareDates(d1, d2) {
+    const [day1, month1, year1] = d1.split("-").map(Number);
+    const [day2, month2, year2] = d2.split("-").map(Number);
+    return new Date(year1, month1 - 1, day1) - new Date(year2, month2 - 1, day2);
+  }
+
   function addToTable() {
     const name = document.getElementById('name').value.trim();
     const amount = document.getElementById('amount').value.trim();
     const active = document.getElementById('active').checked;
     const date = document.getElementById('newDate').value;
+    const formattedDate = formatDate(date);
 
     if (!name || !amount || !date) {
       alert("Please fill all fields");
       return;
     }
 
-    // Check for duplicates
+    // Check duplicate
     const rows = document.querySelectorAll('#dataTable tbody tr');
     for (let row of rows) {
       if (
-        row.cells[0].textContent === formatDate(date) &&
+        row.cells[0].textContent === formattedDate &&
         row.cells[1].textContent.toLowerCase() === name.toLowerCase() &&
         row.cells[2].textContent === amount
       ) {
@@ -210,40 +223,37 @@
       }
     }
 
-    const table = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
-    const newRow = table.insertRow();
-
-    const dateCell = newRow.insertCell(0);
-    const nameCell = newRow.insertCell(1);
-    const amountCell = newRow.insertCell(2);
-    const activeCell = newRow.insertCell(3);
-
-    dateCell.textContent = formatDate(date);
-    nameCell.textContent = name;
-    amountCell.textContent = amount;
-
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.disabled = true;
-    checkbox.checked = active;
-    activeCell.appendChild(checkbox);
-
+    const tableBody = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+      <td>${formattedDate}</td>
+      <td>${name}</td>
+      <td>${amount}</td>
+      <td><input type="checkbox" disabled ${active ? "checked" : ""}></td>
+    `;
     newRow.addEventListener('contextmenu', function (e) {
       e.preventDefault();
       selectedRow = newRow;
       showContextMenu(e.pageX, e.pageY);
     });
 
+    // Sorted Insert
+    let inserted = false;
+    for (let i = 0; i < rows.length; i++) {
+      const rowDate = rows[i].cells[0].textContent;
+      if (compareDates(formattedDate, rowDate) < 0) {
+        tableBody.insertBefore(newRow, rows[i]);
+        inserted = true;
+        break;
+      }
+    }
+    if (!inserted) tableBody.appendChild(newRow);
+
     clearForm();
     updateTotal();
     showMonthLabel();
     saveToSession();
     showToast("✅ Added successfully!");
-  }
-
-  function formatDate(dateStr) {
-    const parts = dateStr.split("-");
-    return `${parts[2]}-${parts[1]}-${parts[0]}`;
   }
 
   function clearForm() {
@@ -255,8 +265,7 @@
 
   function updateTotal() {
     let total = 0, pay = 0, pend = 0;
-    const rows = document.querySelectorAll('#dataTable tbody tr');
-    rows.forEach(row => {
+    document.querySelectorAll('#dataTable tbody tr').forEach(row => {
       const amt = parseFloat(row.cells[2].textContent);
       const active = row.cells[3].querySelector('input').checked;
       total += amt;
@@ -300,8 +309,6 @@
     document.getElementById('contextMenu').style.display = 'none';
   }
 
-  document.addEventListener('click', hideContextMenu);
-
   function editRow() {
     if (!selectedRow) return;
     const [d, m, y] = selectedRow.cells[0].textContent.split("-");
@@ -334,7 +341,7 @@
   }
 
   function showToast(msg) {
-    alert(msg); // You can replace with custom toast
+    alert(msg); // You can customize toast later
   }
 
   function saveToSession() {
@@ -350,29 +357,17 @@
   function loadFromSession() {
     const rows = JSON.parse(sessionStorage.getItem('dataRows') || '[]');
     rows.forEach(data => {
-      const table = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
-      const newRow = table.insertRow();
-      newRow.insertCell(0).textContent = data.date;
-      newRow.insertCell(1).textContent = data.name;
-      newRow.insertCell(2).textContent = data.amount;
-      const activeCell = newRow.insertCell(3);
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.disabled = true;
-      checkbox.checked = data.active;
-      activeCell.appendChild(checkbox);
-
-      newRow.addEventListener('contextmenu', function (e) {
-        e.preventDefault();
-        selectedRow = newRow;
-        showContextMenu(e.pageX, e.pageY);
-      });
+      document.getElementById('name').value = data.name;
+      document.getElementById('amount').value = data.amount;
+      document.getElementById('active').checked = data.active;
+      document.getElementById('newDate').value = `${data.date.split("-").reverse().join("-")}`;
+      addToTable();
     });
-    updateTotal();
     showMonthLabel();
   }
 
   window.onload = loadFromSession;
+  document.addEventListener('click', hideContextMenu);
 </script>
 
 </body>
