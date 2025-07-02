@@ -82,7 +82,7 @@
       width: 100%;
       background: #fff;
       border-collapse: collapse;
-      min-width: 600px;
+      min-width: 700px;
     }
 
     th, td {
@@ -179,13 +179,15 @@
       <thead>
         <tr>
           <th>Date</th>
-          <th>Meditation (Yes /No)</th>
+          <th>Meditation (Yes / No)</th>
           <th>Time</th>
           <th>Duration</th>
           <th>Notes (Insights, Observations)</th>
         </tr>
       </thead>
-      <tbody></tbody>
+      <tbody>
+        <!-- Entries will be inserted here -->
+      </tbody>
     </table>
   </div>
 
@@ -273,50 +275,49 @@
 
     document.getElementById('downloadImgBtn').addEventListener('click', function () {
       const tableDiv = document.getElementById('tableContainer');
+      const table = document.getElementById('meditationTable');
       const originalWidth = tableDiv.style.width;
-      tableDiv.style.width = tableDiv.scrollWidth + "px";
+      const originalOverflow = tableDiv.style.overflow;
+
+      // Expand to full width
+      tableDiv.style.width = table.scrollWidth + "px";
+      tableDiv.style.overflow = 'visible';
+
       html2canvas(tableDiv, {
         backgroundColor: "#fff",
-        padding: 24,
         scale: 2,
         scrollX: 0,
-        scrollY: -window.scrollY
+        scrollY: -window.scrollY,
+        useCORS: true
       }).then(canvas => {
         const link = document.createElement('a');
         link.download = 'meditation_table.png';
         link.href = canvas.toDataURL();
         link.click();
         tableDiv.style.width = originalWidth;
+        tableDiv.style.overflow = originalOverflow;
       });
     });
 
-    // ✅ Context Menu for desktop + mobile (touch)
+    // Context menu logic
     let selectedRowIndex = null;
     const contextMenu = document.getElementById('contextMenu');
+
     let pressTimer;
-
-    function showContextMenuOnRow(tr) {
-      selectedRowIndex = [...tableBody.children].indexOf(tr);
-      const rect = tr.getBoundingClientRect();
-      contextMenu.style.top = `${rect.bottom + window.scrollY}px`;
-      contextMenu.style.left = `${rect.left + window.scrollX}px`;
-      contextMenu.style.display = 'block';
-    }
-
     tableBody.addEventListener('mousedown', function (e) {
       const tr = e.target.closest('tr');
       if (!tr) return;
-      pressTimer = setTimeout(() => showContextMenuOnRow(tr), 600);
+      pressTimer = setTimeout(() => {
+        selectedRowIndex = [...tableBody.children].indexOf(tr);
+        const rect = tr.getBoundingClientRect();
+        contextMenu.style.top = `${rect.bottom + window.scrollY}px`;
+        contextMenu.style.left = `${rect.left + window.scrollX}px`;
+        contextMenu.style.display = 'block';
+      }, 600);
     });
+
     tableBody.addEventListener('mouseup', () => clearTimeout(pressTimer));
     tableBody.addEventListener('mouseleave', () => clearTimeout(pressTimer));
-    tableBody.addEventListener('touchstart', function (e) {
-      const tr = e.target.closest('tr');
-      if (!tr) return;
-      pressTimer = setTimeout(() => showContextMenuOnRow(tr), 600);
-    });
-    tableBody.addEventListener('touchend', () => clearTimeout(pressTimer));
-    tableBody.addEventListener('touchcancel', () => clearTimeout(pressTimer));
 
     document.getElementById('editRow').addEventListener('click', () => {
       const entries = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]');
