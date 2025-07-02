@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Form with Table and Screenshot</title>
+  <title>Form with Table, Image & Context Menu</title>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
     }
-
     .form-container {
       max-width: 600px;
       margin: auto;
@@ -19,18 +18,15 @@
       padding: 15px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-
     .form-group {
       display: flex;
       flex-direction: column;
       margin-bottom: 15px;
     }
-
     label {
       margin-bottom: 5px;
       font-weight: bold;
     }
-
     input[type="text"],
     input[type="number"],
     input[type="month"],
@@ -41,21 +37,17 @@
       border-radius: 5px;
       box-sizing: border-box;
     }
-
     .checkbox-group {
       display: flex;
       align-items: center;
       gap: 10px;
       margin-bottom: 15px;
     }
-
     .button-row {
       display: flex;
-      justify-content: space-between;
       flex-wrap: wrap;
       gap: 10px;
     }
-
     button {
       flex: 1;
       padding: 10px;
@@ -65,33 +57,27 @@
       border-radius: 5px;
       cursor: pointer;
     }
-
     .add-btn { background-color: green; }
     .clear-btn { background-color: red; }
     .image-btn { background-color: #007bff; }
-
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
-
     th, td {
       border: 1px solid #ccc;
       padding: 10px;
       text-align: center;
     }
-
     th {
       background-color: #f0f0f0;
     }
-
     tfoot td {
       font-weight: bold;
       background-color: #f9f9f9;
       text-align: center;
     }
-
     #monthLabel {
       text-align: center;
       margin-top: 15px;
@@ -100,40 +86,32 @@
       display: none;
       color: #444;
     }
-
     input[type="checkbox"]:disabled {
       cursor: not-allowed;
     }
-
-    #toast {
-      visibility: hidden;
-      min-width: 250px;
-      margin-left: -125px;
-      background-color: #4caf50;
-      color: white;
-      text-align: center;
-      border-radius: 4px;
+    .context-menu {
+      position: absolute;
+      display: none;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 999;
+    }
+    .context-menu button {
+      display: block;
+      width: 100%;
       padding: 10px;
-      position: fixed;
-      z-index: 1;
-      left: 50%;
-      bottom: 30px;
+      border: none;
+      background: none;
+      text-align: left;
       font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
     }
-
-    #toast.show {
-      visibility: visible;
-      animation: fadein 0.5s, fadeout 0.5s 2.5s;
-    }
-
-    @keyframes fadein {
-      from { bottom: 0; opacity: 0; }
-      to { bottom: 30px; opacity: 1; }
-    }
-
-    @keyframes fadeout {
-      from { bottom: 30px; opacity: 1; }
-      to { bottom: 0; opacity: 0; }
+    .context-menu button:hover {
+      background-color: #007bff;
+      color: #fff;
     }
   </style>
 </head>
@@ -144,27 +122,22 @@
     <label for="month">Month</label>
     <input type="month" id="month" />
   </div>
-
   <div class="form-group">
     <label for="newDate">Date</label>
     <input type="date" id="newDate" />
   </div>
-
   <div class="form-group">
     <label for="name">Name</label>
     <input type="text" id="name" placeholder="Enter name" />
   </div>
-
   <div class="form-group">
     <label for="amount">Amount</label>
     <input type="number" id="amount" placeholder="Enter amount" />
   </div>
-
   <div class="checkbox-group">
     <input type="checkbox" id="active" checked />
     <label for="active">Active</label>
   </div>
-
   <div class="button-row">
     <button class="add-btn" onclick="addToTable()">Add</button>
     <button class="clear-btn" onclick="confirmClear()">Clear</button>
@@ -173,7 +146,6 @@
 
   <div id="captureArea" style="padding: 20px; background: white;">
     <h2 id="monthLabel"></h2>
-
     <table id="dataTable">
       <thead>
         <tr>
@@ -197,8 +169,12 @@
   </div>
 </div>
 
-<!-- Toast -->
-<div id="toast">✅ Added successfully!</div>
+<!-- Context Menu -->
+<div id="contextMenu" class="context-menu">
+  <button onclick="editRow()">📝 Edit</button>
+  <button onclick="deleteRow()">🗑️ Delete</button>
+  <button onclick="hideContextMenu()">❌ Cancel</button>
+</div>
 
 <script>
   const today = new Date();
@@ -208,17 +184,7 @@
   document.getElementById('month').value = `${yyyy}-${mm}`;
   document.getElementById('newDate').value = `${yyyy}-${mm}-${dd}`;
 
-  // Load session data if exists
-  window.onload = () => {
-    const saved = sessionStorage.getItem("dataRows");
-    if (saved) {
-      JSON.parse(saved).forEach(item => {
-        addRow(item.name, item.amount, item.active, item.date, false);
-      });
-      updateTotal();
-      showMonthLabel();
-    }
-  };
+  let selectedRow = null;
 
   function addToTable() {
     const name = document.getElementById('name').value.trim();
@@ -231,31 +197,19 @@
       return;
     }
 
-    const formattedDate = formatDate(date);
+    // Check for duplicates
     const rows = document.querySelectorAll('#dataTable tbody tr');
-
     for (let row of rows) {
-      const rowDate = row.cells[0].textContent;
-      const rowName = row.cells[1].textContent.trim();
-      const rowAmount = row.cells[2].textContent.trim();
-
       if (
-        rowDate === formattedDate &&
-        rowName.toLowerCase() === name.toLowerCase() &&
-        rowAmount === amount
+        row.cells[0].textContent === formatDate(date) &&
+        row.cells[1].textContent.toLowerCase() === name.toLowerCase() &&
+        row.cells[2].textContent === amount
       ) {
-        alert("Duplicate entry! Same Date, Name & Amount exists.");
+        alert("Duplicate entry not allowed");
         return;
       }
     }
 
-    addRow(name, amount, active, date, true);
-    clearForm();
-    showMonthLabel();
-    showToast();
-  }
-
-  function addRow(name, amount, active, date, save) {
     const table = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
     const newRow = table.insertRow();
 
@@ -274,19 +228,22 @@
     checkbox.checked = active;
     activeCell.appendChild(checkbox);
 
-    if (save) saveToSession(name, amount, active, date);
+    newRow.addEventListener('contextmenu', function (e) {
+      e.preventDefault();
+      selectedRow = newRow;
+      showContextMenu(e.pageX, e.pageY);
+    });
+
+    clearForm();
     updateTotal();
+    showMonthLabel();
+    saveToSession();
+    showToast("✅ Added successfully!");
   }
 
-  function saveToSession(name, amount, active, date) {
-    let rows = JSON.parse(sessionStorage.getItem("dataRows") || "[]");
-    rows.push({ name, amount, active, date });
-    sessionStorage.setItem("dataRows", JSON.stringify(rows));
-  }
-
-  function formatDate(d) {
-    const p = d.split("-");
-    return `${p[2]}-${p[1]}-${p[0]}`;
+  function formatDate(dateStr) {
+    const parts = dateStr.split("-");
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
   }
 
   function clearForm() {
@@ -296,37 +253,22 @@
     document.getElementById('newDate').value = `${yyyy}-${mm}-${dd}`;
   }
 
-  function confirmClear() {
-    if (confirm("Are you sure you want to clear the session?")) {
-      sessionStorage.removeItem("dataRows");
-      document.querySelector('#dataTable tbody').innerHTML = '';
-      updateTotal();
-      document.getElementById('monthLabel').style.display = 'none';
-    }
-  }
-
   function updateTotal() {
-    let total = 0, payment = 0, pending = 0;
+    let total = 0, pay = 0, pend = 0;
     const rows = document.querySelectorAll('#dataTable tbody tr');
     rows.forEach(row => {
-      const amount = parseFloat(row.cells[2].textContent);
-      const isActive = row.cells[3].querySelector('input').checked;
-      if (!isNaN(amount)) {
-        total += amount;
-        if (isActive) payment += amount;
-        else pending += amount;
-      }
+      const amt = parseFloat(row.cells[2].textContent);
+      const active = row.cells[3].querySelector('input').checked;
+      total += amt;
+      active ? pay += amt : pend += amt;
     });
-
     document.getElementById('totalAmount').textContent = total;
-    document.getElementById('activeAmount').textContent = payment;
-    document.getElementById('inactiveAmount').textContent = pending;
+    document.getElementById('activeAmount').textContent = pay;
+    document.getElementById('inactiveAmount').textContent = pend;
   }
 
   function showMonthLabel() {
-    const monthValue = document.getElementById('month').value;
-    if (!monthValue) return;
-    const [year, month] = monthValue.split("-");
+    const [year, month] = document.getElementById('month').value.split("-");
     const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
     const label = document.getElementById('monthLabel');
     label.textContent = `${monthName} Month Schedule`;
@@ -347,13 +289,90 @@
     });
   }
 
-  function showToast() {
-    const toast = document.getElementById("toast");
-    toast.className = "show";
-    setTimeout(() => {
-      toast.className = toast.className.replace("show", "");
-    }, 3000);
+  function showContextMenu(x, y) {
+    const menu = document.getElementById('contextMenu');
+    menu.style.top = `${y}px`;
+    menu.style.left = `${x}px`;
+    menu.style.display = 'block';
   }
+
+  function hideContextMenu() {
+    document.getElementById('contextMenu').style.display = 'none';
+  }
+
+  document.addEventListener('click', hideContextMenu);
+
+  function editRow() {
+    if (!selectedRow) return;
+    const [d, m, y] = selectedRow.cells[0].textContent.split("-");
+    document.getElementById('newDate').value = `${y}-${m}-${d}`;
+    document.getElementById('name').value = selectedRow.cells[1].textContent;
+    document.getElementById('amount').value = selectedRow.cells[2].textContent;
+    document.getElementById('active').checked = selectedRow.cells[3].querySelector('input').checked;
+    selectedRow.remove();
+    updateTotal();
+    saveToSession();
+    hideContextMenu();
+  }
+
+  function deleteRow() {
+    if (selectedRow) {
+      selectedRow.remove();
+      updateTotal();
+      saveToSession();
+    }
+    hideContextMenu();
+  }
+
+  function confirmClear() {
+    if (confirm("Are you sure you want to clear everything?")) {
+      document.querySelector('#dataTable tbody').innerHTML = '';
+      document.getElementById('monthLabel').style.display = 'none';
+      updateTotal();
+      sessionStorage.clear();
+    }
+  }
+
+  function showToast(msg) {
+    alert(msg); // You can replace with custom toast
+  }
+
+  function saveToSession() {
+    const rows = Array.from(document.querySelectorAll('#dataTable tbody tr')).map(row => ({
+      date: row.cells[0].textContent,
+      name: row.cells[1].textContent,
+      amount: row.cells[2].textContent,
+      active: row.cells[3].querySelector('input').checked
+    }));
+    sessionStorage.setItem('dataRows', JSON.stringify(rows));
+  }
+
+  function loadFromSession() {
+    const rows = JSON.parse(sessionStorage.getItem('dataRows') || '[]');
+    rows.forEach(data => {
+      const table = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
+      const newRow = table.insertRow();
+      newRow.insertCell(0).textContent = data.date;
+      newRow.insertCell(1).textContent = data.name;
+      newRow.insertCell(2).textContent = data.amount;
+      const activeCell = newRow.insertCell(3);
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.disabled = true;
+      checkbox.checked = data.active;
+      activeCell.appendChild(checkbox);
+
+      newRow.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+        selectedRow = newRow;
+        showContextMenu(e.pageX, e.pageY);
+      });
+    });
+    updateTotal();
+    showMonthLabel();
+  }
+
+  window.onload = loadFromSession;
 </script>
 
 </body>
