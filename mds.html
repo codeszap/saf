@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Form with Table and Screenshot</title>
-
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -84,7 +82,9 @@
       text-align: center;
     }
 
-    th { background-color: #f0f0f0; }
+    th {
+      background-color: #f0f0f0;
+    }
 
     tfoot td {
       font-weight: bold;
@@ -105,20 +105,20 @@
       cursor: not-allowed;
     }
 
-    /* Toast */
     #toast {
       visibility: hidden;
       min-width: 250px;
-      background-color: #28a745;
-      color: #fff;
+      margin-left: -125px;
+      background-color: #4caf50;
+      color: white;
       text-align: center;
+      border-radius: 4px;
       padding: 10px;
-      border-radius: 8px;
       position: fixed;
-      bottom: 30px;
+      z-index: 1;
       left: 50%;
-      transform: translateX(-50%);
-      z-index: 999;
+      bottom: 30px;
+      font-weight: bold;
     }
 
     #toast.show {
@@ -127,13 +127,13 @@
     }
 
     @keyframes fadein {
-      from {bottom: 0; opacity: 0;}
-      to {bottom: 30px; opacity: 1;}
+      from { bottom: 0; opacity: 0; }
+      to { bottom: 30px; opacity: 1; }
     }
 
     @keyframes fadeout {
-      from {bottom: 30px; opacity: 1;}
-      to {bottom: 0; opacity: 0;}
+      from { bottom: 30px; opacity: 1; }
+      to { bottom: 0; opacity: 0; }
     }
   </style>
 </head>
@@ -167,12 +167,9 @@
 
   <div class="button-row">
     <button class="add-btn" onclick="addToTable()">Add</button>
-    <button class="clear-btn" onclick="clearForm()">Clear</button>
+    <button class="clear-btn" onclick="confirmClear()">Clear</button>
     <button class="image-btn" onclick="captureImage()">📸 Get Image</button>
   </div>
-
-  <!-- Toast -->
-  <div id="toast">✅ Data Saved Successfully</div>
 
   <div id="captureArea" style="padding: 20px; background: white;">
     <h2 id="monthLabel"></h2>
@@ -200,6 +197,9 @@
   </div>
 </div>
 
+<!-- Toast -->
+<div id="toast">✅ Added successfully!</div>
+
 <script>
   const today = new Date();
   const yyyy = today.getFullYear();
@@ -208,12 +208,17 @@
   document.getElementById('month').value = `${yyyy}-${mm}`;
   document.getElementById('newDate').value = `${yyyy}-${mm}-${dd}`;
 
-  // Load session data
-  window.onload = function () {
-    const saved = JSON.parse(sessionStorage.getItem("tableData") || "[]");
-    saved.forEach(row => addRow(row.name, row.amount, row.active, row.date, false));
-    if (saved.length) showMonthLabel();
-  }
+  // Load session data if exists
+  window.onload = () => {
+    const saved = sessionStorage.getItem("dataRows");
+    if (saved) {
+      JSON.parse(saved).forEach(item => {
+        addRow(item.name, item.amount, item.active, item.date, false);
+      });
+      updateTotal();
+      showMonthLabel();
+    }
+  };
 
   function addToTable() {
     const name = document.getElementById('name').value.trim();
@@ -226,6 +231,24 @@
       return;
     }
 
+    const formattedDate = formatDate(date);
+    const rows = document.querySelectorAll('#dataTable tbody tr');
+
+    for (let row of rows) {
+      const rowDate = row.cells[0].textContent;
+      const rowName = row.cells[1].textContent.trim();
+      const rowAmount = row.cells[2].textContent.trim();
+
+      if (
+        rowDate === formattedDate &&
+        rowName.toLowerCase() === name.toLowerCase() &&
+        rowAmount === amount
+      ) {
+        alert("Duplicate entry! Same Date, Name & Amount exists.");
+        return;
+      }
+    }
+
     addRow(name, amount, active, date, true);
     clearForm();
     showMonthLabel();
@@ -236,11 +259,15 @@
     const table = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
     const newRow = table.insertRow();
 
-    newRow.insertCell(0).textContent = formatDate(date);
-    newRow.insertCell(1).textContent = name;
-    newRow.insertCell(2).textContent = amount;
-
+    const dateCell = newRow.insertCell(0);
+    const nameCell = newRow.insertCell(1);
+    const amountCell = newRow.insertCell(2);
     const activeCell = newRow.insertCell(3);
+
+    dateCell.textContent = formatDate(date);
+    nameCell.textContent = name;
+    amountCell.textContent = amount;
+
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.disabled = true;
@@ -252,37 +279,9 @@
   }
 
   function saveToSession(name, amount, active, date) {
-    const prev = JSON.parse(sessionStorage.getItem("tableData") || "[]");
-    prev.push({ name, amount, active, date });
-    sessionStorage.setItem("tableData", JSON.stringify(prev));
-  }
-
-  function clearForm() {
-    if (!confirm("Are you sure you want to clear all data?")) return;
-
-    document.getElementById('name').value = '';
-    document.getElementById('amount').value = '';
-    document.getElementById('active').checked = true;
-    document.getElementById('newDate').value = `${yyyy}-${mm}-${dd}`;
-
-    document.querySelector("#dataTable tbody").innerHTML = '';
-    sessionStorage.removeItem("tableData");
-    updateTotal();
-  }
-
-  function updateTotal() {
-    let total = 0, pay = 0, pend = 0;
-    document.querySelectorAll("#dataTable tbody tr").forEach(row => {
-      const amt = parseFloat(row.cells[2].textContent);
-      const chk = row.cells[3].querySelector("input").checked;
-      if (!isNaN(amt)) {
-        total += amt;
-        chk ? pay += amt : pend += amt;
-      }
-    });
-    document.getElementById("totalAmount").textContent = total;
-    document.getElementById("activeAmount").textContent = pay;
-    document.getElementById("inactiveAmount").textContent = pend;
+    let rows = JSON.parse(sessionStorage.getItem("dataRows") || "[]");
+    rows.push({ name, amount, active, date });
+    sessionStorage.setItem("dataRows", JSON.stringify(rows));
   }
 
   function formatDate(d) {
@@ -290,12 +289,48 @@
     return `${p[2]}-${p[1]}-${p[0]}`;
   }
 
+  function clearForm() {
+    document.getElementById('name').value = '';
+    document.getElementById('amount').value = '';
+    document.getElementById('active').checked = true;
+    document.getElementById('newDate').value = `${yyyy}-${mm}-${dd}`;
+  }
+
+  function confirmClear() {
+    if (confirm("Are you sure you want to clear the session?")) {
+      sessionStorage.removeItem("dataRows");
+      document.querySelector('#dataTable tbody').innerHTML = '';
+      updateTotal();
+      document.getElementById('monthLabel').style.display = 'none';
+    }
+  }
+
+  function updateTotal() {
+    let total = 0, payment = 0, pending = 0;
+    const rows = document.querySelectorAll('#dataTable tbody tr');
+    rows.forEach(row => {
+      const amount = parseFloat(row.cells[2].textContent);
+      const isActive = row.cells[3].querySelector('input').checked;
+      if (!isNaN(amount)) {
+        total += amount;
+        if (isActive) payment += amount;
+        else pending += amount;
+      }
+    });
+
+    document.getElementById('totalAmount').textContent = total;
+    document.getElementById('activeAmount').textContent = payment;
+    document.getElementById('inactiveAmount').textContent = pending;
+  }
+
   function showMonthLabel() {
-    const val = document.getElementById('month').value;
-    const [year, month] = val.split("-");
-    const mname = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
-    document.getElementById('monthLabel').textContent = `${mname} Month Schedule`;
-    document.getElementById('monthLabel').style.display = 'block';
+    const monthValue = document.getElementById('month').value;
+    if (!monthValue) return;
+    const [year, month] = monthValue.split("-");
+    const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
+    const label = document.getElementById('monthLabel');
+    label.textContent = `${monthName} Month Schedule`;
+    label.style.display = 'block';
   }
 
   function captureImage() {
@@ -307,7 +342,7 @@
     }).then(canvas => {
       const link = document.createElement('a');
       link.download = 'table-screenshot.png';
-      link.href = canvas.toDataURL();
+      link.href = canvas.toDataURL('image/png');
       link.click();
     });
   }
@@ -315,7 +350,9 @@
   function showToast() {
     const toast = document.getElementById("toast");
     toast.className = "show";
-    setTimeout(() => toast.className = toast.className.replace("show", ""), 3000);
+    setTimeout(() => {
+      toast.className = toast.className.replace("show", "");
+    }, 3000);
   }
 </script>
 
