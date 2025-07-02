@@ -176,6 +176,10 @@
 </div>
 
 <script>
+  const dbName = 'DueScheduleDB';
+  const storeName = 'entries';
+  let db;
+
   const today = new Date();
   const yyyy = today.getFullYear();
   const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -185,9 +189,63 @@
 
   let selectedRow = null;
 
+  function openDB() {
+    const request = indexedDB.open(dbName, 1);
+    request.onerror = () => alert("DB Error!");
+    request.onsuccess = (event) => {
+      db = event.target.result;
+      loadFromDB();
+    };
+    request.onupgradeneeded = (event) => {
+      db = event.target.result;
+      db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+    };
+  }
+
   function formatDate(dateStr) {
     const parts = dateStr.split("-");
     return `${parts[2]}/${parts[1]}`; // dd/mm
+  }
+
+  function addRowToDB(data) {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    store.add(data);
+    tx.oncomplete = () => {
+      loadFromDB();
+      clearForm();
+      showToast("✅ Added successfully!");
+    };
+  }
+
+  function getAllRowsFromDB(callback) {
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const rows = [];
+    store.openCursor().onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        rows.push({ id: cursor.key, ...cursor.value });
+        cursor.continue();
+      } else {
+        callback(rows);
+      }
+    };
+  }
+
+  function deleteRowFromDB(id) {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).delete(id);
+    tx.oncomplete = loadFromDB;
+  }
+
+  function clearDB() {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).clear();
+    tx.oncomplete = () => {
+      loadFromDB();
+      document.getElementById('monthLabel').style.display = 'none';
+    };
   }
 
   function addToTable() {
@@ -201,59 +259,51 @@
       return;
     }
 
-    const rows = JSON.parse(sessionStorage.getItem('dataRows') || '[]');
     const newDate = formatDate(date);
-    for (let row of rows) {
-      if (
-        row.date === newDate &&
-        row.name.toLowerCase() === name.toLowerCase() &&
-        row.amount === amount
-      ) {
+
+    getAllRowsFromDB((rows) => {
+      const duplicate = rows.find(row => row.date === newDate && row.name.toLowerCase() === name.toLowerCase() && row.amount === amount);
+      if (duplicate) {
         alert("Duplicate entry not allowed");
         return;
       }
-    }
-
-    rows.push({ date: newDate, name, amount, active });
-    sessionStorage.setItem('dataRows', JSON.stringify(rows));
-
-    loadFromSession(); // Re-render with sort
-    clearForm();
-    showToast("✅ Added successfully!");
+      addRowToDB({ date: newDate, name, amount, active });
+    });
   }
 
-  function loadFromSession() {
-    const rows = JSON.parse(sessionStorage.getItem('dataRows') || '[]');
-
-    rows.sort((a, b) => {
-      const [d1, m1] = a.date.split("/").map(Number);
-      const [d2, m2] = b.date.split("/").map(Number);
-      return new Date(2000, m1 - 1, d1) - new Date(2000, m2 - 1, d2);
-    });
-
-    const tbody = document.querySelector('#dataTable tbody');
-    tbody.innerHTML = '';
-    rows.forEach(data => {
-      const newRow = tbody.insertRow();
-      newRow.insertCell(0).textContent = data.date;
-      newRow.insertCell(1).textContent = data.name;
-      newRow.insertCell(2).textContent = data.amount;
-      const activeCell = newRow.insertCell(3);
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.disabled = true;
-      checkbox.checked = data.active;
-      activeCell.appendChild(checkbox);
-
-      newRow.addEventListener('contextmenu', function (e) {
-        e.preventDefault();
-        selectedRow = newRow;
-        showContextMenu(e.pageX, e.pageY);
+  function loadFromDB() {
+    getAllRowsFromDB((rows) => {
+      rows.sort((a, b) => {
+        const [d1, m1] = a.date.split("/").map(Number);
+        const [d2, m2] = b.date.split("/").map(Number);
+        return new Date(2000, m1 - 1, d1) - new Date(2000, m2 - 1, d2);
       });
-    });
 
-    updateTotal();
-    showMonthLabel();
+      const tbody = document.querySelector('#dataTable tbody');
+      tbody.innerHTML = '';
+      rows.forEach(data => {
+        const newRow = tbody.insertRow();
+        newRow.dataset.id = data.id;
+        newRow.insertCell(0).textContent = data.date;
+        newRow.insertCell(1).textContent = data.name;
+        newRow.insertCell(2).textContent = data.amount;
+        const activeCell = newRow.insertCell(3);
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.disabled = true;
+        checkbox.checked = data.active;
+        activeCell.appendChild(checkbox);
+
+        newRow.addEventListener('contextmenu', function (e) {
+          e.preventDefault();
+          selectedRow = newRow;
+          showContextMenu(e.pageX, e.pageY);
+        });
+      });
+
+      updateTotal();
+      showMonthLabel();
+    });
   }
 
   function updateTotal() {
@@ -286,7 +336,7 @@
   }
 
   function showToast(msg) {
-    alert(msg); // You can replace this with custom toast
+    alert(msg);
   }
 
   function captureImage() {
@@ -305,9 +355,7 @@
 
   function confirmClear() {
     if (confirm("Are you sure you want to clear everything?")) {
-      sessionStorage.clear();
-      loadFromSession();
-      document.getElementById('monthLabel').style.display = 'none';
+      clearDB();
     }
   }
 
@@ -332,28 +380,19 @@
     document.getElementById('amount').value = selectedRow.cells[2].textContent;
     document.getElementById('active').checked = selectedRow.cells[3].querySelector('input').checked;
 
-    const rows = JSON.parse(sessionStorage.getItem('dataRows') || '[]');
-    const filtered = rows.filter(row => !(row.date === selectedRow.cells[0].textContent &&
-                                          row.name === selectedRow.cells[1].textContent &&
-                                          row.amount === selectedRow.cells[2].textContent));
-    sessionStorage.setItem('dataRows', JSON.stringify(filtered));
-
+    const id = Number(selectedRow.dataset.id);
+    deleteRowFromDB(id);
     selectedRow = null;
-    loadFromSession();
   }
 
   function deleteRow() {
     if (!selectedRow) return;
-    const rows = JSON.parse(sessionStorage.getItem('dataRows') || '[]');
-    const filtered = rows.filter(row => !(row.date === selectedRow.cells[0].textContent &&
-                                          row.name === selectedRow.cells[1].textContent &&
-                                          row.amount === selectedRow.cells[2].textContent));
-    sessionStorage.setItem('dataRows', JSON.stringify(filtered));
+    const id = Number(selectedRow.dataset.id);
+    deleteRowFromDB(id);
     selectedRow = null;
-    loadFromSession();
   }
 
-  window.onload = loadFromSession;
+  window.onload = openDB;
 </script>
 
 </body>
