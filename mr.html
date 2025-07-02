@@ -185,13 +185,10 @@
           <th>Notes (Insights, Observations)</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- Entries will be inserted here -->
-      </tbody>
+      <tbody></tbody>
     </table>
   </div>
 
-  <!-- Context Menu -->
   <div id="contextMenu" class="context-menu">
     <button id="editRow">Edit</button>
     <button id="deleteRow">Delete</button>
@@ -293,25 +290,33 @@
       });
     });
 
-    // Context menu logic
+    // ✅ Context Menu for desktop + mobile (touch)
     let selectedRowIndex = null;
     const contextMenu = document.getElementById('contextMenu');
-
     let pressTimer;
+
+    function showContextMenuOnRow(tr) {
+      selectedRowIndex = [...tableBody.children].indexOf(tr);
+      const rect = tr.getBoundingClientRect();
+      contextMenu.style.top = `${rect.bottom + window.scrollY}px`;
+      contextMenu.style.left = `${rect.left + window.scrollX}px`;
+      contextMenu.style.display = 'block';
+    }
+
     tableBody.addEventListener('mousedown', function (e) {
       const tr = e.target.closest('tr');
       if (!tr) return;
-      pressTimer = setTimeout(() => {
-        selectedRowIndex = [...tableBody.children].indexOf(tr);
-        const rect = tr.getBoundingClientRect();
-        contextMenu.style.top = `${rect.bottom + window.scrollY}px`;
-        contextMenu.style.left = `${rect.left + window.scrollX}px`;
-        contextMenu.style.display = 'block';
-      }, 600);
+      pressTimer = setTimeout(() => showContextMenuOnRow(tr), 600);
     });
-
     tableBody.addEventListener('mouseup', () => clearTimeout(pressTimer));
     tableBody.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+    tableBody.addEventListener('touchstart', function (e) {
+      const tr = e.target.closest('tr');
+      if (!tr) return;
+      pressTimer = setTimeout(() => showContextMenuOnRow(tr), 600);
+    });
+    tableBody.addEventListener('touchend', () => clearTimeout(pressTimer));
+    tableBody.addEventListener('touchcancel', () => clearTimeout(pressTimer));
 
     document.getElementById('editRow').addEventListener('click', () => {
       const entries = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]');
