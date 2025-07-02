@@ -1,270 +1,207 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>STC Meditation Tracker</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 10px;
-      padding: 0;
-      background: #f7f7f7;
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
+import 'package:offer_driver/config/constants/offer_colors.dart';
+import 'package:offer_driver/config/constants/offer_styles.dart';
+import 'package:share_plus/share_plus.dart';
+
+class ProfileScreen extends ConsumerStatefulWidget {
+  const ProfileScreen({super.key});
+
+  static const path = "/profile_screen";
+
+  @override
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: OfferColors.greyColorBackground,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        title: Text(
+          "Driver Profile",
+          style: OfferStyles.principalTextStyleOrange.copyWith(fontSize: 22),
+        ),
+        actions: [
+          GestureDetector(onTap: () {}, child: Icon(Icons.support_agent)),
+          Padding(
+            padding: EdgeInsets.only(left: 15, right: 6),
+            child: GestureDetector(onTap: () {}, child: const Icon(Icons.edit)),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        bottom: false,
+        child: RefreshIndicator(
+          onRefresh: () async {},
+          child: ListView(
+            controller: _scrollController,
+            children: [
+            _CardHeader(
+                    photoUrl: "",
+                    xFile: "",
+                    isEditMode: false,
+                    onSelectImage: (file) {
+                    
+                    },
+                    shopStatus: true,
+                    onChangeShopStatus: (newValue) {
+                    
+                    },
+                    isFirstLogin: true),
+                const Gap(10),
+              
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CardHeader extends StatefulWidget {
+  const _CardHeader(
+      {super.key,
+      required this.photoUrl,
+      required this.xFile,
+      required this.onSelectImage,
+      this.isEditMode = false,
+      required this.shopStatus,
+      required this.onChangeShopStatus,
+      required this.isFirstLogin});
+
+  final String? photoUrl;
+  final XFile? xFile;
+  final Function(XFile) onSelectImage;
+  final bool isEditMode;
+  final bool shopStatus;
+  final Function(bool) onChangeShopStatus;
+  final bool isFirstLogin;
+
+  @override
+  State<_CardHeader> createState() => _CardHeaderState();
+}
+
+class _CardHeaderState extends State<_CardHeader> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                spreadRadius: 4,
+                blurRadius: 4,
+                offset: const Offset(2, 2),
+              )
+            ]),
+        child: GestureDetector(
+          onTap: () {
+            if (widget.isEditMode) {
+              showAlertUploadImage(context);
+            }
+          },
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  //const Text("Set up your profile"),
+                  const Gap(10),
+                  Stack(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: OfferColors.orange,
+                        radius: 60,
+                        child: widget.xFile == null
+                            ? Padding(
+                                padding: const EdgeInsets.all(6.0),
+                                child: profilePhoto(widget.photoUrl),
+                              )
+                            : Padding(
+                              padding: const EdgeInsets.all(6),
+                              child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(100),
+                                  child: Image.file(
+                                    File(widget.xFile!.path),
+                                    fit: BoxFit.cover,
+                                    height: double.infinity,
+                                    width: double.infinity,
+                                  ),
+                                ),
+                            ),
+                      ),
+                      if (widget.isEditMode)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: CircleCameraIcon(),
+                        ),
+                    ],
+                  ),
+                  const Gap(15)
+                ],
+              ),
+              if (!widget.isFirstLogin)
+                Positioned(
+                    right: 10,
+                    bottom: 0,
+                    child: Row(
+                      children: [
+                        const Text("Status",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 15),),
+                        IgnorePointer(
+                            ignoring: widget.isEditMode == false,
+                            child: Switch(
+                              activeColor: OfferColors.orange,
+                                value: widget.shopStatus,
+                                onChanged: widget.onChangeShopStatus))
+                      ],
+                    ))
+            ],
+          ),
+        ));
+  }
+
+  Widget profilePhoto(String? url) {
+    if (url != null) {
+      return CircleAvatar(radius: 60, backgroundImage: NetworkImage(url));
+    } else {
+      return Image.asset(
+        "assets/user_profile_default_photo.png",
+        fit: BoxFit.contain,
+      );
     }
+  }
 
-    form {
-      background: #fff;
-      padding: 16px;
-      border-radius: 8px;
-      max-width: 400px;
-      margin: auto;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    }
-
-    label {
-      display: block;
-      margin-bottom: 4px;
-      font-weight: 500;
-    }
-
-    input[type="date"],
-    input[type="time"],
-    input[type="number"],
-    textarea {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-
-    .radio-group {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 12px;
-    }
-
-    .button-row {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-
-    .button-row button {
-      padding: 8px 16px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      background: #1976d2;
-      color: #fff;
-    }
-
-    .button-row button#clearBtn {
-      background: #e53935;
-    }
-
-    .button-row button#downloadImgBtn {
-      background: #388e3c;
-    }
-
-    .table-container {
-      max-width: 600px;
-      margin: 30px auto 0;
-      overflow-x: auto;
-      padding: 24px;
-      background: #fff;
-      border-radius: 12px;
-    }
-
-    table {
-      width: 100%;
-      background: #fff;
-      border-collapse: collapse;
-      min-width: 600px;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-      white-space: nowrap; /* ✅ Force content to stay in one line */
-    }
-
-    @media (max-width: 600px) {
-      form {
-        padding: 8px;
-        max-width: 100%;
-      }
-
-      .button-row {
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .table-container {
-        padding: 8px;
-      }
-
-      table {
-        font-size: 14px;
-        min-width: 320px;
-      }
-
-      th, td {
-        padding: 6px;
-      }
-    }
-  </style>
-</head>
-<body>
-  <h2 style="text-align:center;">Meditation Tracker</h2>
-
-  <form id="meditationForm">
-    <label for="date">Date:</label>
-    <input type="date" id="date" name="date" required>
-
-    <label>Meditation:</label>
-    <div class="radio-group">
-      <input type="radio" id="medYes" name="meditation" value="yes" required checked>
-      <label for="medYes">Yes</label>
-      <input type="radio" id="medNo" name="meditation" value="no">
-      <label for="medNo">No</label>
-    </div>
-
-    <label for="startTime">Start Time:</label>
-    <input type="time" id="startTime" name="startTime">
-
-    <label for="duration">Duration (minutes):</label>
-    <input type="number" id="duration" name="duration" min="1">
-
-    <label for="notes">Notes:</label>
-    <textarea id="notes" name="notes" rows="3" cols="30"></textarea>
-
-    <div class="button-row">
-      <button type="submit">Save</button>
-      <button type="button" id="clearBtn">Clear</button>
-      <button type="button" id="downloadImgBtn">Download Table</button>
-    </div>
-  </form>
-
-  <div class="table-container" id="tableContainer">
-    <table id="meditationTable">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Meditation (Yes /No)</th>
-          <th>Time</th>
-          <th>Duration</th>
-          <th>Notes (Insights,Observations)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Entries will be inserted here -->
-      </tbody>
-    </table>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script>
-    const dateInput = document.getElementById('date');
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    dateInput.value = `${yyyy}-${mm}-${dd}`;
-    dateInput.placeholder = `${dd}-${mm}-${yyyy}`;
-
-    const timeInput = document.getElementById('startTime');
-    let hours = today.getHours();
-    let minutes = String(today.getMinutes()).padStart(2, '0');
-    timeInput.value = `${String(hours).padStart(2, '0')}:${minutes}`;
-    let ampm = hours >= 12 ? 'PM' : 'AM';
-    let displayHour = hours % 12 || 12;
-    timeInput.placeholder = `${displayHour}:${minutes} ${ampm}`;
-
-    const form = document.getElementById('meditationForm');
-    const tableBody = document.querySelector('#meditationTable tbody');
-    const STORAGE_KEY = 'meditation_entries';
-
-    function loadEntries() {
-      tableBody.innerHTML = '';
-      const entries = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]');
-      entries.forEach(entry => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${entry.date}</td>
-          <td>${entry.meditation}</td>
-          <td>${entry.time}</td>
-          <td>${entry.duration}</td>
-          <td>${entry.notes}</td>
-        `;
-        tableBody.appendChild(row);
-      });
-    }
-
-    loadEntries();
-
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const dateVal = dateInput.value.split('-').reverse().join('-');
-      const meditationVal = document.querySelector('input[name="meditation"]:checked').value === 'yes' ? 'Yes' : 'No';
-      const timeVal = timeInput.value;
-      let [h, m] = timeVal.split(':');
-      h = Number(h);
-      let t12 = (h % 12 || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
-      const durationVal = document.getElementById('duration').value;
-      const notesVal = document.getElementById('notes').value;
-
-      const entries = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]');
-      entries.push({
-        date: dateVal,
-        meditation: meditationVal,
-        time: t12,
-        duration: durationVal,
-        notes: notesVal
-      });
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-      loadEntries();
-      form.reset();
-      dateInput.value = `${yyyy}-${mm}-${dd}`;
-      timeInput.value = `${String(hours).padStart(2, '0')}:${minutes}`;
-      document.getElementById('medYes').checked = true;
-    });
-
-    document.getElementById('clearBtn').addEventListener('click', function () {
-      if (tableBody.children.length > 0) {
-        const confirmClear = confirm('Are you sure you want to clear all entries?');
-        if (!confirmClear) return;
-        sessionStorage.removeItem(STORAGE_KEY);
-        loadEntries();
-      }
-      form.reset();
-      dateInput.value = `${yyyy}-${mm}-${dd}`;
-      timeInput.value = `${String(hours).padStart(2, '0')}:${minutes}`;
-      document.getElementById('medYes').checked = true;
-    });
-
-    document.getElementById('downloadImgBtn').addEventListener('click', function () {
-      const tableDiv = document.getElementById('tableContainer');
-      const originalWidth = tableDiv.style.width;
-      tableDiv.style.width = tableDiv.scrollWidth + "px"; // ✅ Expand width
-
-      html2canvas(tableDiv, {
-        backgroundColor: "#fff",
-        padding: 24,
-        scale: 2,
-        scrollX: 0,
-        scrollY: -window.scrollY
-      }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = 'meditation_table.png';
-        link.href = canvas.toDataURL();
-        link.click();
-        tableDiv.style.width = originalWidth; // Reset back
-      });
-    });
-  </script>
-</body>
-</html>
+  showAlertUploadImage(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (context) => DialogUploadImage(
+              onImageLoaded: (file) {
+                widget.onSelectImage(file);
+                setState(() {});
+                 Navigator.of(context).pop();
+                // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Profile Upload Successfully")));
+              },
+              ratioX: 1,
+              ratioY: 1,
+              label: 'Upload shop image',
+            ),
+        traversalEdgeBehavior: TraversalEdgeBehavior.parentScope,
+        useRootNavigator: false);
+  }
+}
