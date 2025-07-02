@@ -197,29 +197,78 @@
     <button id="cancelMenu">Cancel</button>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script>
-    const dateInput = document.getElementById('date');
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    dateInput.value = `${yyyy}-${mm}-${dd}`;
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+  const DB_NAME = 'MeditationDB';
+  const STORE_NAME = 'entries';
+  let db;
 
-    const timeInput = document.getElementById('startTime');
-    let hours = today.getHours();
-    let minutes = String(today.getMinutes()).padStart(2, '0');
-    timeInput.value = `${String(hours).padStart(2, '0')}:${minutes}`;
+  const dateInput = document.getElementById('date');
+  const timeInput = document.getElementById('startTime');
+  const form = document.getElementById('meditationForm');
+  const tableBody = document.querySelector('#meditationTable tbody');
+  const contextMenu = document.getElementById('contextMenu');
+  let selectedRowId = null;
 
-    const form = document.getElementById('meditationForm');
-    const tableBody = document.querySelector('#meditationTable tbody');
-    const STORAGE_KEY = 'meditation_entries';
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  dateInput.value = `${yyyy}-${mm}-${dd}`;
 
-    function loadEntries() {
+  let hours = today.getHours();
+  let minutes = String(today.getMinutes()).padStart(2, '0');
+  timeInput.value = `${String(hours).padStart(2, '0')}:${minutes}`;
+
+  function openDB() {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onerror = () => alert("Failed to open DB");
+    request.onsuccess = (e) => {
+      db = e.target.result;
+      loadEntries();
+    };
+    request.onupgradeneeded = (e) => {
+      db = e.target.result;
+      db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+    };
+  }
+
+  function addEntry(entry) {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).add(entry);
+    tx.oncomplete = () => {
+      loadEntries();
+      resetForm();
+    };
+  }
+
+  function updateEntryList(callback) {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const entries = [];
+    store.openCursor().onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        entries.push(cursor.value);
+        cursor.continue();
+      } else {
+        callback(entries);
+      }
+    };
+  }
+
+  function deleteEntry(id) {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).delete(id);
+    tx.oncomplete = loadEntries;
+  }
+
+  function loadEntries() {
+    updateEntryList(entries => {
       tableBody.innerHTML = '';
-      const entries = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]');
       entries.forEach(entry => {
         const row = document.createElement('tr');
+        row.dataset.id = entry.id;
         row.innerHTML = `
           <td>${entry.date}</td>
           <td>${entry.meditation}</td>
@@ -227,140 +276,126 @@
           <td>${entry.duration}</td>
           <td>${entry.notes}</td>
         `;
+        row.addEventListener('contextmenu', function (e) {
+          e.preventDefault();
+          selectedRowId = entry.id;
+          const rect = row.getBoundingClientRect();
+          contextMenu.style.top = `${rect.bottom + window.scrollY}px`;
+          contextMenu.style.left = `${rect.left + window.scrollX}px`;
+          contextMenu.style.display = 'block';
+        });
         tableBody.appendChild(row);
       });
+    });
+  }
+
+  function resetForm() {
+    form.reset();
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+    timeInput.value = `${String(hours).padStart(2, '0')}:${minutes}`;
+    document.getElementById('medYes').checked = true;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const dateVal = dateInput.value.split('-').reverse().join('-');
+    const meditationVal = document.querySelector('input[name="meditation"]:checked').value === 'yes' ? 'Yes' : 'No';
+    const timeVal = timeInput.value;
+    let [h, m] = timeVal.split(':');
+    h = Number(h);
+    let t12 = (h % 12 || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
+    const durationVal = document.getElementById('duration').value;
+    const notesVal = document.getElementById('notes').value;
+
+    addEntry({
+      date: dateVal,
+      meditation: meditationVal,
+      time: t12,
+      duration: durationVal,
+      notes: notesVal
+    });
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    if (confirm("Clear all entries?")) {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).clear();
+      tx.oncomplete = loadEntries;
     }
+    resetForm();
+  });
 
-    loadEntries();
+  document.getElementById('downloadImgBtn').addEventListener('click', () => {
+    const tableDiv = document.getElementById('tableContainer');
+    const table = document.getElementById('meditationTable');
+    const originalWidth = tableDiv.style.width;
+    const originalOverflow = tableDiv.style.overflow;
 
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const dateVal = dateInput.value.split('-').reverse().join('-');
-      const meditationVal = document.querySelector('input[name="meditation"]:checked').value === 'yes' ? 'Yes' : 'No';
-      const timeVal = timeInput.value;
-      let [h, m] = timeVal.split(':');
-      h = Number(h);
-      let t12 = (h % 12 || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
-      const durationVal = document.getElementById('duration').value;
-      const notesVal = document.getElementById('notes').value;
+    tableDiv.style.width = table.scrollWidth + "px";
+    tableDiv.style.overflow = 'visible';
 
-      const entries = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]');
-      entries.push({
-        date: dateVal,
-        meditation: meditationVal,
-        time: t12,
-        duration: durationVal,
-        notes: notesVal
-      });
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-      loadEntries();
-      form.reset();
-      dateInput.value = `${yyyy}-${mm}-${dd}`;
-      timeInput.value = `${String(hours).padStart(2, '0')}:${minutes}`;
-      document.getElementById('medYes').checked = true;
+    html2canvas(tableDiv, {
+      backgroundColor: "#fff",
+      scale: 2,
+      scrollX: 0,
+      scrollY: -window.scrollY,
+      useCORS: true
+    }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = 'meditation_table.png';
+      link.href = canvas.toDataURL();
+      link.click();
+      tableDiv.style.width = originalWidth;
+      tableDiv.style.overflow = originalOverflow;
     });
+  });
 
-    document.getElementById('clearBtn').addEventListener('click', function () {
-      if (tableBody.children.length > 0) {
-        const confirmClear = confirm('Are you sure you want to clear all entries?');
-        if (!confirmClear) return;
-        sessionStorage.removeItem(STORAGE_KEY);
-        loadEntries();
-      }
-      form.reset();
-      dateInput.value = `${yyyy}-${mm}-${dd}`;
-      timeInput.value = `${String(hours).padStart(2, '0')}:${minutes}`;
-      document.getElementById('medYes').checked = true;
-    });
+  document.getElementById('editRow').addEventListener('click', () => {
+    if (selectedRowId == null) return;
 
-    document.getElementById('downloadImgBtn').addEventListener('click', function () {
-      const tableDiv = document.getElementById('tableContainer');
-      const table = document.getElementById('meditationTable');
-      const originalWidth = tableDiv.style.width;
-      const originalOverflow = tableDiv.style.overflow;
-
-      // Expand to full width
-      tableDiv.style.width = table.scrollWidth + "px";
-      tableDiv.style.overflow = 'visible';
-
-      html2canvas(tableDiv, {
-        backgroundColor: "#fff",
-        scale: 2,
-        scrollX: 0,
-        scrollY: -window.scrollY,
-        useCORS: true
-      }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = 'meditation_table.png';
-        link.href = canvas.toDataURL();
-        link.click();
-        tableDiv.style.width = originalWidth;
-        tableDiv.style.overflow = originalOverflow;
-      });
-    });
-
-    // Context menu logic
-    let selectedRowIndex = null;
-    const contextMenu = document.getElementById('contextMenu');
-
-    let pressTimer;
-    tableBody.addEventListener('mousedown', function (e) {
-      const tr = e.target.closest('tr');
-      if (!tr) return;
-      pressTimer = setTimeout(() => {
-        selectedRowIndex = [...tableBody.children].indexOf(tr);
-        const rect = tr.getBoundingClientRect();
-        contextMenu.style.top = `${rect.bottom + window.scrollY}px`;
-        contextMenu.style.left = `${rect.left + window.scrollX}px`;
-        contextMenu.style.display = 'block';
-      }, 600);
-    });
-
-    tableBody.addEventListener('mouseup', () => clearTimeout(pressTimer));
-    tableBody.addEventListener('mouseleave', () => clearTimeout(pressTimer));
-
-    document.getElementById('editRow').addEventListener('click', () => {
-      const entries = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]');
-      const entry = entries[selectedRowIndex];
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    store.get(selectedRowId).onsuccess = function (e) {
+      const entry = e.target.result;
       const [d, m, y] = entry.date.split('-');
       dateInput.value = `${y}-${m}-${d}`;
       document.getElementById(entry.meditation === 'Yes' ? 'medYes' : 'medNo').checked = true;
+
       const [timeStr, ampm] = entry.time.split(' ');
       let [hh, mm] = timeStr.split(':');
       hh = parseInt(hh);
       if (ampm === 'PM' && hh !== 12) hh += 12;
       if (ampm === 'AM' && hh === 12) hh = 0;
       timeInput.value = `${String(hh).padStart(2, '0')}:${mm}`;
+
       document.getElementById('duration').value = entry.duration;
       document.getElementById('notes').value = entry.notes;
-      entries.splice(selectedRowIndex, 1);
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-      loadEntries();
-      contextMenu.style.display = 'none';
-    });
 
-    document.getElementById('deleteRow').addEventListener('click', () => {
-      const confirmDel = confirm("Delete this entry?");
-      if (!confirmDel) {
-        contextMenu.style.display = 'none';
-        return;
-      }
-      const entries = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]');
-      entries.splice(selectedRowIndex, 1);
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-      loadEntries();
+      store.delete(selectedRowId).onsuccess = loadEntries;
       contextMenu.style.display = 'none';
-    });
+    };
+  });
 
-    document.getElementById('cancelMenu').addEventListener('click', () => {
+  document.getElementById('deleteRow').addEventListener('click', () => {
+    if (selectedRowId == null) return;
+    if (confirm("Delete this entry?")) {
+      deleteEntry(selectedRowId);
+    }
+    contextMenu.style.display = 'none';
+  });
+
+  document.getElementById('cancelMenu').addEventListener('click', () => {
+    contextMenu.style.display = 'none';
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!contextMenu.contains(e.target)) {
       contextMenu.style.display = 'none';
-    });
+    }
+  });
 
-    document.addEventListener('click', (e) => {
-      if (!contextMenu.contains(e.target)) {
-        contextMenu.style.display = 'none';
-      }
-    });
-  </script>
+  window.onload = openDB;
+</script>
+
 </body>
 </html>
