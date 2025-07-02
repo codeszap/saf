@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STC Meditation Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            padding: 0;
+            background: #f7f7f7;
+        }
+
+        form {
+            background: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            max-width: 400px;
+            margin: auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        input[type="date"],
+        input[type="time"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .button-row button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            background: #1976d2;
+            color: #fff;
+        }
+
+        .button-row button#clearBtn {
+            background: #e53935;
+        }
+
+        .button-row button#downloadImgBtn {
+            background: #388e3c;
+        }
+
+        .table-container {
+            max-width: 600px;
+            margin: 30px auto 0;
+            overflow-x: auto;
+            padding: 24px;
+            background: #fff;
+            border-radius: 12px;
+        }
+
+        table {
+            width: 100%;
+            background: #fff;
+            border-collapse: collapse;
+            min-width: 400px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        thead {
+            background: #f0f0f0;
+        }
+
+        @media (max-width: 600px) {
+            form {
+                padding: 8px;
+                max-width: 100%;
+            }
+
+            .button-row {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .table-container {
+                padding: 8px;
+            }
+
+            table {
+                font-size: 14px;
+                min-width: 320px;
+            }
+
+            th,
+            td {
+                padding: 6px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h2 style="text-align:center;">Meditation Tracker</h2>
+    <form id="meditationForm">
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" required>
+
+        <label>Meditation:</label>
+        <div class="radio-group">
+            <input type="radio" id="medYes" name="meditation" value="yes" required checked>
+            <label for="medYes">Yes</label>
+            <input type="radio" id="medNo" name="meditation" value="no">
+            <label for="medNo">No</label>
+        </div>
+
+        <label for="startTime">Start Time:</label>
+        <input type="time" id="startTime" name="startTime">
+
+        <label for="duration">Duration (minutes):</label>
+        <input type="number" id="duration" name="duration" min="1">
+
+        <label for="notes">Notes:</label>
+        <textarea id="notes" name="notes" rows="3" cols="30"></textarea>
+
+        <!-- ✅ Buttons Row with Save, Clear, and Download -->
+        <div class="button-row">
+            <button type="submit">Save</button>
+            <button type="button" id="clearBtn">Clear</button>
+            <button type="button" id="downloadImgBtn">Download Table</button>
+        </div>
+    </form>
+
+    <!-- Table Section -->
+    <div class="table-container" id="tableContainer">
+        <table id="meditationTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Meditation</th>
+                    <th>Time</th>
+                    <th>Duration</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Entries will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- HTML2Canvas Library -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+        const dateInput = document.getElementById('date');
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+        dateInput.placeholder = `${dd}-${mm}-${yyyy}`;
+
+        const timeInput = document.getElementById('startTime');
+        let hours = today.getHours();
+        let minutes = String(today.getMinutes()).padStart(2, '0');
+        timeInput.value = `${String(hours).padStart(2, '0')}:${minutes}`;
+        let ampm = hours >= 12 ? 'PM' : 'AM';
+        let displayHour = hours % 12 || 12;
+        timeInput.placeholder = `${displayHour}:${minutes} ${ampm}`;
+
+        const form = document.getElementById('meditationForm');
+        const tableBody = document.querySelector('#meditationTable tbody');
+        const STORAGE_KEY = 'meditation_entries';
+
+        function loadEntries() {
+            tableBody.innerHTML = '';
+            const entries = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]');
+            entries.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${entry.date}</td>
+                    <td>${entry.meditation}</td>
+                    <td>${entry.time}</td>
+                    <td>${entry.duration}</td>
+                    <td>${entry.notes}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        loadEntries();
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const dateVal = dateInput.value.split('-').reverse().join('-');
+            const meditationVal = document.querySelector('input[name="meditation"]:checked').value === 'yes' ? 'Yes' : 'No';
+            const timeVal = timeInput.value;
+            let [h, m] = timeVal.split(':');
+            h = Number(h);
+            let t12 = (h % 12 || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
+            const durationVal = document.getElementById('duration').value;
+            const notesVal = document.getElementById('notes').value;
+
+            const entries = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]');
+            entries.push({
+                date: dateVal,
+                meditation: meditationVal,
+                time: t12,
+                duration: durationVal,
+                notes: notesVal
+            });
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+
+            loadEntries();
+
+            form.reset();
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+            timeInput.value = `${String(hours).padStart(2, '0')}:${minutes}`;
+            document.getElementById('medYes').checked = true;
+        });
+
+        const clearBtn = document.getElementById('clearBtn');
+        clearBtn.addEventListener('click', function () {
+            if (tableBody.children.length > 0) {
+                const confirmClear = confirm('Are you sure you want to clear all entries?');
+                if (!confirmClear) return;
+                sessionStorage.removeItem(STORAGE_KEY);
+                loadEntries();
+            }
+            form.reset();
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+            timeInput.value = `${String(hours).padStart(2, '0')}:${minutes}`;
+            document.getElementById('medYes').checked = true;
+        });
+
+        document.getElementById('downloadImgBtn').addEventListener('click', function () {
+            const tableDiv = document.getElementById('tableContainer');
+            html2canvas(tableDiv, {
+                backgroundColor: "#fff",
+                padding: 24,
+                scale: 2
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'meditation_table.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        });
+    </script>
+</body>
+
+</html>
