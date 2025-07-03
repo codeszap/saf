@@ -339,19 +339,36 @@
     alert(msg);
   }
 
+  // function captureImage() {
+  //   const element = document.getElementById("captureArea");
+  //   html2canvas(element, {
+  //     backgroundColor: null,
+  //     scale: 2,
+  //     scrollY: -window.scrollY
+  //   }).then(canvas => {
+  //     const link = document.createElement('a');
+  //     link.download = 'table-screenshot.png';
+  //     link.href = canvas.toDataURL('image/png');
+  //     link.click();
+  //   });
+  // }
+
   function captureImage() {
-    const element = document.getElementById("captureArea");
-    html2canvas(element, {
-      backgroundColor: null,
-      scale: 2,
-      scrollY: -window.scrollY
-    }).then(canvas => {
-      const link = document.createElement('a');
-      link.download = 'table-screenshot.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    });
-  }
+  const element = document.getElementById("captureArea");
+  html2canvas(element, {
+    backgroundColor: null,
+    scale: 2,
+    scrollY: -window.scrollY
+  }).then(canvas => {
+    const base64Image = canvas.toDataURL('image/png');
+    if (window.ImageChannel && window.ImageChannel.postMessage) {
+      window.ImageChannel.postMessage(base64Image);
+    } else {
+      alert("ImageChannel not found");
+    }
+  });
+}
+
 
   function confirmClear() {
     if (confirm("Are you sure you want to clear everything?")) {
