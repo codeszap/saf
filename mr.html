@@ -6,50 +6,53 @@
   <title>STC Meditation Tracker</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 10px;
-      padding: 0;
-      background: #f7f7f7;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 10px;
+      background: #f2f2f2;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
     }
 
     form {
       background: #fff;
-      padding: 16px;
-      border-radius: 8px;
-      max-width: 400px;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
       margin: auto;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
 
     label {
+      font-weight: 600;
+      margin-top: 10px;
       display: block;
-      margin-bottom: 4px;
-      font-weight: 500;
     }
 
-    input[type="date"],
-    input[type="time"],
-    input[type="number"],
-    textarea {
+    input, textarea {
       width: 100%;
       padding: 8px;
+      margin-top: 4px;
       margin-bottom: 12px;
       border: 1px solid #ccc;
-      border-radius: 4px;
+      border-radius: 5px;
       box-sizing: border-box;
     }
 
     .radio-group {
       display: flex;
-      gap: 16px;
+      gap: 15px;
       margin-bottom: 12px;
     }
 
     .button-row {
       display: flex;
       gap: 10px;
-      justify-content: flex-end;
       flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .button-row button {
@@ -57,42 +60,57 @@
       border-radius: 6px;
       border: none;
       cursor: pointer;
-      background: #1976d2;
-      color: #fff;
+      color: white;
+      font-weight: 600;
     }
 
-    .button-row button#clearBtn {
-      background: #e53935;
+    #clearBtn {
+      background-color: #e53935;
     }
 
-    .button-row button#downloadImgBtn {
-      background: #388e3c;
+    #downloadImgBtn {
+      background-color: #388e3c;
+    }
+
+    .button-row button[type="submit"] {
+      background-color: #1976d2;
     }
 
     .table-container {
-      max-width: 600px;
-      margin: 30px auto 0;
-      overflow-x: auto;
-      padding: 24px;
-      background: #fff;
+      max-width: 800px;
+      margin: 40px auto;
+      background: white;
       border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow-x: auto;
     }
 
     table {
       width: 100%;
-      background: #fff;
       border-collapse: collapse;
+      font-size: 14px;
       min-width: 700px;
     }
 
-    th, td {
+    th {
+      background-color: #1976d2;
+      color: white;
+      font-weight: 600;
+      padding: 10px;
+    }
+
+    td {
+      padding: 10px;
       border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
       white-space: nowrap;
     }
 
-    .context-menu {
+    tr:nth-child(even) {
+      background: #f5f5f5;
+    }
+
+    #contextMenu {
       position: absolute;
       background: #fff;
       border: 1px solid #ccc;
@@ -101,10 +119,9 @@
       display: none;
       z-index: 1000;
       padding: 4px 0;
-      font-size: 14px;
     }
 
-    .context-menu button {
+    #contextMenu button {
       background: none;
       border: none;
       width: 100%;
@@ -113,59 +130,46 @@
       cursor: pointer;
     }
 
-    .context-menu button:hover {
+    #contextMenu button:hover {
       background: #f0f0f0;
     }
 
     @media (max-width: 600px) {
-      form {
-        padding: 8px;
-        max-width: 100%;
-      }
-
-      .button-row {
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .table-container {
-        padding: 8px;
+      form, .table-container {
+        padding: 10px;
       }
 
       table {
-        font-size: 14px;
-        min-width: 320px;
-      }
-
-      th, td {
-        padding: 6px;
+        font-size: 13px;
+        min-width: 400px;
       }
     }
   </style>
 </head>
 <body>
-  <h2 style="text-align:center;">Meditation Tracker</h2>
+
+  <h2>Meditation Tracker</h2>
 
   <form id="meditationForm">
-    <label for="date">Date:</label>
-    <input type="date" id="date" name="date" required>
+    <label for="date">Date</label>
+    <input type="date" id="date" required>
 
-    <label>Meditation:</label>
+    <label>Meditation</label>
     <div class="radio-group">
-      <input type="radio" id="medYes" name="meditation" value="yes" required checked>
+      <input type="radio" name="meditation" id="medYes" value="yes" checked />
       <label for="medYes">Yes</label>
-      <input type="radio" id="medNo" name="meditation" value="no">
+      <input type="radio" name="meditation" id="medNo" value="no" />
       <label for="medNo">No</label>
     </div>
 
-    <label for="startTime">Start Time:</label>
-    <input type="time" id="startTime" name="startTime">
+    <label for="startTime">Start Time</label>
+    <input type="time" id="startTime">
 
-    <label for="duration">Duration (minutes):</label>
-    <input type="number" id="duration" name="duration" min="1">
+    <label for="duration">Duration (minutes)</label>
+    <input type="number" id="duration" min="1">
 
-    <label for="notes">Notes:</label>
-    <textarea id="notes" name="notes" rows="3" cols="30"></textarea>
+    <label for="notes">Notes</label>
+    <textarea id="notes" rows="3"></textarea>
 
     <div class="button-row">
       <button type="submit">Save</button>
@@ -174,244 +178,189 @@
     </div>
   </form>
 
-  <div class="table-container" id="tableContainer">
-    <table id="meditationTable">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Meditation (Yes / No)</th>
-          <th>Time</th>
-          <th>Duration</th>
-          <th>Notes (Insights, Observations)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Entries will be inserted here -->
-      </tbody>
-    </table>
+  <div id="snapshotContainer">
+    <div class="table-container" id="tableContainer">
+      <table id="meditationTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Meditation</th>
+            <th>Time</th>
+            <th>Duration</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 
-  <div id="contextMenu" class="context-menu">
+  <div id="contextMenu">
     <button id="editRow">Edit</button>
     <button id="deleteRow">Delete</button>
     <button id="cancelMenu">Cancel</button>
   </div>
 
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script>
-  const DB_NAME = 'MeditationDB';
-  const STORE_NAME = 'entries';
-  let db;
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script>
+    const DB_NAME = "MeditationDB";
+    const STORE_NAME = "entries";
+    let db;
+    let selectedRowId = null;
 
-  const dateInput = document.getElementById('date');
-  const timeInput = document.getElementById('startTime');
-  const form = document.getElementById('meditationForm');
-  const tableBody = document.querySelector('#meditationTable tbody');
-  const contextMenu = document.getElementById('contextMenu');
-  let selectedRowId = null;
+    const dateInput = document.getElementById('date');
+    const timeInput = document.getElementById('startTime');
+    const form = document.getElementById('meditationForm');
+    const tableBody = document.querySelector('#meditationTable tbody');
+    const contextMenu = document.getElementById('contextMenu');
 
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  dateInput.value = `${yyyy}-${mm}-${dd}`;
+    const today = new Date();
+    dateInput.valueAsDate = today;
+    timeInput.value = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-  let hours = today.getHours();
-  let minutes = String(today.getMinutes()).padStart(2, '0');
-  timeInput.value = `${String(hours).padStart(2, '0')}:${minutes}`;
+    function openDB() {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onerror = () => alert("Failed to open DB");
+      request.onsuccess = (e) => {
+        db = e.target.result;
+        loadEntries();
+      };
+      request.onupgradeneeded = (e) => {
+        db = e.target.result;
+        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+      };
+    }
 
-  function openDB() {
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onerror = () => alert("Failed to open DB");
-    request.onsuccess = (e) => {
-      db = e.target.result;
-      loadEntries();
-    };
-    request.onupgradeneeded = (e) => {
-      db = e.target.result;
-      db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-    };
-  }
+    function addEntry(entry) {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).add(entry);
+      tx.oncomplete = () => {
+        loadEntries();
+        form.reset();
+        dateInput.valueAsDate = new Date();
+      };
+    }
 
-  function addEntry(entry) {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    tx.objectStore(STORE_NAME).add(entry);
-    tx.oncomplete = () => {
-      loadEntries();
-      resetForm();
-    };
-  }
+    function loadEntries() {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const entries = [];
 
-  function updateEntryList(callback) {
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
-    const entries = [];
-    store.openCursor().onsuccess = (e) => {
-      const cursor = e.target.result;
-      if (cursor) {
-        entries.push(cursor.value);
-        cursor.continue();
-      } else {
-        callback(entries);
+      store.openCursor().onsuccess = (e) => {
+        const cursor = e.target.result;
+        if (cursor) {
+          entries.push(cursor.value);
+          cursor.continue();
+        } else {
+          tableBody.innerHTML = '';
+          entries.forEach(entry => {
+            const row = document.createElement('tr');
+            row.dataset.id = entry.id;
+            row.innerHTML = `
+              <td>${entry.date}</td>
+              <td>${entry.meditation}</td>
+              <td>${entry.time}</td>
+              <td>${entry.duration}</td>
+              <td>${entry.notes}</td>
+            `;
+            row.addEventListener('contextmenu', function (e) {
+              e.preventDefault();
+              selectedRowId = entry.id;
+              contextMenu.style.top = `${e.pageY}px`;
+              contextMenu.style.left = `${e.pageX}px`;
+              contextMenu.style.display = 'block';
+            });
+            tableBody.appendChild(row);
+          });
+        }
+      };
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const dateVal = dateInput.value.split('-').reverse().join('-');
+      const medVal = document.querySelector('input[name="meditation"]:checked').value === 'yes' ? 'Yes' : 'No';
+      const timeVal = timeInput.value;
+      let [h, m] = timeVal.split(':');
+      h = Number(h);
+      let t12 = (h % 12 || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
+      const duration = document.getElementById('duration').value;
+      const notes = document.getElementById('notes').value;
+
+      addEntry({ date: dateVal, meditation: medVal, time: t12, duration, notes });
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      if (confirm("Clear all entries?")) {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).clear();
+        tx.oncomplete = loadEntries;
       }
-    };
-  }
+    });
 
-  function deleteEntry(id) {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    tx.objectStore(STORE_NAME).delete(id);
-    tx.oncomplete = loadEntries;
-  }
-
-  function loadEntries() {
-    updateEntryList(entries => {
-      tableBody.innerHTML = '';
-      entries.forEach(entry => {
-        const row = document.createElement('tr');
-        row.dataset.id = entry.id;
-        row.innerHTML = `
-          <td>${entry.date}</td>
-          <td>${entry.meditation}</td>
-          <td>${entry.time}</td>
-          <td>${entry.duration}</td>
-          <td>${entry.notes}</td>
-        `;
-        row.addEventListener('contextmenu', function (e) {
-          e.preventDefault();
-          selectedRowId = entry.id;
-          const rect = row.getBoundingClientRect();
-          contextMenu.style.top = `${rect.bottom + window.scrollY}px`;
-          contextMenu.style.left = `${rect.left + window.scrollX}px`;
-          contextMenu.style.display = 'block';
-        });
-        tableBody.appendChild(row);
+    document.getElementById('downloadImgBtn').addEventListener('click', () => {
+      const targetDiv = document.getElementById('snapshotContainer');
+      html2canvas(targetDiv, {
+        backgroundColor: "#fff",
+        scale: 2,
+        scrollX: 0,
+        scrollY: -window.scrollY,
+        useCORS: true
+      }).then(canvas => {
+        const base64Image = canvas.toDataURL("image/png");
+        if (window.ImageChannel && window.ImageChannel.postMessage) {
+          window.ImageChannel.postMessage(base64Image);
+        } else {
+          alert("❌ ImageChannel not found. Please use in Flutter WebView.");
+        }
       });
     });
-  }
 
-  function resetForm() {
-    form.reset();
-    dateInput.value = `${yyyy}-${mm}-${dd}`;
-    timeInput.value = `${String(hours).padStart(2, '0')}:${minutes}`;
-    document.getElementById('medYes').checked = true;
-  }
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    const dateVal = dateInput.value.split('-').reverse().join('-');
-    const meditationVal = document.querySelector('input[name="meditation"]:checked').value === 'yes' ? 'Yes' : 'No';
-    const timeVal = timeInput.value;
-    let [h, m] = timeVal.split(':');
-    h = Number(h);
-    let t12 = (h % 12 || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
-    const durationVal = document.getElementById('duration').value;
-    const notesVal = document.getElementById('notes').value;
-
-    addEntry({
-      date: dateVal,
-      meditation: meditationVal,
-      time: t12,
-      duration: durationVal,
-      notes: notesVal
-    });
-  });
-
-  document.getElementById('clearBtn').addEventListener('click', () => {
-    if (confirm("Clear all entries?")) {
+    document.getElementById('editRow').addEventListener('click', () => {
+      if (!selectedRowId) return;
       const tx = db.transaction(STORE_NAME, 'readwrite');
-      tx.objectStore(STORE_NAME).clear();
-      tx.oncomplete = loadEntries;
-    }
-    resetForm();
-  });
+      const store = tx.objectStore(STORE_NAME);
+      store.get(selectedRowId).onsuccess = function (e) {
+        const entry = e.target.result;
+        const [d, m, y] = entry.date.split('-');
+        dateInput.value = `${y}-${m}-${d}`;
+        document.getElementById(entry.meditation === 'Yes' ? 'medYes' : 'medNo').checked = true;
 
-  document.getElementById('downloadImgBtn').addEventListener('click', () => {
-    const tableDiv = document.getElementById('tableContainer');
-    const table = document.getElementById('meditationTable');
-    const originalWidth = tableDiv.style.width;
-    const originalOverflow = tableDiv.style.overflow;
+        const [t, ampm] = entry.time.split(' ');
+        let [hh, mm] = t.split(':');
+        hh = parseInt(hh);
+        if (ampm === 'PM' && hh !== 12) hh += 12;
+        if (ampm === 'AM' && hh === 12) hh = 0;
+        timeInput.value = `${String(hh).padStart(2, '0')}:${mm}`;
 
-    tableDiv.style.width = table.scrollWidth + "px";
-    tableDiv.style.overflow = 'visible';
+        document.getElementById('duration').value = entry.duration;
+        document.getElementById('notes').value = entry.notes;
 
-  //   html2canvas(tableDiv, {
-  //     backgroundColor: "#fff",
-  //     scale: 2,
-  //     scrollX: 0,
-  //     scrollY: -window.scrollY,
-  //     useCORS: true
-  //   }).then(canvas => {
-  //     const link = document.createElement('a');
-  //     link.download = 'meditation_table.png';
-  //     link.href = canvas.toDataURL();
-  //     link.click();
-  //     tableDiv.style.width = originalWidth;
-  //     tableDiv.style.overflow = originalOverflow;
-  //   });
-  // });
+        store.delete(selectedRowId).onsuccess = loadEntries;
+        contextMenu.style.display = 'none';
+      };
+    });
 
-    html2canvas(tableDiv, {
-  backgroundColor: "#fff",
-  scale: 2,
-  scrollX: 0,
-  scrollY: -window.scrollY,
-  useCORS: true
-}).then(canvas => {
-  const base64Image = canvas.toDataURL("image/png");
-  if (window.ImageChannel && window.ImageChannel.postMessage) {
-    window.ImageChannel.postMessage(base64Image);
-  } else {
-    alert("❌ ImageChannel not found. Please use in Flutter WebView.");
-  }
-});
-
-
-  document.getElementById('editRow').addEventListener('click', () => {
-    if (selectedRowId == null) return;
-
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    store.get(selectedRowId).onsuccess = function (e) {
-      const entry = e.target.result;
-      const [d, m, y] = entry.date.split('-');
-      dateInput.value = `${y}-${m}-${d}`;
-      document.getElementById(entry.meditation === 'Yes' ? 'medYes' : 'medNo').checked = true;
-
-      const [timeStr, ampm] = entry.time.split(' ');
-      let [hh, mm] = timeStr.split(':');
-      hh = parseInt(hh);
-      if (ampm === 'PM' && hh !== 12) hh += 12;
-      if (ampm === 'AM' && hh === 12) hh = 0;
-      timeInput.value = `${String(hh).padStart(2, '0')}:${mm}`;
-
-      document.getElementById('duration').value = entry.duration;
-      document.getElementById('notes').value = entry.notes;
-
-      store.delete(selectedRowId).onsuccess = loadEntries;
+    document.getElementById('deleteRow').addEventListener('click', () => {
+      if (!selectedRowId) return;
+      if (confirm("Delete this entry?")) {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).delete(selectedRowId).onsuccess = loadEntries;
+      }
       contextMenu.style.display = 'none';
-    };
-  });
+    });
 
-  document.getElementById('deleteRow').addEventListener('click', () => {
-    if (selectedRowId == null) return;
-    if (confirm("Delete this entry?")) {
-      deleteEntry(selectedRowId);
-    }
-    contextMenu.style.display = 'none';
-  });
-
-  document.getElementById('cancelMenu').addEventListener('click', () => {
-    contextMenu.style.display = 'none';
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!contextMenu.contains(e.target)) {
+    document.getElementById('cancelMenu').addEventListener('click', () => {
       contextMenu.style.display = 'none';
-    }
-  });
+    });
 
-  window.onload = openDB;
-</script>
+    document.addEventListener('click', (e) => {
+      if (!contextMenu.contains(e.target)) {
+        contextMenu.style.display = 'none';
+      }
+    });
 
+    window.onload = openDB;
+  </script>
 </body>
 </html>
