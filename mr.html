@@ -334,37 +334,21 @@
     tableDiv.style.width = table.scrollWidth + "px";
     tableDiv.style.overflow = 'visible';
 
-  //   html2canvas(tableDiv, {
-  //     backgroundColor: "#fff",
-  //     scale: 2,
-  //     scrollX: 0,
-  //     scrollY: -window.scrollY,
-  //     useCORS: true
-  //   }).then(canvas => {
-  //     const link = document.createElement('a');
-  //     link.download = 'meditation_table.png';
-  //     link.href = canvas.toDataURL();
-  //     link.click();
-  //     tableDiv.style.width = originalWidth;
-  //     tableDiv.style.overflow = originalOverflow;
-  //   });
-  // });
-
-  html2canvas(tableDiv, {
-  backgroundColor: "#fff",
-  scale: 2,
-  scrollX: 0,
-  scrollY: -window.scrollY,
-  useCORS: true
-}).then(canvas => {
-  const base64Image = canvas.toDataURL("image/png");
-  if (window.ImageChannel && window.ImageChannel.postMessage) {
-    window.ImageChannel.postMessage(base64Image);
-  } else {
-    alert("❌ ImageChannel not found. Please use in Flutter WebView.");
-  }
-});
-
+    html2canvas(tableDiv, {
+      backgroundColor: "#fff",
+      scale: 2,
+      scrollX: 0,
+      scrollY: -window.scrollY,
+      useCORS: true
+    }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = 'meditation_table.png';
+      link.href = canvas.toDataURL();
+      link.click();
+      tableDiv.style.width = originalWidth;
+      tableDiv.style.overflow = originalOverflow;
+    });
+  });
 
   document.getElementById('editRow').addEventListener('click', () => {
     if (selectedRowId == null) return;
