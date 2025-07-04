@@ -29,12 +29,28 @@
     #dataTable th { background-color: #f0f0f0; }
     tfoot td { font-weight: bold; background-color: #f9f9f9; text-align: center; }
     #monthLabel { text-align: center; margin-top: 15px; font-size: 20px; font-weight: bold; display: none; color: #444; }
+
+    #contextMenu {
+      position: absolute;
+      display: none;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      z-index: 9999;
+    }
+    #contextMenu button {
+      display: block;
+      padding: 8px 12px;
+      width: 100%;
+      border: none;
+      background: none;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
 
 <div class="form-container">
-  <!-- Form Inputs -->
   <div class="form-group"><label for="month">Month</label><input type="month" id="month" /></div>
   <div class="form-group"><label for="newDate">Date</label><input type="date" id="newDate" /></div>
   <div class="form-group"><label for="name">Name</label><input type="text" id="name" placeholder="Enter name" /></div>
@@ -48,13 +64,10 @@
     <button class="save-btn" onclick="saveToFlutter()">💾 Save</button>
   </div>
 
-  <!-- Table Area -->
   <div id="captureArea">
     <h2 id="monthLabel"></h2>
     <table id="dataTable">
-      <thead>
-        <tr><th>Date</th><th>Name</th><th>Amount</th><th>Active</th></tr>
-      </thead>
+      <thead><tr><th>Date</th><th>Name</th><th>Amount</th><th>Active</th></tr></thead>
       <tbody></tbody>
       <tfoot>
         <tr>
@@ -69,6 +82,12 @@
   </div>
 </div>
 
+<div id="contextMenu">
+  <button onclick="editRow()">✏️ Edit</button>
+  <button onclick="deleteRow()">🗑️ Delete</button>
+  <button onclick="cancelMenu()">❌ Cancel</button>
+</div>
+
 <script>
   const yyyy = new Date().getFullYear();
   const mm = String(new Date().getMonth() + 1).padStart(2, '0');
@@ -76,7 +95,9 @@
   document.getElementById('month').value = `${yyyy}-${mm}`;
   document.getElementById('newDate').value = `${yyyy}-${mm}-${dd}`;
 
-  const dataRows = [];
+  let dataRows = [];
+  let nextId = 1;
+  let selectedId = null;
 
   function formatDate(dateStr) {
     const [y, m, d] = dateStr.split("-");
@@ -92,28 +113,48 @@
       alert("Please fill all fields.");
       return;
     }
+
     const formattedDate = formatDate(date);
-    dataRows.push({ date: formattedDate, name, amount, active });
+    if (selectedId) {
+      const index = dataRows.findIndex(row => row.id === selectedId);
+      if (index !== -1) {
+        dataRows[index] = { id: selectedId, date: formattedDate, name, amount, active };
+      }
+      selectedId = null;
+    } else {
+      dataRows.push({ id: nextId++, date: formattedDate, name, amount, active });
+    }
+
     refreshTable();
+    formReset();
   }
 
   function refreshTable() {
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
     let total = 0, paid = 0, pending = 0;
+
     dataRows.forEach(row => {
       const tr = document.createElement("tr");
+      tr.dataset.id = row.id;
       tr.innerHTML = `
         <td>${row.date}</td>
         <td>${row.name}</td>
         <td>${row.amount}</td>
         <td><input type="checkbox" disabled ${row.active ? "checked" : ""}></td>
       `;
+      tr.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
+        selectedId = row.id;
+        showContextMenu(e.pageX, e.pageY);
+      });
       tbody.appendChild(tr);
+
       const amt = parseFloat(row.amount);
       total += amt;
       row.active ? paid += amt : pending += amt;
     });
+
     document.getElementById("totalAmount").textContent = total;
     document.getElementById("activeAmount").textContent = paid;
     document.getElementById("inactiveAmount").textContent = pending;
@@ -125,9 +166,16 @@
     document.getElementById("monthLabel").style.display = "block";
   }
 
+  function formReset() {
+    document.getElementById("name").value = "";
+    document.getElementById("amount").value = "";
+    document.getElementById("active").checked = true;
+    document.getElementById("newDate").value = `${yyyy}-${mm}-${dd}`;
+  }
+
   function clearAll() {
     if (confirm("Clear all data?")) {
-      dataRows.length = 0;
+      dataRows = [];
       refreshTable();
     }
   }
@@ -150,6 +198,46 @@
     });
   }
 
+  function showContextMenu(x, y) {
+    const menu = document.getElementById("contextMenu");
+    menu.style.left = x + "px";
+    menu.style.top = y + "px";
+    menu.style.display = "block";
+  }
+
+  function cancelMenu() {
+    document.getElementById("contextMenu").style.display = "none";
+    selectedId = null;
+  }
+
+  function editRow() {
+    const row = dataRows.find(r => r.id === selectedId);
+    if (!row) return;
+    const [d, m] = row.date.split("/");
+    const dateFormatted = `${yyyy}-${m}-${d}`;
+    document.getElementById("newDate").value = dateFormatted;
+    document.getElementById("name").value = row.name;
+    document.getElementById("amount").value = row.amount;
+    document.getElementById("active").checked = row.active;
+    cancelMenu();
+  }
+
+  function deleteRow() {
+    if (confirm("Delete this entry?")) {
+      const index = dataRows.findIndex(r => r.id === selectedId);
+      if (index !== -1) {
+        dataRows.splice(index, 1);
+        refreshTable();
+      }
+    }
+    cancelMenu();
+  }
+
+  document.addEventListener("click", function (e) {
+    const menu = document.getElementById("contextMenu");
+    if (!menu.contains(e.target)) menu.style.display = "none";
+  });
+
   function saveDataGlobally(formName, formData) {
     const payload = { form: formName, data: formData };
     if (window.SaveDataChannel && window.SaveDataChannel.postMessage) {
@@ -168,6 +256,5 @@
     saveDataGlobally("monthly_due_form", data);
   }
 </script>
-
 </body>
 </html>
