@@ -77,6 +77,10 @@
       background-color: #1976d2;
     }
 
+    .table-wrap {
+      display: inline-block;
+    }
+
     .table-container {
       max-width: 100%;
       margin: 40px auto;
@@ -87,13 +91,6 @@
       overflow-x: auto;
     }
 
-    /* 👇 fix for html2canvas image cutoff */
-    .table-container,
-    #snapshotContainer {
-      overflow: visible !important;
-      max-height: none !important;
-    }
-
     table {
       width: 100%;
       border-collapse: collapse;
@@ -101,21 +98,22 @@
       min-width: 800px;
     }
 
-    th {
-      background-color: #1976d2;
-      color: white;
-      font-weight: 600;
-      padding: 10px;
-    }
-
-    td {
+    th, td {
       padding: 10px;
       border: 1px solid #ddd;
-      white-space: nowrap;
+      white-space: normal;
+      text-align: left;
+      vertical-align: top;
     }
 
     tr:nth-child(even) {
       background: #f5f5f5;
+    }
+
+    th {
+      background-color: #1976d2;
+      color: white;
+      font-weight: 600;
     }
 
     #contextMenu {
@@ -186,7 +184,7 @@
     </div>
   </form>
 
-  <div id="snapshotContainer">
+  <div class="table-wrap" id="snapshotContainer">
     <div class="table-container" id="tableContainer">
       <table id="meditationTable">
         <thead>
@@ -306,7 +304,7 @@
     });
 
     document.getElementById('downloadImgBtn').addEventListener('click', () => {
-      const targetDiv = document.querySelector('.table-container');
+      const targetDiv = document.querySelector('.table-wrap');
       html2canvas(targetDiv, {
         backgroundColor: "#fff",
         scale: 2,
