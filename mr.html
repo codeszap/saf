@@ -78,11 +78,12 @@
     }
 
     .table-wrap {
-      display: inline-block;
+      display: block;
+      width: fit-content;
+      margin: auto;
     }
 
     .table-container {
-      max-width: 100%;
       margin: 40px auto;
       background: white;
       border-radius: 12px;
@@ -305,11 +306,13 @@
 
     document.getElementById('downloadImgBtn').addEventListener('click', () => {
       const targetDiv = document.querySelector('.table-wrap');
+      window.scrollTo(0, 0); // ensure scrollY = 0
       html2canvas(targetDiv, {
         backgroundColor: "#fff",
         scale: 2,
-        scrollY: -window.scrollY,
-        useCORS: true
+        scrollY: 0,
+        useCORS: true,
+        width: targetDiv.scrollWidth
       }).then(canvas => {
         const base64Image = canvas.toDataURL("image/png");
         if (window.ImageChannel && window.ImageChannel.postMessage) {
