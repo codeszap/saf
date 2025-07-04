@@ -340,18 +340,36 @@
   }
 
   function captureImage() {
-    const element = document.getElementById("captureArea");
-    html2canvas(element, {
-      backgroundColor: null,
-      scale: 2,
-      scrollY: -window.scrollY
-    }).then(canvas => {
-      const link = document.createElement('a');
-      link.download = 'table-screenshot.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    });
-  }
+  const element = document.getElementById("captureArea");
+  html2canvas(element, {
+    backgroundColor: "#fff", // optional: white bg for better visibility
+    scale: 2,
+    scrollY: -window.scrollY,
+    useCORS: true
+  }).then(canvas => {
+    const base64Image = canvas.toDataURL("image/png");
+    if (window.ImageChannel && window.ImageChannel.postMessage) {
+      window.ImageChannel.postMessage(base64Image); // Flutter receives it here
+    } else {
+      alert("❌ ImageChannel not found. Please use in Flutter WebView.");
+    }
+  });
+}
+
+
+  // function captureImage() {
+  //   const element = document.getElementById("captureArea");
+  //   html2canvas(element, {
+  //     backgroundColor: null,
+  //     scale: 2,
+  //     scrollY: -window.scrollY
+  //   }).then(canvas => {
+  //     const link = document.createElement('a');
+  //     link.download = 'table-screenshot.png';
+  //     link.href = canvas.toDataURL('image/png');
+  //     link.click();
+  //   });
+  // }
 
 //   function captureImage() {
 //   const element = document.getElementById("captureArea");
