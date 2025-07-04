@@ -6,144 +6,46 @@
   <title>Monthly Due Schedule Maker</title>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .form-container { max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; padding: 15px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .form-group { display: flex; flex-direction: column; margin-bottom: 15px; }
+    label { margin-bottom: 5px; font-weight: bold; }
+    input[type="text"], input[type="number"], input[type="month"], input[type="date"] {
+      width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;
     }
-
-    .form-container {
-      max-width: 600px;
-      margin: auto;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 15px;
-    }
-
-    label {
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    input[type="month"],
-    input[type="date"] {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      box-sizing: border-box;
-    }
-
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-
-    .button-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    button {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      color: #fff;
-      font-weight: bold;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
+    .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 10px; }
+    button { flex: 1; padding: 10px; border: none; color: #fff; font-weight: bold; border-radius: 5px; cursor: pointer; }
     .add-btn { background-color: green; }
     .clear-btn { background-color: red; }
     .image-btn { background-color: #007bff; }
+    .save-btn { background-color: #f57c00; }
 
-    #captureArea {
-      padding: 20px !important;
-      background: white;
-      overflow: visible !important;
-      max-width: none !important;
-      box-sizing: border-box;
+    #captureArea { padding: 20px !important; background: white; overflow: visible !important; max-width: none !important; box-sizing: border-box; }
+    #dataTable { width: 100%; border-collapse: collapse; table-layout: auto; }
+    #dataTable th, #dataTable td {
+      border: 1px solid #ccc; padding: 10px; text-align: center; white-space: nowrap; overflow: visible;
     }
-
-    #dataTable {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: auto;
-    }
-
-    #dataTable th,
-    #dataTable td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: center;
-      white-space: nowrap;
-      overflow: visible;
-    }
-
-    #dataTable th {
-      background-color: #f0f0f0;
-    }
-
-    tfoot td {
-      font-weight: bold;
-      background-color: #f9f9f9;
-      text-align: center;
-    }
-
-    #monthLabel {
-      text-align: center;
-      margin-top: 15px;
-      font-size: 20px;
-      font-weight: bold;
-      display: none;
-      color: #444;
-    }
-
-    input[type="checkbox"]:disabled {
-      cursor: not-allowed;
-    }
+    #dataTable th { background-color: #f0f0f0; }
+    tfoot td { font-weight: bold; background-color: #f9f9f9; text-align: center; }
+    #monthLabel { text-align: center; margin-top: 15px; font-size: 20px; font-weight: bold; display: none; color: #444; }
   </style>
 </head>
 <body>
 
 <div class="form-container">
   <!-- Form Inputs -->
-  <div class="form-group">
-    <label for="month">Month</label>
-    <input type="month" id="month" />
-  </div>
-  <div class="form-group">
-    <label for="newDate">Date</label>
-    <input type="date" id="newDate" />
-  </div>
-  <div class="form-group">
-    <label for="name">Name</label>
-    <input type="text" id="name" placeholder="Enter name" />
-  </div>
-  <div class="form-group">
-    <label for="amount">Amount</label>
-    <input type="number" id="amount" placeholder="Enter amount" />
-  </div>
-  <div class="checkbox-group">
-    <input type="checkbox" id="active" checked />
-    <label for="active">Active</label>
-  </div>
+  <div class="form-group"><label for="month">Month</label><input type="month" id="month" /></div>
+  <div class="form-group"><label for="newDate">Date</label><input type="date" id="newDate" /></div>
+  <div class="form-group"><label for="name">Name</label><input type="text" id="name" placeholder="Enter name" /></div>
+  <div class="form-group"><label for="amount">Amount</label><input type="number" id="amount" placeholder="Enter amount" /></div>
+  <div class="checkbox-group"><input type="checkbox" id="active" checked /><label for="active">Active</label></div>
+
   <div class="button-row">
     <button class="add-btn" onclick="addToTable()">Add</button>
     <button class="clear-btn" onclick="clearAll()">Clear</button>
     <button class="image-btn" onclick="captureImage()">📸 Get Image</button>
+    <button class="save-btn" onclick="saveToFlutter()">💾 Save</button>
   </div>
 
   <!-- Table Area -->
@@ -151,12 +53,7 @@
     <h2 id="monthLabel"></h2>
     <table id="dataTable">
       <thead>
-        <tr>
-          <th style="width: 80px;">Date</th>
-          <th style="width: 150px;">Name</th>
-          <th style="width: 100px;">Amount</th>
-          <th style="width: 80px;">Active</th>
-        </tr>
+        <tr><th>Date</th><th>Name</th><th>Amount</th><th>Active</th></tr>
       </thead>
       <tbody></tbody>
       <tfoot>
@@ -176,7 +73,6 @@
   const yyyy = new Date().getFullYear();
   const mm = String(new Date().getMonth() + 1).padStart(2, '0');
   const dd = String(new Date().getDate()).padStart(2, '0');
-
   document.getElementById('month').value = `${yyyy}-${mm}`;
   document.getElementById('newDate').value = `${yyyy}-${mm}-${dd}`;
 
@@ -196,7 +92,6 @@
       alert("Please fill all fields.");
       return;
     }
-
     const formattedDate = formatDate(date);
     dataRows.push({ date: formattedDate, name, amount, active });
     refreshTable();
@@ -205,9 +100,7 @@
   function refreshTable() {
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
-
     let total = 0, paid = 0, pending = 0;
-
     dataRows.forEach(row => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -217,12 +110,10 @@
         <td><input type="checkbox" disabled ${row.active ? "checked" : ""}></td>
       `;
       tbody.appendChild(tr);
-
       const amt = parseFloat(row.amount);
       total += amt;
       row.active ? paid += amt : pending += amt;
     });
-
     document.getElementById("totalAmount").textContent = total;
     document.getElementById("activeAmount").textContent = paid;
     document.getElementById("inactiveAmount").textContent = pending;
@@ -243,12 +134,7 @@
 
   function captureImage() {
     const element = document.getElementById("captureArea");
-
-    // Ensure full render
     element.style.height = 'auto';
-    element.style.maxHeight = 'none';
-    element.style.overflow = 'visible';
-
     html2canvas(element, {
       backgroundColor: "#fff",
       scale: 2,
@@ -256,14 +142,32 @@
       useCORS: true
     }).then(canvas => {
       const base64Image = canvas.toDataURL("image/png");
-
       if (window.ImageChannel && window.ImageChannel.postMessage) {
-        window.ImageChannel.postMessage(base64Image); // Send to Flutter
+        window.ImageChannel.postMessage(base64Image);
       } else {
         alert("❌ ImageChannel not found. Please use inside Flutter WebView.");
       }
     });
   }
+
+  function saveDataGlobally(formName, formData) {
+    const payload = { form: formName, data: formData };
+    if (window.SaveDataChannel && window.SaveDataChannel.postMessage) {
+      window.SaveDataChannel.postMessage(JSON.stringify(payload));
+    } else {
+      alert("❌ SaveDataChannel not found.");
+    }
+  }
+
+  function saveToFlutter() {
+    const month = document.getElementById("month").value;
+    const data = {
+      month: month,
+      entries: dataRows
+    };
+    saveDataGlobally("monthly_due_form", data);
+  }
 </script>
+
 </body>
 </html>
