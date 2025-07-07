@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON Viewer</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css" />
+  <style>
+    body { background-color: #f8f9fa; }
+    .table thead { background-color: #0d6efd; color: white; }
+    .container { max-width: 1000px; }
+  </style>
+</head>
+<body>
+
+<div class="container my-5">
+  <h2 class="text-center mb-4">📄 JSON Log Viewer</h2>
+
+  <div class="mb-3">
+    <label for="jsonFile" class="form-label">📁 Upload your .json file</label>
+    <input class="form-control" type="file" id="jsonFile" accept=".json">
+  </div>
+
+  <div id="tableContainer" class="mt-4 d-none">
+    <table class="table table-bordered table-striped">
+      <thead>
+        <tr id="tableHeadRow"></tr>
+      </thead>
+      <tbody id="logTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  document.getElementById('jsonFile').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!Array.isArray(data) || data.length === 0) throw new Error("Invalid or empty JSON");
+
+        const keys = Object.keys(data[0]); // Dynamic column headers from first item
+
+        // Build table head
+        const headRow = document.getElementById('tableHeadRow');
+        headRow.innerHTML = ''; // clear existing
+        keys.forEach(key => {
+          const th = document.createElement('th');
+          th.textContent = key.charAt(0).toUpperCase() + key.slice(1); // Capitalize
+          headRow.appendChild(th);
+        });
+
+        // Build table body
+        const tbody = document.getElementById('logTableBody');
+        tbody.innerHTML = ''; // clear
+        data.forEach(item => {
+          const tr = document.createElement('tr');
+          keys.forEach(key => {
+            const td = document.createElement('td');
+            td.textContent = item[key] ?? ''; // if key missing, show empty
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById('tableContainer').classList.remove('d-none');
+      } catch (err) {
+        alert("❌ Invalid JSON file!");
+        console.error(err);
+      }
+    };
+    reader.readAsText(file);
+  });
+</script>
+
+</body>
+</html>
