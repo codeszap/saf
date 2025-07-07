@@ -264,12 +264,29 @@
     return;
   }
 
-  html2canvas(target).then((canvas) => {
-    const link = document.createElement("a");
-    link.download = "due_breakdown.png";
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-  });
+  // html2canvas(target).then((canvas) => {
+  //   const link = document.createElement("a");
+  //   link.download = "due_breakdown.png";
+  //   link.href = canvas.toDataURL("image/png");
+  //   link.click();
+  // });
+   html2canvas(element, {
+      backgroundColor: null,
+      scale: 2,
+      scrollY: -window.scrollY
+    }).then(canvas => {
+      const base64Image = canvas.toDataURL('image/png');
+      // Optionally send to Flutter
+      if (window.ImageChannel && window.ImageChannel.postMessage) {
+        window.ImageChannel.postMessage(base64Image);
+      }
+
+      // Also download locally
+      const link = document.createElement('a');
+      link.download = 'due_breakdown.png';
+      link.href = base64Image;
+      link.click();
+    });
 }
   </script>
 
