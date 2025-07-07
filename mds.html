@@ -64,13 +64,14 @@
     .table-wrapper {
       width: 100%;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-top: 20px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
-      min-width: 500px;
+      min-width: 100%;
     }
     th, td {
       border: 1px solid #ccc;
@@ -80,11 +81,14 @@
     }
     th {
       background-color: #f0f0f0;
+      position: sticky;
+      top: 0;
     }
     tfoot td {
       font-weight: bold;
       background-color: #f9f9f9;
       text-align: center;
+      white-space: nowrap;
     }
     #monthLabel {
       text-align: center;
@@ -120,6 +124,21 @@
     .context-menu button:hover {
       background-color: #007bff;
       color: #fff;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
+      .form-container {
+        padding: 10px;
+      }
+      th, td {
+        padding: 8px 5px;
+        font-size: 14px;
+      }
+      .button-row button {
+        padding: 8px;
+        font-size: 14px;
+      }
     }
   </style>
 </head>
