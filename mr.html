@@ -6,78 +6,91 @@
   <title>STC Meditation Tracker</title>
   <link rel="stylesheet" href="css/bootstrap.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <style>
+    /* 👇 Force border visibility for table in general rendering */
+    #meditationTable, 
+    #meditationTable th, 
+    #meditationTable td {
+      border: 1px solid #dee2e6 !important;
+    }
+
+    #meditationTable {
+      border-collapse: collapse !important;
+    }
+  </style>
 </head>
 <body class="bg-light">
 
-  <div class="container my-4">
-    <h2 class="text-center mb-4">STC Meditation Tracker</h2>
+<div class="container my-4">
+  <h2 class="text-center mb-4">STC Meditation Tracker</h2>
 
-    <form id="meditationForm" class="card p-4 shadow rounded">
-      <div class="mb-3">
-        <label for="date" class="form-label fw-semibold">Date</label>
-        <input type="date" id="date" class="form-control" required />
+  <form id="meditationForm" class="card p-4 shadow rounded">
+    <div class="mb-3">
+      <label for="date" class="form-label fw-semibold">Date</label>
+      <input type="date" id="date" class="form-control" required />
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Meditation</label>
+      <div class="form-check form-check-inline">
+        <input type="radio" id="medYes" name="meditation" value="yes" class="form-check-input" checked />
+        <label for="medYes" class="form-check-label">Yes</label>
       </div>
-
-      <div class="mb-3">
-        <label class="form-label fw-semibold">Meditation</label>
-        <div class="form-check form-check-inline">
-          <input type="radio" id="medYes" name="meditation" value="yes" class="form-check-input" checked />
-          <label for="medYes" class="form-check-label">Yes</label>
-        </div>
-        <div class="form-check form-check-inline">
-          <input type="radio" id="medNo" name="meditation" value="no" class="form-check-input" />
-          <label for="medNo" class="form-check-label">No</label>
-        </div>
-      </div>
-
-      <div class="mb-3">
-        <label for="startTime" class="form-label fw-semibold">Start Time</label>
-        <input type="time" id="startTime" class="form-control" />
-      </div>
-
-      <div class="mb-3">
-        <label for="duration" class="form-label fw-semibold">Duration (minutes)</label>
-        <input type="number" id="duration" class="form-control" min="1" />
-      </div>
-
-      <div class="mb-3">
-        <label for="notes" class="form-label fw-semibold">Notes</label>
-        <textarea id="notes" rows="3" class="form-control"></textarea>
-      </div>
-
-      <div class="d-flex gap-2 justify-content-end flex-wrap">
-        <button type="submit" class="btn btn-primary">Save</button>
-        <button type="button" id="clearBtn" class="btn btn-danger">Clear</button>
-        <button type="button" id="downloadImgBtn" class="btn btn-success">📸 Download Table</button>
-      </div>
-    </form>
-
-    <div class="card shadow p-3 mt-5" id="snapshotContainer">
-      <div class="table-responsive bg-white p-3 rounded shadow">
-        <table class="table table-bordered table-hover align-middle text-nowrap" id="meditationTable">
-          <thead class="table-primary">
-            <tr>
-              <th>Date</th>
-              <th>Meditation</th>
-              <th>Time</th>
-              <th>Duration</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+      <div class="form-check form-check-inline">
+        <input type="radio" id="medNo" name="meditation" value="no" class="form-check-input" />
+        <label for="medNo" class="form-check-label">No</label>
       </div>
     </div>
-  </div>
 
-  <!-- Context Menu -->
-  <div id="contextMenu" class="position-absolute bg-white border shadow-sm rounded d-none z-3">
-    <button class="dropdown-item" id="editRow">📝 Edit</button>
-    <button class="dropdown-item" id="deleteRow">🗑️ Delete</button>
-    <button class="dropdown-item" id="cancelMenu">❌ Cancel</button>
-  </div>
+    <div class="mb-3">
+      <label for="startTime" class="form-label fw-semibold">Start Time</label>
+      <input type="time" id="startTime" class="form-control" />
+    </div>
 
-  <script src="js/bootstrap.bundle.min.js"></script>
+    <div class="mb-3">
+      <label for="duration" class="form-label fw-semibold">Duration (minutes)</label>
+      <input type="number" id="duration" class="form-control" min="1" />
+    </div>
+
+    <div class="mb-3">
+      <label for="notes" class="form-label fw-semibold">Notes</label>
+      <textarea id="notes" rows="3" class="form-control"></textarea>
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end flex-wrap">
+      <button type="submit" class="btn btn-primary">Save</button>
+      <button type="button" id="clearBtn" class="btn btn-danger">Clear</button>
+      <button type="button" id="downloadImgBtn" class="btn btn-success">📸 Download Table</button>
+    </div>
+  </form>
+
+  <div class="card shadow p-3 mt-5" id="snapshotContainer">
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover table-striped align-middle text-nowrap" id="meditationTable">
+        <thead class="table-primary">
+          <tr>
+            <th class="text-nowrap">Date</th>
+            <th class="text-nowrap">Meditation</th>
+            <th class="text-nowrap">Time</th>
+            <th class="text-nowrap">Duration</th>
+            <th class="text-nowrap">Notes</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div id="contextMenu" class="position-absolute bg-white border shadow-sm rounded d-none z-3">
+  <button class="dropdown-item" id="editRow">📝 Edit</button>
+  <button class="dropdown-item" id="deleteRow">🗑️ Delete</button>
+  <button class="dropdown-item" id="cancelMenu">❌ Cancel</button>
+</div>
+
+<script src="js/bootstrap.bundle.min.js"></script>
 <script>
   const DB_NAME = "MeditationDB";
   const STORE_NAME = "entries";
@@ -133,11 +146,11 @@
           const row = document.createElement('tr');
           row.dataset.id = entry.id;
           row.innerHTML = `
-            <td>${entry.date}</td>
-            <td>${entry.meditation}</td>
-            <td>${entry.time}</td>
-            <td>${entry.duration}</td>
-            <td>${entry.notes}</td>
+            <td class="text-nowrap">${entry.date}</td>
+            <td class="text-nowrap">${entry.meditation}</td>
+            <td class="text-nowrap">${entry.time}</td>
+            <td class="text-nowrap">${entry.duration}</td>
+            <td class="text-nowrap">${entry.notes}</td>
           `;
           row.addEventListener('contextmenu', function (e) {
             e.preventDefault();
@@ -174,42 +187,72 @@
     }
   });
 
-document.getElementById('downloadImgBtn').addEventListener('click', () => {
-  const snapshot = document.getElementById('snapshotContainer');
-  const tableWrap = snapshot.querySelector('.table-responsive');
+  document.getElementById('downloadImgBtn').addEventListener('click', () => {
+    const snapshot = document.getElementById('snapshotContainer');
+    const clone = snapshot.cloneNode(true);
 
-  // 1. Temporarily allow full width capture
-  const originalOverflow = tableWrap.style.overflowX;
-  tableWrap.style.overflowX = 'visible';
+    // Apply style to container
+    Object.assign(clone.style, {
+      maxWidth: "100%",
+      border: "2px solid #dee2e6",
+      borderRadius: "0.5rem",
+      padding: "1rem",
+      backgroundColor: "white",
+      margin: "10px",
+      boxSizing: "border-box",
+      minHeight: "100px"
+    });
 
-  window.scrollTo(0, 0); // ensure top
-
-  html2canvas(snapshot, {
-    backgroundColor: "#fff",
-    scale: 2,
-    scrollY: -window.scrollY,
-    useCORS: true,
-    width: snapshot.scrollWidth,
-    height: snapshot.scrollHeight
-  }).then(canvas => {
-    const base64Image = canvas.toDataURL("image/png");
-
-    // send to Flutter
-    if (window.ImageChannel && window.ImageChannel.postMessage) {
-      window.ImageChannel.postMessage(base64Image);
-    } else {
-      // fallback: download in browser
-      const link = document.createElement('a');
-      link.download = 'meditation_table.png';
-      link.href = base64Image;
-      link.click();
+    // Add dummy row if table is empty
+    const tableBodyClone = clone.querySelector('tbody');
+    if (!tableBodyClone || tableBodyClone.children.length === 0) {
+      const dummyRow = document.createElement('tr');
+      dummyRow.innerHTML = `
+        <td colspan="5" style="text-align:center; padding:20px; color:#888;">
+          No data available
+        </td>
+      `;
+      tableBodyClone.appendChild(dummyRow);
     }
-  }).finally(() => {
-    // 3. Restore overflow
-    tableWrap.style.overflowX = originalOverflow;
-  });
-});
 
+    // 🔧 Manually apply borders for html2canvas
+    const tableClone = clone.querySelector('table');
+    tableClone.style.border = "1px solid #dee2e6";
+    tableClone.style.borderCollapse = "collapse";
+
+    clone.querySelectorAll('th, td').forEach(cell => {
+      cell.style.border = "1px solid #dee2e6";
+    });
+
+    const hiddenContainer = document.createElement('div');
+    Object.assign(hiddenContainer.style, {
+      position: 'fixed',
+      top: '-9999px',
+      left: '-9999px',
+      zIndex: '-1'
+    });
+
+    hiddenContainer.appendChild(clone);
+    document.body.appendChild(hiddenContainer);
+
+    html2canvas(clone, {
+      backgroundColor: "#fff",
+      scale: 2
+    }).then(canvas => {
+      const base64Image = canvas.toDataURL("image/png");
+
+      if (window.ImageChannel && window.ImageChannel.postMessage) {
+        window.ImageChannel.postMessage(base64Image);
+      } else {
+        const link = document.createElement('a');
+        link.download = 'meditation_table.png';
+        link.href = base64Image;
+        link.click();
+      }
+    }).finally(() => {
+      document.body.removeChild(hiddenContainer);
+    });
+  });
 
   document.getElementById('editRow').addEventListener('click', () => {
     if (!selectedRowId) return;
@@ -220,17 +263,14 @@ document.getElementById('downloadImgBtn').addEventListener('click', () => {
       const [d, m, y] = entry.date.split('-');
       dateInput.value = `${y}-${m}-${d}`;
       document.getElementById(entry.meditation === 'Yes' ? 'medYes' : 'medNo').checked = true;
-
       const [t, ampm] = entry.time.split(' ');
       let [hh, mm] = t.split(':');
       hh = parseInt(hh);
       if (ampm === 'PM' && hh !== 12) hh += 12;
       if (ampm === 'AM' && hh === 12) hh = 0;
       timeInput.value = `${String(hh).padStart(2, '0')}:${mm}`;
-
       document.getElementById('duration').value = entry.duration;
       document.getElementById('notes').value = entry.notes;
-
       store.delete(selectedRowId).onsuccess = loadEntries;
       contextMenu.classList.add("d-none");
     };
