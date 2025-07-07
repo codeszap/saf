@@ -125,11 +125,16 @@
   function addEntry(entry) {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     tx.objectStore(STORE_NAME).add(entry);
-    tx.oncomplete = () => {
-      loadEntries();
-      form.reset();
-      dateInput.valueAsDate = new Date();
-    };
+  tx.oncomplete = () => {
+  loadEntries();
+
+  // Clear only fields, don't reset entire form
+  // So date will remain as selected
+  document.getElementById('duration').value = '';
+  document.getElementById('notes').value = '';
+  timeInput.value = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+};
+
   }
 
   function loadEntries() {
