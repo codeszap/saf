@@ -4,210 +4,80 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>STC Meditation Tracker</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 10px;
-      background: #f2f2f2;
-    }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    form {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 500px;
-      margin: auto;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-
-    label {
-      font-weight: 600;
-      margin-top: 10px;
-      display: block;
-    }
-
-    input, textarea {
-      width: 100%;
-      padding: 8px;
-      margin-top: 4px;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      box-sizing: border-box;
-    }
-
-    .radio-group {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 12px;
-    }
-
-    .button-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .button-row button {
-      padding: 8px 16px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      color: white;
-      font-weight: 600;
-    }
-
-    #clearBtn {
-      background-color: #e53935;
-    }
-
-    #downloadImgBtn {
-      background-color: #388e3c;
-    }
-
-    .button-row button[type="submit"] {
-      background-color: #1976d2;
-    }
-
-    .table-wrap {
-      display: block;
-      width: fit-content;
-      margin: auto;
-    }
-
-    .table-container {
-      margin: 40px auto;
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-      min-width: 800px;
-    }
-
-    th, td {
-      padding: 10px;
-      border: 1px solid #ddd;
-      white-space: normal;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    tr:nth-child(even) {
-      background: #f5f5f5;
-    }
-
-    th {
-      background-color: #1976d2;
-      color: white;
-      font-weight: 600;
-    }
-
-    #contextMenu {
-      position: absolute;
-      background: #fff;
-      border: 1px solid #ccc;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      border-radius: 6px;
-      display: none;
-      z-index: 1000;
-      padding: 4px 0;
-    }
-
-    #contextMenu button {
-      background: none;
-      border: none;
-      width: 100%;
-      text-align: left;
-      padding: 8px 16px;
-      cursor: pointer;
-    }
-
-    #contextMenu button:hover {
-      background: #f0f0f0;
-    }
-
-    @media (max-width: 600px) {
-      form, .table-container {
-        padding: 10px;
-      }
-
-      table {
-        font-size: 13px;
-        min-width: 400px;
-      }
-    }
-  </style>
 </head>
-<body>
+<body class="bg-light">
 
-  <h2>Meditation Tracker</h2>
+  <div class="container my-4">
+    <h2 class="text-center mb-4">STC Meditation Tracker</h2>
 
-  <form id="meditationForm">
-    <label for="date">Date</label>
-    <input type="date" id="date" required>
+    <form id="meditationForm" class="card p-4 shadow rounded">
+      <div class="mb-3">
+        <label for="date" class="form-label fw-semibold">Date</label>
+        <input type="date" id="date" class="form-control" required />
+      </div>
 
-    <label>Meditation</label>
-    <div class="radio-group">
-      <input type="radio" name="meditation" id="medYes" value="yes" checked />
-      <label for="medYes">Yes</label>
-      <input type="radio" name="meditation" id="medNo" value="no" />
-      <label for="medNo">No</label>
-    </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Meditation</label>
+        <div class="form-check form-check-inline">
+          <input type="radio" id="medYes" name="meditation" value="yes" class="form-check-input" checked />
+          <label for="medYes" class="form-check-label">Yes</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input type="radio" id="medNo" name="meditation" value="no" class="form-check-input" />
+          <label for="medNo" class="form-check-label">No</label>
+        </div>
+      </div>
 
-    <label for="startTime">Start Time</label>
-    <input type="time" id="startTime">
+      <div class="mb-3">
+        <label for="startTime" class="form-label fw-semibold">Start Time</label>
+        <input type="time" id="startTime" class="form-control" />
+      </div>
 
-    <label for="duration">Duration (minutes)</label>
-    <input type="number" id="duration" min="1">
+      <div class="mb-3">
+        <label for="duration" class="form-label fw-semibold">Duration (minutes)</label>
+        <input type="number" id="duration" class="form-control" min="1" />
+      </div>
 
-    <label for="notes">Notes</label>
-    <textarea id="notes" rows="3"></textarea>
+      <div class="mb-3">
+        <label for="notes" class="form-label fw-semibold">Notes</label>
+        <textarea id="notes" rows="3" class="form-control"></textarea>
+      </div>
 
-    <div class="button-row">
-      <button type="submit">Save</button>
-      <button type="button" id="clearBtn">Clear</button>
-      <button type="button" id="downloadImgBtn">Download Table</button>
-    </div>
-  </form>
+      <div class="d-flex gap-2 justify-content-end flex-wrap">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" id="clearBtn" class="btn btn-danger">Clear</button>
+        <button type="button" id="downloadImgBtn" class="btn btn-success">📸 Download Table</button>
+      </div>
+    </form>
 
-  <div class="table-wrap" id="snapshotContainer">
-    <div class="table-container" id="tableContainer">
-      <table id="meditationTable">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Meditation</th>
-            <th>Time</th>
-            <th>Duration</th>
-            <th>Notes</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <div id="snapshotContainer" class="my-5">
+      <div class="table-responsive bg-white p-3 rounded shadow">
+        <table class="table table-bordered table-hover align-middle text-nowrap" id="meditationTable">
+          <thead class="table-primary">
+            <tr>
+              <th>Date</th>
+              <th>Meditation</th>
+              <th>Time</th>
+              <th>Duration</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <div id="contextMenu">
-    <button id="editRow">Edit</button>
-    <button id="deleteRow">Delete</button>
-    <button id="cancelMenu">Cancel</button>
+  <!-- Context Menu -->
+  <div id="contextMenu" class="position-absolute bg-white border shadow-sm rounded d-none z-3">
+    <button class="dropdown-item" id="editRow">📝 Edit</button>
+    <button class="dropdown-item" id="deleteRow">🗑️ Delete</button>
+    <button class="dropdown-item" id="cancelMenu">❌ Cancel</button>
   </div>
 
+  <script src="js/bootstrap.bundle.min.js"></script>
   <script>
     const DB_NAME = "MeditationDB";
     const STORE_NAME = "entries";
@@ -369,5 +239,6 @@
 
     window.onload = openDB;
   </script>
+
 </body>
 </html>
