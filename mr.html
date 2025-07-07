@@ -174,23 +174,42 @@
     }
   });
 
-  document.getElementById('downloadImgBtn').addEventListener('click', () => {
-    const targetDiv = document.getElementById('snapshotContainer');
-    window.scrollTo(0, 0); // 🛑 Ensure scrollY is 0
-    html2canvas(targetDiv, {
-      backgroundColor: "#fff",
-      scale: 2,
-      scrollY: 0,
-       scrollY: -window.scrollY
-    }).then(canvas => {
-      const base64Image = canvas.toDataURL("image/png");
-      if (window.ImageChannel && window.ImageChannel.postMessage) {
-        window.ImageChannel.postMessage(base64Image);
-      } else {
-        alert("❌ ImageChannel not found. Please use in Flutter WebView.");
-      }
-    });
+document.getElementById('downloadImgBtn').addEventListener('click', () => {
+  const snapshot = document.getElementById('snapshotContainer');
+  const tableWrap = snapshot.querySelector('.table-responsive');
+
+  // 1. Temporarily allow full width capture
+  const originalOverflow = tableWrap.style.overflowX;
+  tableWrap.style.overflowX = 'visible';
+
+  window.scrollTo(0, 0); // ensure top
+
+  html2canvas(snapshot, {
+    backgroundColor: "#fff",
+    scale: 2,
+    scrollY: -window.scrollY,
+    useCORS: true,
+    width: snapshot.scrollWidth,
+    height: snapshot.scrollHeight
+  }).then(canvas => {
+    const base64Image = canvas.toDataURL("image/png");
+
+    // send to Flutter
+    if (window.ImageChannel && window.ImageChannel.postMessage) {
+      window.ImageChannel.postMessage(base64Image);
+    } else {
+      // fallback: download in browser
+      const link = document.createElement('a');
+      link.download = 'meditation_table.png';
+      link.href = base64Image;
+      link.click();
+    }
+  }).finally(() => {
+    // 3. Restore overflow
+    tableWrap.style.overflowX = originalOverflow;
   });
+});
+
 
   document.getElementById('editRow').addEventListener('click', () => {
     if (!selectedRowId) return;
