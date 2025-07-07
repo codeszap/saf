@@ -52,7 +52,7 @@
       </div>
     </form>
 
-    <div id="snapshotContainer" class="my-5">
+    <div class="card shadow p-3 mt-5" id="snapshotContainer">
       <div class="table-responsive bg-white p-3 rounded shadow">
         <table class="table table-bordered table-hover align-middle text-nowrap" id="meditationTable">
           <thead class="table-primary">
@@ -181,8 +181,7 @@
       backgroundColor: "#fff",
       scale: 2,
       scrollY: 0,
-      useCORS: true,
-      width: targetDiv.scrollWidth
+       scrollY: -window.scrollY
     }).then(canvas => {
       const base64Image = canvas.toDataURL("image/png");
       if (window.ImageChannel && window.ImageChannel.postMessage) {
