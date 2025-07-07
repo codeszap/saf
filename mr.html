@@ -58,11 +58,13 @@
       <textarea id="notes" rows="3" class="form-control"></textarea>
     </div>
 
-    <div class="d-flex gap-2 justify-content-end flex-wrap">
-      <button type="submit" class="btn btn-primary">Save</button>
-      <button type="button" id="clearBtn" class="btn btn-danger">Clear</button>
-      <button type="button" id="downloadImgBtn" class="btn btn-success">📸 Download Table</button>
-    </div>
+   <div class="d-flex gap-2 justify-content-end flex-wrap">
+  <button type="submit" class="btn btn-primary">Save</button>
+  <button type="button" id="clearBtn" class="btn btn-danger">Clear</button>
+  <button type="button" id="downloadImgBtn" class="btn btn-success">📸 Download Table</button>
+  <button type="button" id="downloadJsonBtn" class="btn btn-warning">💾 Download JSON</button>
+</div>
+
   </form>
 
   <div class="card shadow p-3 mt-5" id="snapshotContainer">
@@ -288,6 +290,32 @@
   document.getElementById('cancelMenu').addEventListener('click', () => {
     contextMenu.classList.add("d-none");
   });
+
+  document.getElementById('downloadJsonBtn').addEventListener('click', () => {
+  const tx = db.transaction(STORE_NAME, 'readonly');
+  const store = tx.objectStore(STORE_NAME);
+  const entries = [];
+
+  store.openCursor().onsuccess = (e) => {
+    const cursor = e.target.result;
+    if (cursor) {
+      entries.push(cursor.value);
+      cursor.continue();
+    } else {
+      const payload = {
+        form: 'stc_meditation',
+        data: entries
+      };
+
+      if (window.SaveDataChannel && window.SaveDataChannel.postMessage) {
+        window.SaveDataChannel.postMessage(JSON.stringify(payload));
+      } else {
+        alert("❌ SaveDataChannel not available");
+      }
+    }
+  };
+});
+
 
   document.addEventListener('click', (e) => {
     if (!contextMenu.contains(e.target)) {
