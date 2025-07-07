@@ -6,22 +6,40 @@
   <title>Monthly Due Schedule Maker</title>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
+    body { font-family: Arial, sans-serif; padding: 20px; margin: 0; }
     .form-container {
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
       border: 1px solid #ddd;
       border-radius: 10px;
       padding: 15px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    .form-group { display: flex; flex-direction: column; margin-bottom: 15px; }
-    label { margin-bottom: 5px; font-weight: bold; }
-    input[type="text"], input[type="number"], input[type="month"], input[type="date"] {
-      width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;
+
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
     }
-    .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
-    .button-row { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
     button {
       flex: 1;
       padding: 10px;
@@ -31,47 +49,52 @@
       border-radius: 5px;
       cursor: pointer;
     }
+
     .add-btn { background-color: green; }
     .clear-btn { background-color: red; }
     .image-btn { background-color: #007bff; }
     .save-btn { background-color: #f57c00; }
 
-    #captureArea {
-      padding: 20px !important;
+    #monthLabel {
+      text-align: center;
+      margin: 15px 0;
+      font-size: 20px;
+      font-weight: bold;
+      color: #444;
+      display: none;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
       background: white;
-      overflow: visible !important;
-      width: fit-content;
-      max-width: unset;
-      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #ccc;
     }
 
-    #dataTable {
-      width: 100%;
+    #captureArea {
+      display: inline-block;
+      background: white;
+      padding: 20px;
+    }
+
+    table {
+      min-width: 600px;
       border-collapse: collapse;
-      table-layout: auto;
+      width: 100%;
     }
 
-    #dataTable th, #dataTable td {
+    th, td {
       border: 1px solid #ccc;
       padding: 10px;
       text-align: center;
       white-space: nowrap;
     }
 
-    #dataTable th { background-color: #f0f0f0; }
+    th { background-color: #f0f0f0; }
+
     tfoot td {
       font-weight: bold;
       background-color: #f9f9f9;
-      text-align: center;
-    }
-
-    #monthLabel {
-      text-align: center;
-      margin-top: 15px;
-      font-size: 20px;
-      font-weight: bold;
-      display: none;
-      color: #444;
     }
 
     #contextMenu {
@@ -109,21 +132,24 @@
     <button class="save-btn" onclick="saveToFlutter()">💾 Save</button>
   </div>
 
-  <div id="captureArea">
-    <h2 id="monthLabel"></h2>
-    <table id="dataTable">
-      <thead><tr><th>Date</th><th>Name</th><th>Amount</th><th>Active</th></tr></thead>
-      <tbody></tbody>
-      <tfoot>
-        <tr>
-          <td colspan="4">
-            <strong>T:</strong> ₹<span id="totalAmount">0</span> |
-            <strong>P:</strong> ₹<span id="activeAmount">0</span> |
-            <strong>Pe:</strong> ₹<span id="inactiveAmount">0</span>
-          </td>
-        </tr>
-      </tfoot>
-    </table>
+  <div id="monthLabel"></div>
+
+  <div class="table-wrapper">
+    <div id="captureArea">
+      <table id="dataTable">
+        <thead><tr><th>Date</th><th>Name</th><th>Amount</th><th>Active</th></tr></thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4">
+              <strong>T:</strong> ₹<span id="totalAmount">0</span> |
+              <strong>P:</strong> ₹<span id="activeAmount">0</span> |
+              <strong>Pe:</strong> ₹<span id="inactiveAmount">0</span>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
   </div>
 </div>
 
