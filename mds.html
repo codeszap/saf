@@ -6,40 +6,48 @@
   <title>Monthly Due Schedule Maker</title>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; margin: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
     .form-container {
-      max-width: 700px;
+      max-width: 600px;
       margin: auto;
       border: 1px solid #ddd;
       border-radius: 10px;
       padding: 15px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; }
-    input, select {
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
+    label {
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="month"],
+    input[type="date"] {
       width: 100%;
       padding: 8px;
       border: 1px solid #ccc;
       border-radius: 5px;
       box-sizing: border-box;
     }
-
     .checkbox-group {
       display: flex;
       align-items: center;
       gap: 10px;
       margin-bottom: 15px;
     }
-
     .button-row {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-bottom: 20px;
     }
-
     button {
       flex: 1;
       padding: 10px;
@@ -49,288 +57,360 @@
       border-radius: 5px;
       cursor: pointer;
     }
-
     .add-btn { background-color: green; }
     .clear-btn { background-color: red; }
     .image-btn { background-color: #007bff; }
-    .save-btn { background-color: #f57c00; }
-
-    #monthLabel {
-      text-align: center;
-      margin: 15px 0;
-      font-size: 20px;
-      font-weight: bold;
-      color: #444;
-      display: none;
-    }
-
-    .table-scroll-wrapper {
-      overflow-x: auto;
-      margin-bottom: 15px;
-    }
-
-    #captureArea {
-      display: inline-block;
-      background: white;
-      padding: 20px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-      max-width: unset;
-      width: auto;
-    }
-
     table {
-      border-collapse: collapse;
       width: 100%;
-      min-width: 600px;
+      border-collapse: collapse;
+      margin-top: 20px;
     }
-
     th, td {
       border: 1px solid #ccc;
       padding: 10px;
       text-align: center;
-      white-space: nowrap;
     }
-
-    th { background-color: #f0f0f0; }
+    th {
+      background-color: #f0f0f0;
+    }
     tfoot td {
       font-weight: bold;
       background-color: #f9f9f9;
+      text-align: center;
     }
-
-    #contextMenu {
+    #monthLabel {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      display: none;
+      color: #444;
+    }
+    input[type="checkbox"]:disabled {
+      cursor: not-allowed;
+    }
+    .context-menu {
       position: absolute;
       display: none;
-      background: white;
+      background: #444;
       border: 1px solid #ccc;
       border-radius: 5px;
-      z-index: 9999;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      z-index: 999;
     }
-
-    #contextMenu button {
+    .context-menu button {
       display: block;
-      padding: 8px 12px;
       width: 100%;
+      padding: 10px;
       border: none;
       background: none;
       text-align: left;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .context-menu button:hover {
+      background-color: #007bff;
+      color: #fff;
     }
   </style>
 </head>
 <body>
 
 <div class="form-container">
-  <div class="form-group"><label for="month">Month</label><input type="month" id="month" /></div>
-  <div class="form-group"><label for="newDate">Date</label><input type="date" id="newDate" /></div>
-  <div class="form-group"><label for="name">Name</label><input type="text" id="name" placeholder="Enter name" /></div>
-  <div class="form-group"><label for="amount">Amount</label><input type="number" id="amount" placeholder="Enter amount" /></div>
-  <div class="checkbox-group"><input type="checkbox" id="active" checked /><label for="active">Active</label></div>
-
+  <div class="form-group">
+    <label for="month">Month</label>
+    <input type="month" id="month" />
+  </div>
+  <div class="form-group">
+    <label for="newDate">Date</label>
+    <input type="date" id="newDate" />
+  </div>
+  <div class="form-group">
+    <label for="name">Name</label>
+    <input type="text" id="name" placeholder="Enter name" />
+  </div>
+  <div class="form-group">
+    <label for="amount">Amount</label>
+    <input type="number" id="amount" placeholder="Enter amount" />
+  </div>
+  <div class="checkbox-group">
+    <input type="checkbox" id="active" checked />
+    <label for="active">Active</label>
+  </div>
   <div class="button-row">
     <button class="add-btn" onclick="addToTable()">Add</button>
-    <button class="clear-btn" onclick="clearAll()">Clear</button>
+    <button class="clear-btn" onclick="confirmClear()">Clear</button>
     <button class="image-btn" onclick="captureImage()">📸 Get Image</button>
-    <button class="save-btn" onclick="saveToFlutter()">💾 Save</button>
   </div>
 
-  <div id="monthLabel"></div>
-
-  <div class="table-scroll-wrapper">
-    <div id="captureArea">
-      <table id="dataTable">
-        <thead><tr><th>Date</th><th>Name</th><th>Amount</th><th>Active</th></tr></thead>
-        <tbody></tbody>
-        <tfoot>
-          <tr>
-            <td colspan="4">
-              <strong>T:</strong> ₹<span id="totalAmount">0</span> |
-              <strong>P:</strong> ₹<span id="activeAmount">0</span> |
-              <strong>Pe:</strong> ₹<span id="inactiveAmount">0</span>
-            </td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
+  <div id="captureArea" style="padding: 20px; background: white;">
+    <h2 id="monthLabel"></h2>
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Name</th>
+          <th>Amount</th>
+          <th>Active</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="4">
+            <strong>T:</strong> ₹<span id="totalAmount">0</span> |
+            <strong>P:</strong> ₹<span id="activeAmount">0</span> |
+            <strong>Pe:</strong> ₹<span id="inactiveAmount">0</span>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
   </div>
 </div>
 
-<div id="contextMenu">
-  <button onclick="editRow()">✏️ Edit</button>
+<div id="contextMenu" class="context-menu">
+  <button onclick="editRow()">📝 Edit</button>
   <button onclick="deleteRow()">🗑️ Delete</button>
-  <button onclick="cancelMenu()">❌ Cancel</button>
+  <button onclick="hideContextMenu()">❌ Cancel</button>
 </div>
 
 <script>
-  const yyyy = new Date().getFullYear();
-  const mm = String(new Date().getMonth() + 1).padStart(2, '0');
-  const dd = String(new Date().getDate()).padStart(2, '0');
+  const dbName = 'DueScheduleDB';
+  const storeName = 'entries';
+  let db;
+
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
   document.getElementById('month').value = `${yyyy}-${mm}`;
   document.getElementById('newDate').value = `${yyyy}-${mm}-${dd}`;
 
-  let dataRows = [];
-  let nextId = 1;
-  let selectedId = null;
+  let selectedRow = null;
+
+  function openDB() {
+    const request = indexedDB.open(dbName, 1);
+    request.onerror = () => alert("DB Error!");
+    request.onsuccess = (event) => {
+      db = event.target.result;
+      loadFromDB();
+    };
+    request.onupgradeneeded = (event) => {
+      db = event.target.result;
+      db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+    };
+  }
 
   function formatDate(dateStr) {
-    const [y, m, d] = dateStr.split("-");
-    return `${d}/${m}`;
+    const parts = dateStr.split("-");
+    return `${parts[2]}/${parts[1]}`; // dd/mm
+  }
+
+  function addRowToDB(data) {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    store.add(data);
+    tx.oncomplete = () => {
+      loadFromDB();
+      clearForm();
+      showToast("✅ Added successfully!");
+    };
+  }
+
+  function getAllRowsFromDB(callback) {
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const rows = [];
+    store.openCursor().onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        rows.push({ id: cursor.key, ...cursor.value });
+        cursor.continue();
+      } else {
+        callback(rows);
+      }
+    };
+  }
+
+  function deleteRowFromDB(id) {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).delete(id);
+    tx.oncomplete = loadFromDB;
+  }
+
+  function clearDB() {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).clear();
+    tx.oncomplete = () => {
+      loadFromDB();
+      document.getElementById('monthLabel').style.display = 'none';
+    };
   }
 
   function addToTable() {
-    const name = document.getElementById("name").value.trim();
-    const amount = document.getElementById("amount").value.trim();
-    const active = document.getElementById("active").checked;
-    const date = document.getElementById("newDate").value;
+    const name = document.getElementById('name').value.trim();
+    const amount = document.getElementById('amount').value.trim();
+    const active = document.getElementById('active').checked;
+    const date = document.getElementById('newDate').value;
+
     if (!name || !amount || !date) {
-      alert("Please fill all fields.");
+      alert("Please fill all fields");
       return;
     }
 
-    const formattedDate = formatDate(date);
-    if (selectedId) {
-      const index = dataRows.findIndex(row => row.id === selectedId);
-      if (index !== -1) {
-        dataRows[index] = { id: selectedId, date: formattedDate, name, amount, active };
+    const newDate = formatDate(date);
+
+    getAllRowsFromDB((rows) => {
+      const duplicate = rows.find(row => row.date === newDate && row.name.toLowerCase() === name.toLowerCase() && row.amount === amount);
+      if (duplicate) {
+        alert("Duplicate entry not allowed");
+        return;
       }
-      selectedId = null;
-    } else {
-      dataRows.push({ id: nextId++, date: formattedDate, name, amount, active });
-    }
-
-    refreshTable();
-    formReset();
-  }
-
-  function refreshTable() {
-    const tbody = document.querySelector("#dataTable tbody");
-    tbody.innerHTML = "";
-    let total = 0, paid = 0, pending = 0;
-
-    dataRows.forEach(row => {
-      const tr = document.createElement("tr");
-      tr.dataset.id = row.id;
-      tr.innerHTML = `
-        <td>${row.date}</td>
-        <td>${row.name}</td>
-        <td>${row.amount}</td>
-        <td><input type="checkbox" disabled ${row.active ? "checked" : ""}></td>
-      `;
-      tr.addEventListener("contextmenu", function (e) {
-        e.preventDefault();
-        selectedId = row.id;
-        showContextMenu(e.pageX, e.pageY);
-      });
-      tbody.appendChild(tr);
-
-      const amt = parseFloat(row.amount);
-      total += amt;
-      row.active ? paid += amt : pending += amt;
+      addRowToDB({ date: newDate, name, amount, active });
     });
+  }
 
-    document.getElementById("totalAmount").textContent = total;
-    document.getElementById("activeAmount").textContent = paid;
-    document.getElementById("inactiveAmount").textContent = pending;
+  function loadFromDB() {
+    getAllRowsFromDB((rows) => {
+      rows.sort((a, b) => {
+        const [d1, m1] = a.date.split("/").map(Number);
+        const [d2, m2] = b.date.split("/").map(Number);
+        return new Date(2000, m1 - 1, d1) - new Date(2000, m2 - 1, d2);
+      });
 
-    const monthVal = document.getElementById('month').value;
-    const [year, month] = monthVal.split("-");
+      const tbody = document.querySelector('#dataTable tbody');
+      tbody.innerHTML = '';
+      rows.forEach(data => {
+        const newRow = tbody.insertRow();
+        newRow.dataset.id = data.id;
+        newRow.insertCell(0).textContent = data.date;
+        newRow.insertCell(1).textContent = data.name;
+        newRow.insertCell(2).textContent = data.amount;
+        const activeCell = newRow.insertCell(3);
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.disabled = true;
+        checkbox.checked = data.active;
+        activeCell.appendChild(checkbox);
+
+        newRow.addEventListener('contextmenu', function (e) {
+          e.preventDefault();
+          selectedRow = newRow;
+          showContextMenu(e.pageX, e.pageY);
+        });
+      });
+
+      updateTotal();
+      showMonthLabel();
+    });
+  }
+
+  function updateTotal() {
+    let total = 0, pay = 0, pend = 0;
+    const rows = document.querySelectorAll('#dataTable tbody tr');
+    rows.forEach(row => {
+      const amt = parseFloat(row.cells[2].textContent);
+      const active = row.cells[3].querySelector('input').checked;
+      total += amt;
+      active ? pay += amt : pend += amt;
+    });
+    document.getElementById('totalAmount').textContent = total;
+    document.getElementById('activeAmount').textContent = pay;
+    document.getElementById('inactiveAmount').textContent = pend;
+  }
+
+  function clearForm() {
+    document.getElementById('name').value = '';
+    document.getElementById('amount').value = '';
+    document.getElementById('active').checked = true;
+    document.getElementById('newDate').value = `${yyyy}-${mm}-${dd}`;
+  }
+
+  function showMonthLabel() {
+    const [year, month] = document.getElementById('month').value.split("-");
     const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
-    document.getElementById("monthLabel").textContent = `${monthName} Month Schedule`;
-    document.getElementById("monthLabel").style.display = "block";
+    const label = document.getElementById('monthLabel');
+    label.textContent = `${monthName} Month Schedule`;
+    label.style.display = 'block';
   }
 
-  function formReset() {
-    document.getElementById("name").value = "";
-    document.getElementById("amount").value = "";
-    document.getElementById("active").checked = true;
-    document.getElementById("newDate").value = `${yyyy}-${mm}-${dd}`;
+  function showToast(msg) {
+    alert(msg);
   }
 
-  function clearAll() {
-    if (confirm("Clear all data?")) {
-      dataRows = [];
-      refreshTable();
-    }
-  }
+  // function captureImage() {
+  //   const element = document.getElementById("captureArea");
+  //   html2canvas(element, {
+  //     backgroundColor: null,
+  //     scale: 2,
+  //     scrollY: -window.scrollY
+  //   }).then(canvas => {
+  //     const link = document.createElement('a');
+  //     link.download = 'table-screenshot.png';
+  //     link.href = canvas.toDataURL('image/png');
+  //     link.click();
+  //   });
+  // }
 
   function captureImage() {
-    const element = document.getElementById("captureArea");
-    element.style.width = "auto";
-    element.style.maxWidth = "unset";
-    element.style.overflow = "visible";
+  const element = document.getElementById("captureArea");
+  html2canvas(element, {
+    backgroundColor: null,
+    scale: 2,
+    scrollY: -window.scrollY
+  }).then(canvas => {
+    const base64Image = canvas.toDataURL('image/png');
+    if (window.ImageChannel && window.ImageChannel.postMessage) {
+      window.ImageChannel.postMessage(base64Image);
+    } else {
+      alert("ImageChannel not found");
+    }
+  });
+}
 
-    html2canvas(element, {
-      backgroundColor: "#fff",
-      scale: 2,
-      scrollX: -window.scrollX,
-      scrollY: -window.scrollY,
-      useCORS: true
-    }).then(canvas => {
-      const base64Image = canvas.toDataURL("image/png");
-      if (window.ImageChannel && window.ImageChannel.postMessage) {
-        window.ImageChannel.postMessage(base64Image);
-      } else {
-        document.body.appendChild(canvas); // For testing
-      }
-    });
+
+  function confirmClear() {
+    if (confirm("Are you sure you want to clear everything?")) {
+      clearDB();
+    }
   }
 
   function showContextMenu(x, y) {
-    const menu = document.getElementById("contextMenu");
-    menu.style.left = x + "px";
-    menu.style.top = y + "px";
-    menu.style.display = "block";
+    const menu = document.getElementById('contextMenu');
+    menu.style.top = `${y}px`;
+    menu.style.left = `${x}px`;
+    menu.style.display = 'block';
   }
 
-  function cancelMenu() {
-    document.getElementById("contextMenu").style.display = "none";
-    selectedId = null;
+  function hideContextMenu() {
+    document.getElementById('contextMenu').style.display = 'none';
   }
+
+  document.addEventListener('click', hideContextMenu);
 
   function editRow() {
-    const row = dataRows.find(r => r.id === selectedId);
-    if (!row) return;
-    const [d, m] = row.date.split("/");
-    const dateFormatted = `${yyyy}-${m}-${d}`;
-    document.getElementById("newDate").value = dateFormatted;
-    document.getElementById("name").value = row.name;
-    document.getElementById("amount").value = row.amount;
-    document.getElementById("active").checked = row.active;
-    cancelMenu();
+    if (!selectedRow) return;
+    const [d, m] = selectedRow.cells[0].textContent.split("/");
+    document.getElementById('newDate').value = `${yyyy}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    document.getElementById('name').value = selectedRow.cells[1].textContent;
+    document.getElementById('amount').value = selectedRow.cells[2].textContent;
+    document.getElementById('active').checked = selectedRow.cells[3].querySelector('input').checked;
+
+    const id = Number(selectedRow.dataset.id);
+    deleteRowFromDB(id);
+    selectedRow = null;
   }
 
   function deleteRow() {
-    if (confirm("Delete this entry?")) {
-      const index = dataRows.findIndex(r => r.id === selectedId);
-      if (index !== -1) {
-        dataRows.splice(index, 1);
-        refreshTable();
-      }
-    }
-    cancelMenu();
+    if (!selectedRow) return;
+    const id = Number(selectedRow.dataset.id);
+    deleteRowFromDB(id);
+    selectedRow = null;
   }
 
-  document.addEventListener("click", function (e) {
-    const menu = document.getElementById("contextMenu");
-    if (!menu.contains(e.target)) menu.style.display = "none";
-  });
-
-  function saveDataGlobally(formName, formData) {
-    const payload = { form: formName, data: formData };
-    if (window.SaveDataChannel && window.SaveDataChannel.postMessage) {
-      window.SaveDataChannel.postMessage(JSON.stringify(payload));
-    } else {
-      alert("❌ SaveDataChannel not found.");
-    }
-  }
-
-  function saveToFlutter() {
-    const month = document.getElementById("month").value;
-    const data = {
-      month: month,
-      entries: dataRows
-    };
-    saveDataGlobally("monthly_due_form", data);
-  }
+  window.onload = openDB;
 </script>
+
 </body>
 </html>
