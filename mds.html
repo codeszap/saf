@@ -60,16 +60,23 @@
     .add-btn { background-color: green; }
     .clear-btn { background-color: red; }
     .image-btn { background-color: #007bff; }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
+
     th, td {
       border: 1px solid #ccc;
       padding: 10px;
       text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 150px;
     }
+
     th {
       background-color: #f0f0f0;
     }
@@ -78,6 +85,7 @@
       background-color: #f9f9f9;
       text-align: center;
     }
+
     #monthLabel {
       text-align: center;
       margin-top: 15px;
@@ -204,7 +212,7 @@
 
   function formatDate(dateStr) {
     const parts = dateStr.split("-");
-    return `${parts[2]}/${parts[1]}`; // dd/mm
+    return `${parts[2]}/${parts[1]}`;
   }
 
   function addRowToDB(data) {
@@ -214,7 +222,7 @@
     tx.oncomplete = () => {
       loadFromDB();
       clearForm();
-      showToast("✅ Added successfully!");
+      alert("✅ Added successfully!");
     };
   }
 
@@ -335,40 +343,21 @@
     label.style.display = 'block';
   }
 
-  function showToast(msg) {
-    alert(msg);
-  }
-
-  // function captureImage() {
-  //   const element = document.getElementById("captureArea");
-  //   html2canvas(element, {
-  //     backgroundColor: null,
-  //     scale: 2,
-  //     scrollY: -window.scrollY
-  //   }).then(canvas => {
-  //     const link = document.createElement('a');
-  //     link.download = 'table-screenshot.png';
-  //     link.href = canvas.toDataURL('image/png');
-  //     link.click();
-  //   });
-  // }
-
   function captureImage() {
-  const element = document.getElementById("captureArea");
-  html2canvas(element, {
-    backgroundColor: null,
-    scale: 2,
-    scrollY: -window.scrollY
-  }).then(canvas => {
-    const base64Image = canvas.toDataURL('image/png');
-    if (window.ImageChannel && window.ImageChannel.postMessage) {
-      window.ImageChannel.postMessage(base64Image);
-    } else {
-      alert("ImageChannel not found");
-    }
-  });
-}
-
+    const element = document.getElementById("captureArea");
+    html2canvas(element, {
+      backgroundColor: null,
+      scale: 2,
+      scrollY: -window.scrollY
+    }).then(canvas => {
+      const base64Image = canvas.toDataURL('image/png');
+      if (window.ImageChannel && window.ImageChannel.postMessage) {
+        window.ImageChannel.postMessage(base64Image);
+      } else {
+        alert("ImageChannel not found");
+      }
+    });
+  }
 
   function confirmClear() {
     if (confirm("Are you sure you want to clear everything?")) {
