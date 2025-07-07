@@ -1,169 +1,54 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Due Amount Calculator</title>
-
-  <!-- html2canvas CDN for capturing image -->
+  <link rel="stylesheet" href="css/bootstrap.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      padding: 20px;
-      margin: 0;
-      background: #f7f7f7;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-
-    .container {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-      width: 100%;
-      max-width: 420px;
-    }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    label {
-      font-weight: bold;
-      margin-bottom: 5px;
-      display: block;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      margin-bottom: 10px;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-    }
-
-    .row .field {
-      flex: 1;
-    }
-
-    .button-group {
-      margin-top: 20px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    button {
-      flex: 1;
-      padding: 10px;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 15px;
-      cursor: pointer;
-    }
-
-    button:nth-child(1) { background-color: #007bff; }
-    button:nth-child(2) { background-color: #17a2b8; }
-    button:nth-child(3) { background-color: #6c757d; }
-    button:nth-child(4) { background-color: #28a745; }
-
-    .result {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 18px;
-      color: #333;
-    }
-
-    table {
-      width: 100%;
-      margin-top: 15px;
-      border-collapse: collapse;
-    }
-
-    table, th, td {
-      border: 1px solid #ccc;
-    }
-
-    th, td {
-      padding: 8px;
-      text-align: center;
-    }
-
-    tr:last-child {
-      font-weight: bold;
-      background-color: #f1f1f1;
-    }
-
-    .title-heading {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 20px;
-      font-weight: bold;
-      color: #333;
-    }
-
-    @media (max-width: 480px) {
-      .row {
-        flex-direction: column;
-      }
-
-      button {
-        font-size: 14px;
-      }
-    }
-  </style>
 </head>
-<body>
+<body class="bg-light d-flex justify-content-center align-items-center min-vh-100">
 
-  <div class="container">
-    <h2>Due Amount Calculator</h2>
+<div class="container bg-white p-4 rounded shadow" style="max-width: 450px;">
+  <h2 class="text-center mb-4">Due Amount Calculator</h2>
 
-    <label for="title">Title</label>
-    <input type="text" id="title" placeholder="Ex: Bike EMI, Loan">
-
-    <div class="row">
-      <div class="field">
-        <label for="totalAmount">Total Amount</label>
-        <input type="number" id="totalAmount" placeholder="₹">
-      </div>
-      <div class="field">
-        <label for="monthlyDue">Monthly Due</label>
-        <input type="number" id="monthlyDue" placeholder="₹">
-      </div>
-    </div>
-
-    <label for="startDate">Start Date (Optional)</label>
-    <input type="date" id="startDate">
-
-    <div class="button-group">
-      <button onclick="calculate()">Calculate</button>
-      <button onclick="showBreakdown()">View</button>
-      <button onclick="clearFields()">Clear</button>
-      <button onclick="captureImage()">Get Image</button>
-    </div>
-
-    <div class="result" id="result"></div>
-<div id="snapshotContainer" style="padding:20px;background:white;">
-  <div id="breakdown"></div>
-</div>
+  <div class="mb-3">
+    <label for="title" class="form-label fw-bold">Title</label>
+    <input type="text" id="title" class="form-control" placeholder="Ex: Bike EMI, Loan">
   </div>
 
+  <div class="row">
+    <div class="col mb-3">
+      <label for="totalAmount" class="form-label fw-bold">Total Amount</label>
+      <input type="number" id="totalAmount" class="form-control" placeholder="₹">
+    </div>
+    <div class="col mb-3">
+      <label for="monthlyDue" class="form-label fw-bold">Monthly Due</label>
+      <input type="number" id="monthlyDue" class="form-control" placeholder="₹">
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label for="startDate" class="form-label fw-bold">Start Date (Optional)</label>
+    <input type="date" id="startDate" class="form-control">
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mt-3">
+    <button class="btn btn-primary flex-fill" onclick="calculate()">Calculate</button>
+    <button class="btn btn-info text-white flex-fill" onclick="showBreakdown()">View</button>
+    <button class="btn btn-secondary flex-fill" onclick="clearFields()">Clear</button>
+    <button class="btn btn-success flex-fill" onclick="captureImage()">Get Image</button>
+  </div>
+
+  <div class="result text-center mt-3 fs-5 text-muted" id="result"></div>
+
+  <div class="mt-4 p-3 bg-white border rounded" id="snapshotContainer">
+    <div id="breakdown"></div>
+  </div>
+</div>
+
+<script src="js/bootstrap.bundle.min.js"></script>
   <script>
     function calculate() {
       const total = parseFloat(document.getElementById("totalAmount").value);
