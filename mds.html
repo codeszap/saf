@@ -7,7 +7,14 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
-    .form-container { max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; padding: 15px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .form-container {
+      max-width: 600px;
+      margin: auto;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
     .form-group { display: flex; flex-direction: column; margin-bottom: 15px; }
     label { margin-bottom: 5px; font-weight: bold; }
     input[type="text"], input[type="number"], input[type="month"], input[type="date"] {
@@ -15,20 +22,57 @@
     }
     .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
     .button-row { display: flex; flex-wrap: wrap; gap: 10px; }
-    button { flex: 1; padding: 10px; border: none; color: #fff; font-weight: bold; border-radius: 5px; cursor: pointer; }
+    button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      color: #fff;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
     .add-btn { background-color: green; }
     .clear-btn { background-color: red; }
     .image-btn { background-color: #007bff; }
     .save-btn { background-color: #f57c00; }
 
-    #captureArea { padding: 20px !important; background: white; overflow: visible !important; max-width: none !important; box-sizing: border-box; }
-    #dataTable { width: 100%; border-collapse: collapse; table-layout: auto; }
-    #dataTable th, #dataTable td {
-      border: 1px solid #ccc; padding: 10px; text-align: center; white-space: nowrap; overflow: visible;
+    #captureArea {
+      padding: 20px !important;
+      background: white;
+      overflow: visible !important;
+      width: fit-content;
+      max-width: unset;
+      box-sizing: border-box;
     }
+
+    #dataTable {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: auto;
+    }
+
+    #dataTable th, #dataTable td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
     #dataTable th { background-color: #f0f0f0; }
-    tfoot td { font-weight: bold; background-color: #f9f9f9; text-align: center; }
-    #monthLabel { text-align: center; margin-top: 15px; font-size: 20px; font-weight: bold; display: none; color: #444; }
+    tfoot td {
+      font-weight: bold;
+      background-color: #f9f9f9;
+      text-align: center;
+    }
+
+    #monthLabel {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      display: none;
+      color: #444;
+    }
 
     #contextMenu {
       position: absolute;
@@ -38,6 +82,7 @@
       border-radius: 5px;
       z-index: 9999;
     }
+
     #contextMenu button {
       display: block;
       padding: 8px 12px;
@@ -182,10 +227,15 @@
 
   function captureImage() {
     const element = document.getElementById("captureArea");
-    element.style.height = 'auto';
+
+    element.style.width = "auto";
+    element.style.maxWidth = "unset";
+    element.style.overflow = "visible";
+
     html2canvas(element, {
       backgroundColor: "#fff",
       scale: 2,
+      scrollX: -window.scrollX,
       scrollY: -window.scrollY,
       useCORS: true
     }).then(canvas => {
