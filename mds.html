@@ -4,185 +4,82 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Monthly Due Schedule Maker</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    .form-container {
-      max-width: 600px;
-      margin: auto;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 15px;
-    }
-    label {
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    input[type="text"],
-    input[type="number"],
-    input[type="month"],
-    input[type="date"] {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      box-sizing: border-box;
-    }
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-    .button-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    button {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      color: #fff;
-      font-weight: bold;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .add-btn { background-color: green; }
-    .clear-btn { background-color: red; }
-    .image-btn { background-color: #007bff; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: center;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 150px;
-    }
-
-    th {
-      background-color: #f0f0f0;
-    }
-    tfoot td {
-      font-weight: bold;
-      background-color: #f9f9f9;
-      text-align: center;
-    }
-
-    #monthLabel {
-      text-align: center;
-      margin-top: 15px;
-      font-size: 20px;
-      font-weight: bold;
-      display: none;
-      color: #444;
-    }
-    input[type="checkbox"]:disabled {
-      cursor: not-allowed;
-    }
-    .context-menu {
-      position: absolute;
-      display: none;
-      background: #444;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      z-index: 999;
-    }
-    .context-menu button {
-      display: block;
-      width: 100%;
-      padding: 10px;
-      border: none;
-      background: none;
-      text-align: left;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .context-menu button:hover {
-      background-color: #007bff;
-      color: #fff;
-    }
-  </style>
 </head>
-<body>
+<body class="bg-light p-3">
 
-<div class="form-container">
-  <div class="form-group">
-    <label for="month">Month</label>
-    <input type="month" id="month" />
-  </div>
-  <div class="form-group">
-    <label for="newDate">Date</label>
-    <input type="date" id="newDate" />
-  </div>
-  <div class="form-group">
-    <label for="name">Name</label>
-    <input type="text" id="name" placeholder="Enter name" />
-  </div>
-  <div class="form-group">
-    <label for="amount">Amount</label>
-    <input type="number" id="amount" placeholder="Enter amount" />
-  </div>
-  <div class="checkbox-group">
-    <input type="checkbox" id="active" checked />
-    <label for="active">Active</label>
-  </div>
-  <div class="button-row">
-    <button class="add-btn" onclick="addToTable()">Add</button>
-    <button class="clear-btn" onclick="confirmClear()">Clear</button>
-    <button class="image-btn" onclick="captureImage()">📸 Get Image</button>
+<div class="container my-4">
+  <div class="card shadow rounded p-4 mx-auto" style="max-width: 600px;">
+    <h2 class="text-center mb-4">Monthly Due Schedule Maker</h2>
+
+    <div class="mb-3">
+      <label for="month" class="form-label">Month</label>
+      <input type="month" id="month" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label for="newDate" class="form-label">Date</label>
+      <input type="date" id="newDate" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label for="name" class="form-label">Name</label>
+      <input type="text" id="name" placeholder="Enter name" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label for="amount" class="form-label">Amount</label>
+      <input type="number" id="amount" placeholder="Enter amount" class="form-control" />
+    </div>
+
+    <div class="form-check mb-3">
+      <input type="checkbox" id="active" class="form-check-input" checked />
+      <label for="active" class="form-check-label">Active</label>
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end flex-wrap">
+      <button class="btn btn-primary" onclick="addToTable()">Add</button>
+      <button class="btn btn-danger" onclick="confirmClear()">Clear</button>
+      <button class="btn btn-success" onclick="captureImage()">📸 Get Image</button>
+    </div>
   </div>
 
-  <div id="captureArea" style="padding: 20px; background: white;">
-    <h2 id="monthLabel"></h2>
-    <table id="dataTable">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Name</th>
-          <th>Amount</th>
-          <th>Active</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-      <tfoot>
-        <tr>
-          <td colspan="4">
-            <strong>T:</strong> ₹<span id="totalAmount">0</span> |
-            <strong>P:</strong> ₹<span id="activeAmount">0</span> |
-            <strong>Pe:</strong> ₹<span id="inactiveAmount">0</span>
-          </td>
-        </tr>
-      </tfoot>
-    </table>
+  <div class="card shadow p-3 mt-5" id="snapshotContainer">
+    <h2 class="text-center" id="monthLabel"></h2>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover table-striped align-middle text-nowrap" id="dataTable">
+        <thead class="table-primary">
+          <tr>
+            <th>Date</th>
+            <th>Name</th>
+            <th>Amount</th>
+            <th>Active</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4">
+              <strong>T:</strong> ₹<span id="totalAmount">0</span> |
+              <strong>P:</strong> ₹<span id="activeAmount">0</span> |
+              <strong>Pe:</strong> ₹<span id="inactiveAmount">0</span>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
   </div>
 </div>
 
-<div id="contextMenu" class="context-menu">
-  <button onclick="editRow()">📝 Edit</button>
-  <button onclick="deleteRow()">🗑️ Delete</button>
-  <button onclick="hideContextMenu()">❌ Cancel</button>
+<!-- Context Menu -->
+<div id="contextMenu" class="position-absolute bg-white border shadow-sm rounded d-none z-3">
+  <button class="dropdown-item" onclick="editRow()">📝 Edit</button>
+  <button class="dropdown-item" onclick="deleteRow()">🗑️ Delete</button>
+  <button class="dropdown-item" onclick="hideContextMenu()">❌ Cancel</button>
 </div>
 
+<script src="js/bootstrap.bundle.min.js"></script>
 <script>
   const dbName = 'DueScheduleDB';
   const storeName = 'entries';
@@ -400,6 +297,5 @@
 
   window.onload = openDB;
 </script>
-
 </body>
 </html>
