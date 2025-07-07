@@ -155,11 +155,11 @@
       <button onclick="calculate()">Calculate</button>
       <button onclick="showBreakdown()">View</button>
       <button onclick="clearFields()">Clear</button>
-      <button onclick="downloadImage()">Get Image</button>
+      <button onclick="captureImage()">Get Image</button>
     </div>
 
     <div class="result" id="result"></div>
-<div id="screenshot-wrapper" style="padding:20px;background:white;">
+<div id="snapshotContainer" style="padding:20px;background:white;">
   <div id="breakdown"></div>
 </div>
   </div>
@@ -256,21 +256,9 @@
       document.getElementById("breakdown").innerHTML = "";
     }
 
-    function downloadImage() {
-  const target = document.getElementById("screenshot-wrapper");
-
-  if (!document.getElementById("breakdown").innerHTML.trim()) {
-    alert("Please click 'View' first to generate the content.");
-    return;
-  }
-
-  // html2canvas(target).then((canvas) => {
-  //   const link = document.createElement("a");
-  //   link.download = "due_breakdown.png";
-  //   link.href = canvas.toDataURL("image/png");
-  //   link.click();
-  // });
-   html2canvas(element, {
+     function captureImage() {
+    const element = document.getElementById("snapshotContainer");
+    html2canvas(element, {
       backgroundColor: null,
       scale: 2,
       scrollY: -window.scrollY
@@ -283,11 +271,11 @@
 
       // Also download locally
       const link = document.createElement('a');
-      link.download = 'due_breakdown.png';
+      link.download = 'due_schedule.png';
       link.href = base64Image;
       link.click();
     });
-}
+  }
   </script>
 
 </body>
