@@ -104,9 +104,11 @@
   const form = document.getElementById('meditationForm');
   const tableBody = document.querySelector('#meditationTable tbody');
   const contextMenu = document.getElementById('contextMenu');
-
-  const today = new Date();
+  
+const today = new Date();
+if (!dateInput.value) {
   dateInput.valueAsDate = today;
+}
   timeInput.value = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
   function openDB() {
