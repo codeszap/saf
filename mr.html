@@ -176,14 +176,18 @@
     e.preventDefault();
     const dateVal = dateInput.value.split('-').reverse().join('-');
     const medVal = document.querySelector('input[name="meditation"]:checked').value === 'yes' ? 'Yes' : 'No';
-    const timeVal = timeInput.value;
-    let [h, m] = timeVal.split(':');
-    h = Number(h);
-    let t12 = (h % 12 || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
-    const duration = document.getElementById('duration').value;
-    const notes = document.getElementById('notes').value;
+    let timeVal = '', t12 = '', duration = '', notes = '';
 
-    addEntry({ date: dateVal, meditation: medVal, time: t12, duration, notes });
+if (medVal === 'Yes') {
+  timeVal = timeInput.value;
+  let [h, m] = timeVal.split(':');
+  h = Number(h);
+  t12 = (h % 12 || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
+  duration = document.getElementById('duration').value;
+  notes = document.getElementById('notes').value;
+}
+
+addEntry({ date: dateVal, meditation: medVal, time: t12, duration, notes });
   });
 
   document.getElementById('clearBtn').addEventListener('click', () => {
