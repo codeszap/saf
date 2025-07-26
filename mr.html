@@ -58,11 +58,14 @@
       <textarea id="notes" rows="3" class="form-control"></textarea>
     </div>
 
-   <div class="d-flex gap-2 justify-content-end flex-wrap">
+  <div class="d-flex gap-2 justify-content-end flex-wrap">
   <button type="submit" class="btn btn-primary">Save</button>
   <button type="button" id="clearBtn" class="btn btn-danger">Clear</button>
   <button type="button" id="downloadImgBtn" class="btn btn-success">📸 Download Table</button>
   <button type="button" id="downloadJsonBtn" class="btn btn-warning">💾 Download JSON</button>
+  <!-- Add this new button -->
+  <input type="file" id="importInput" accept=".json" class="d-none">
+  <button type="button" id="importBtn" class="btn btn-info">📥 Import JSON</button>
 </div>
 
   </form>
@@ -206,6 +209,73 @@ addEntry({ date: dateVal, meditation: medVal, time: t12, duration, notes });
     }
   });
 
+  
+
+
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importInput').click();
+});
+
+document.getElementById('importInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const jsonData = JSON.parse(event.target.result);
+      
+      // Validate the JSON structure
+      if (!jsonData.data || !Array.isArray(jsonData.data)) {
+        throw new Error('Invalid JSON format');
+      }
+
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Process each entry
+      jsonData.data.forEach(entry => {
+        const request = store.add(entry);
+        
+        request.onsuccess = () => {
+          successCount++;
+          if (successCount + errorCount === jsonData.data.length) {
+            showImportResult(successCount, errorCount);
+          }
+        };
+        
+        request.onerror = () => {
+          errorCount++;
+          if (successCount + errorCount === jsonData.data.length) {
+            showImportResult(successCount, errorCount);
+          }
+        };
+      });
+
+      tx.oncomplete = () => {
+        loadEntries(); // Refresh the table
+        e.target.value = ''; // Clear the file input
+      };
+
+    } catch (error) {
+      alert('❌ Error: Invalid JSON file format');
+    }
+  };
+
+  reader.onerror = () => {
+    alert('❌ Error reading file');
+  };
+
+  reader.readAsText(file);
+});
+
+function showImportResult(success, error) {
+  const message = `Import completed!\n✅ ${success} entries imported successfully\n${error > 0 ? `❌ ${error} entries failed` : ''}`;
+  alert(message);
+}
+
   document.getElementById('downloadImgBtn').addEventListener('click', () => {
     const snapshot = document.getElementById('snapshotContainer');
     const clone = snapshot.cloneNode(true);
@@ -308,7 +378,8 @@ addEntry({ date: dateVal, meditation: medVal, time: t12, duration, notes });
     contextMenu.classList.add("d-none");
   });
 
-  document.getElementById('downloadJsonBtn').addEventListener('click', () => {
+ // Comment out or remove the existing downloadJsonBtn event listener
+/* document.getElementById('downloadJsonBtn').addEventListener('click', () => {
   const tx = db.transaction(STORE_NAME, 'readonly');
   const store = tx.objectStore(STORE_NAME);
   const entries = [];
@@ -331,8 +402,43 @@ addEntry({ date: dateVal, meditation: medVal, time: t12, duration, notes });
       }
     }
   };
-});
+}); */
 
+// Add this new event listener
+document.getElementById('downloadJsonBtn').addEventListener('click', () => {
+  const tx = db.transaction(STORE_NAME, 'readonly');
+  const store = tx.objectStore(STORE_NAME);
+  const entries = [];
+
+  store.openCursor().onsuccess = (e) => {
+    const cursor = e.target.result;
+    if (cursor) {
+      entries.push(cursor.value);
+      cursor.continue();
+    } else {
+      const payload = {
+        form: 'stc_meditation',
+        data: entries
+      };
+      
+      // Create a Blob with the JSON data
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'meditation_data.json';
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the URL object
+      URL.revokeObjectURL(link.href);
+    }
+  };
+});
 
   document.addEventListener('click', (e) => {
     if (!contextMenu.contains(e.target)) {
