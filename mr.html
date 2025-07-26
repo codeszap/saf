@@ -139,41 +139,47 @@ if (!dateInput.value) {
 
   }
 
-  function loadEntries() {
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
-    const entries = [];
+function loadEntries() {
+  const tx = db.transaction(STORE_NAME, 'readonly');
+  const store = tx.objectStore(STORE_NAME);
+  const entries = [];
 
-    store.openCursor().onsuccess = (e) => {
-      const cursor = e.target.result;
-      if (cursor) {
-        entries.push(cursor.value);
-        cursor.continue();
-      } else {
-        tableBody.innerHTML = '';
-        entries.forEach(entry => {
-          const row = document.createElement('tr');
-          row.dataset.id = entry.id;
-          row.innerHTML = `
-            <td class="text-nowrap">${entry.date}</td>
-            <td class="text-nowrap">${entry.meditation}</td>
-            <td class="text-nowrap">${entry.time}</td>
-            <td class="text-nowrap">${entry.duration}</td>
-            <td class="text-nowrap">${entry.notes}</td>
-          `;
-          row.addEventListener('contextmenu', function (e) {
-            e.preventDefault();
-            selectedRowId = entry.id;
-            contextMenu.style.top = `${e.pageY}px`;
-            contextMenu.style.left = `${e.pageX}px`;
-            contextMenu.classList.remove("d-none");
-          });
-          tableBody.appendChild(row);
+  store.openCursor().onsuccess = (e) => {
+    const cursor = e.target.result;
+    if (cursor) {
+      entries.push(cursor.value);
+      cursor.continue();
+    } else {
+      // Sort entries by date
+      entries.sort((a, b) => {
+        const [dayA, monthA, yearA] = a.date.split('-');
+        const [dayB, monthB, yearB] = b.date.split('-');
+        return new Date(`${yearA}-${monthA}-${dayA}`) - new Date(`${yearB}-${monthB}-${dayB}`);
+      });
+
+      tableBody.innerHTML = '';
+      entries.forEach(entry => {
+        const row = document.createElement('tr');
+        row.dataset.id = entry.id;
+        row.innerHTML = `
+          <td class="text-nowrap">${entry.date}</td>
+          <td class="text-nowrap">${entry.meditation}</td>
+          <td class="text-nowrap">${entry.time}</td>
+          <td class="text-nowrap">${entry.duration}</td>
+          <td class="text-nowrap">${entry.notes}</td>
+        `;
+        row.addEventListener('contextmenu', function (e) {
+          e.preventDefault();
+          selectedRowId = entry.id;
+          contextMenu.style.top = `${e.pageY}px`;
+          contextMenu.style.left = `${e.pageX}px`;
+          contextMenu.classList.remove("d-none");
         });
-      }
-    };
-  }
-
+        tableBody.appendChild(row);
+      });
+    }
+  };
+}
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     const dateVal = dateInput.value.split('-').reverse().join('-');
