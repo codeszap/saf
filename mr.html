@@ -71,6 +71,7 @@
   </form>
 
   <div class="card shadow p-3 mt-5" id="snapshotContainer">
+    <div id="summaryCounts" class="alert alert-info px-4 mb-3" style="display:none;"></div>
     <div class="table-responsive">
       <table class="table table-bordered table-hover table-striped align-middle text-nowrap" id="meditationTable">
         <thead class="table-primary">
@@ -153,7 +154,7 @@ function loadEntries() {
       entries.push(cursor.value);
       cursor.continue();
     } else {
-      // Sort entries by date
+      // Sort entries by date (optional)
       entries.sort((a, b) => {
         const [dayA, monthA, yearA] = a.date.split('-');
         const [dayB, monthB, yearB] = b.date.split('-');
@@ -180,9 +181,24 @@ function loadEntries() {
         });
         tableBody.appendChild(row);
       });
+
+      // Calculate summary counts
+      const totalDays = new Set(entries.map(e => e.date)).size;
+      const yesCount = entries.filter(e => e.meditation === "Yes").length;
+      const noCount = entries.filter(e => e.meditation === "No").length;
+
+      // Show summary info above the table
+      const summaryDiv = document.getElementById('summaryCounts');
+      summaryDiv.innerHTML = `
+        <b>Total days recorded:</b> ${totalDays} &nbsp; | 
+        <span class="text-success"><b>Meditated (Yes):</b> ${yesCount}</span> &nbsp; | 
+        <span class="text-danger"><b>Not Meditated (No):</b> ${noCount}</span>
+      `;
+      summaryDiv.style.display = 'block';
     }
   };
 }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     const dateVal = dateInput.value.split('-').reverse().join('-');
