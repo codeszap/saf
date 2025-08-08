@@ -45,16 +45,8 @@
 
   <div class="card shadow p-3 mt-5" id="snapshotContainer">
     <h2 class="text-center mb-3">Days Count Schedule</h2>
-    <div class="table-responsive">
-      <table class="table table-bordered table-hover table-striped align-middle text-nowrap" id="dataTable">
-        <thead class="table-primary">
-          <tr>
-            <th>Title</th>
-            <th>Balance Days</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <div id="cardsContainer" class="row g-3">
+      <!-- Cards will be rendered here -->
     </div>
   </div>
 </div>
@@ -192,22 +184,41 @@
   function loadFromDB() {
     getAllRowsFromDB((rows) => {
       rows.sort((a, b) => new Date(a.fromDate) - new Date(b.fromDate));
-      const tbody = document.querySelector('#dataTable tbody');
-      tbody.innerHTML = '';
+      const container = document.getElementById('cardsContainer');
+      container.innerHTML = '';
+
       rows.forEach(data => {
-        const newRow = tbody.insertRow();
-        newRow.dataset.id = data.id;
-
-        const titleCell = newRow.insertCell(0);
-        titleCell.textContent = data.title;
-
         const days = calcBalanceDays(data.fromDate, data.toDate);
-        const balanceCell = newRow.insertCell(1);
-        balanceCell.textContent = `${days} days left`;
 
-        newRow.addEventListener('contextmenu', (e) => {
+        const cardCol = document.createElement('div');
+        cardCol.className = 'col-12 col-md-6';
+
+        const card = document.createElement('div');
+        card.className = 'card shadow-sm h-100';
+        card.dataset.id = data.id;
+
+        const cardBody = document.createElement('div');
+        cardBody.className = 'card-body d-flex flex-column justify-content-between';
+
+        const titleEl = document.createElement('h5');
+        titleEl.className = 'card-title';
+        titleEl.textContent = data.title;
+
+        const daysEl = document.createElement('p');
+        daysEl.className = 'card-text text-muted';
+        daysEl.textContent = `${days} days left`;
+
+        cardBody.appendChild(titleEl);
+        cardBody.appendChild(daysEl);
+
+        card.appendChild(cardBody);
+        cardCol.appendChild(card);
+        container.appendChild(cardCol);
+
+        // Context menu on right click
+        card.addEventListener('contextmenu', (e) => {
           e.preventDefault();
-          selectedRow = newRow;
+          selectedRow = card;
           showContextMenu(e.pageX, e.pageY);
         });
       });
