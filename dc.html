@@ -101,13 +101,16 @@
     };
   }
 
-  function calcBalanceDays(fromDateStr, toDateStr) {
-    const fromDate = new Date(fromDateStr);
-    const toDate = new Date(toDateStr);
-    const diffMs = toDate - fromDate;
-    if (diffMs < 0) return 0;
-    return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-  }
+function calcBalanceDays(toDateStr) {
+  const today = new Date();
+  const toDate = new Date(toDateStr);
+  const diffMs = toDate - today;
+  if (diffMs < 0) return 0;
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+}
+
+
+  
 
   function showSaveToast(message = "✅ Added successfully!") {
     const toastEl = document.getElementById('saveToast');
