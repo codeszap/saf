@@ -211,6 +211,18 @@
       const container = document.getElementById('cardsContainer');
       container.innerHTML = '';
 
+      function formatFullDate(dateStr) {
+        const date = new Date(dateStr);
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear();
+        const months = [
+          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+        const month = months[date.getMonth()];
+        return `${day} ${month} ${year}`;
+      }
+
       rows.forEach(data => {
         const days = calcBalanceDays(data.fromDate, data.toDate);
 
@@ -228,22 +240,31 @@
         titleEl.className = 'card-title';
         titleEl.textContent = data.title;
 
+        const toDateFormatted = formatFullDate(data.toDate);
+
+        const dateRow = document.createElement('div');
+        dateRow.className = 'd-flex justify-content-between align-items-center';
+
         const daysEl = document.createElement('p');
-        daysEl.className = 'card-text text-muted';
+        daysEl.className = 'card-text text-primary fw-bold mb-0';
         daysEl.textContent = `${days} days left`;
 
+        const toDateEl = document.createElement('small');
+        toDateEl.className = 'text-muted';
+        toDateEl.textContent = `To: ${toDateFormatted}`;
+
+        dateRow.appendChild(daysEl);
+        dateRow.appendChild(toDateEl);
+
         cardBody.appendChild(titleEl);
-        cardBody.appendChild(daysEl);
+        cardBody.appendChild(dateRow);
 
         card.appendChild(cardBody);
         cardCol.appendChild(card);
         container.appendChild(cardCol);
 
-        card.addEventListener('contextmenu', (e) => {
-          e.preventDefault();
-          selectedRow = card;
-          showContextMenu(e.pageX, e.pageY);
-        });
+        // Add long press listener instead of right-click context menu
+        addLongPressListener(card);
       });
     });
   }
@@ -262,121 +283,159 @@
       scrollY: -window.scrollY
     }).then(canvas => {
       const base64Image = canvas.toDataURL('image/png');
-      if (window.ImageChannel && window.ImageChannel.postMessage) {
-        window.ImageChannel.postMessage(base64Image);
+      if (window.AndroidInterface && window.AndroidInterface.saveImage) {
+        window.AndroidInterface.saveImage(base64Image);
+      } else {
+        // Fallback: download image
+        const link = document.createElement('a');
+        link.download = 'days_count_schedule.png';
+        link.href = base64Image;
+        link.click();
       }
-
-      const link = document.createElement('a');
-      link.download = 'dayscount_schedule.png';
-      link.href = base64Image;
-      link.click();
     });
   }
 
+  function exportData() {
+    getAllRowsFromDB((rows) => {
+      const dataStr = JSON.stringify(rows, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'days_count_schedule.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!Array.isArray(data)) throw new Error("Invalid JSON");
+        clearDB();
+        setTimeout(() => {
+          const tx = db.transaction(storeName, 'readwrite');
+          const store = tx.objectStore(storeName);
+          data.forEach(item => {
+            delete item.id;
+            store.add(item);
+          });
+          tx.oncomplete = () => loadFromDB();
+        }, 200);
+      } catch {
+        alert("Invalid JSON file");
+      }
+    };
+    reader.readAsText(file);
+  }
+
   function confirmClear() {
-    if (confirm("Are you sure you want to clear everything?")) {
+    if (confirm("Are you sure you want to clear all entries?")) {
       clearDB();
     }
   }
 
+  // Context Menu logic
+
+  const contextMenu = document.getElementById('contextMenu');
+
   function showContextMenu(x, y) {
-    const menu = document.getElementById('contextMenu');
-    menu.style.top = `${y}px`;
-    menu.style.left = `${x}px`;
-    menu.classList.remove('d-none');
+    contextMenu.style.top = y + 'px';
+    contextMenu.style.left = x + 'px';
+    contextMenu.classList.remove('d-none');
   }
 
   function hideContextMenu() {
-    document.getElementById('contextMenu').classList.add('d-none');
-  }
-
-  document.addEventListener('click', () => {
-    hideContextMenu();
+    contextMenu.classList.add('d-none');
     selectedRow = null;
-  });
+  }
 
   function editRow() {
     if (!selectedRow) return;
-    const id = Number(selectedRow.dataset.id);
-    const tx = db.transaction(storeName, 'readonly');
-    const store = tx.objectStore(storeName);
-    const request = store.get(id);
-    request.onsuccess = () => {
-      const data = request.result;
-      if (!data) return;
-      document.getElementById('title').value = data.title;
-      document.getElementById('fromDate').value = data.fromDate;
-      document.getElementById('toDate').value = data.toDate;
 
-      // Delete old record to replace on save
+    const id = Number(selectedRow.dataset.id);
+    const title = selectedRow.querySelector('.card-title').textContent;
+    const daysLeftText = selectedRow.querySelector('.card-text').textContent;
+
+    getAllRowsFromDB((rows) => {
+      const row = rows.find(r => r.id === id);
+      if (!row) return;
+
+      document.getElementById('title').value = row.title;
+      document.getElementById('fromDate').value = row.fromDate;
+      document.getElementById('toDate').value = row.toDate;
+
+      // Remove old entry before saving update
       deleteRowFromDB(id);
-      selectedRow = null;
       hideContextMenu();
-    };
+    });
   }
 
   function deleteRow() {
     if (!selectedRow) return;
+    if (!confirm("Are you sure you want to delete this entry?")) {
+      hideContextMenu();
+      return;
+    }
     const id = Number(selectedRow.dataset.id);
     deleteRowFromDB(id);
     selectedRow = null;
     hideContextMenu();
   }
 
-  // Export JSON excluding 'name' and 'active' fields
-  function exportData() {
-    getAllRowsFromDB((rows) => {
-      const filteredRows = rows.map(({ id, title, fromDate, toDate }) => ({
-        id, title, fromDate, toDate
-      }));
+  // Long press detection
 
-      const dataStr = JSON.stringify(filteredRows, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
+  function addLongPressListener(element) {
+    let pressTimer;
 
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'dayscount_export.json';
-      link.click();
+    element.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      pressTimer = setTimeout(() => {
+        selectedRow = element;
+        showContextMenu(e.pageX, e.pageY);
+      }, 700);
+    });
 
-      URL.revokeObjectURL(url);
+    element.addEventListener('mouseup', () => {
+      clearTimeout(pressTimer);
+    });
+
+    element.addEventListener('mouseleave', () => {
+      clearTimeout(pressTimer);
+    });
+
+    element.addEventListener('touchstart', (e) => {
+      pressTimer = setTimeout(() => {
+        selectedRow = element;
+        showContextMenu(e.touches[0].pageX, e.touches[0].pageY);
+      }, 700);
+    });
+
+    element.addEventListener('touchend', () => {
+      clearTimeout(pressTimer);
+    });
+
+    element.addEventListener('touchcancel', () => {
+      clearTimeout(pressTimer);
     });
   }
 
-  // Import JSON and exclude 'name' and 'active' fields
-  function importData(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+  // Hide context menu on clicking outside
+  window.addEventListener('click', (e) => {
+    if (!contextMenu.contains(e.target)) {
+      hideContextMenu();
+    }
+  });
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const importedData = JSON.parse(e.target.result);
+  openDB();
 
-        const cleanData = importedData.map(({ id, title, fromDate, toDate }) => ({
-          id, title, fromDate, toDate
-        }));
-
-        const tx = db.transaction(storeName, 'readwrite');
-        const store = tx.objectStore(storeName);
-
-        cleanData.forEach(item => {
-          store.put(item);
-        });
-
-        tx.oncomplete = () => {
-          showSaveToast('Import successful!');
-          loadFromDB();
-        };
-        tx.onerror = () => alert('Import error!');
-      } catch (err) {
-        alert('Invalid JSON file!');
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  window.onload = openDB;
 </script>
 
 </body>
