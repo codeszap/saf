@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Days Counter</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    #contextMenu {
+      z-index: 10000;
+    }
+  </style>
+</head>
+<body class="bg-light p-3">
+
+<div class="container my-4">
+  <div class="card shadow rounded p-4 mx-auto" style="max-width: 600px;">
+    <h2 class="text-center mb-4">Days Counter</h2>
+
+    <div class="mb-3">
+      <label for="title" class="form-label">Title</label>
+      <input type="text" id="title" placeholder="Enter title" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label for="fromDate" class="form-label">From Date</label>
+      <input type="date" id="fromDate" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label for="toDate" class="form-label">To Date</label>
+      <input type="date" id="toDate" class="form-control" />
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end flex-wrap">
+      <button class="btn btn-primary" onclick="addToTable()">Add</button>
+      <button class="btn btn-danger" onclick="confirmClear()">Clear</button>
+      <button class="btn btn-success" onclick="captureImage()">📸 Get Image</button>
+      <button class="btn btn-info" onclick="exportData()">Export JSON</button>
+      <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)" />
+      <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import JSON</button>
+    </div>
+  </div>
+
+  <div class="card shadow p-3 mt-5" id="snapshotContainer">
+    <h2 class="text-center mb-3">Days Count Schedule</h2>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover table-striped align-middle text-nowrap" id="dataTable">
+        <thead class="table-primary">
+          <tr>
+            <th>Title</th>
+            <th>Balance Days</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div id="contextMenu" class="position-absolute bg-white border shadow-sm rounded d-none">
+  <button class="dropdown-item" onclick="editRow()">📝 Edit</button>
+  <button class="dropdown-item" onclick="deleteRow()">🗑️ Delete</button>
+  <button class="dropdown-item" onclick="hideContextMenu()">❌ Cancel</button>
+</div>
+
+<script src="js/bootstrap.bundle.min.js"></script>
+<script>
+  const dbName = 'dayscount';
+  const storeName = 'entries';
+  let db;
+
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+
+  document.getElementById('fromDate').value = `${yyyy}-${mm}-${dd}`;
+  document.getElementById('toDate').value = `${yyyy}-${mm}-${dd}`;
+
+  let selectedRow = null;
+
+  function openDB() {
+    const request = indexedDB.open(dbName, 1);
+    request.onerror = () => alert("DB Error!");
+    request.onsuccess = (event) => {
+      db = event.target.result;
+      loadFromDB();
+    };
+    request.onupgradeneeded = (event) => {
+      db = event.target.result;
+      if (!db.objectStoreNames.contains(storeName)) {
+        db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+  }
+
+  function calcBalanceDays(fromDateStr, toDateStr) {
+    const fromDate = new Date(fromDateStr);
+    const toDate = new Date(toDateStr);
+    const diffMs = toDate - fromDate;
+    if (diffMs < 0) return 0;
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+  }
+
+  function addRowToDB(data) {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    store.add(data);
+    tx.oncomplete = () => {
+      loadFromDB();
+      clearForm();
+      alert("✅ Added successfully!");
+    };
+  }
+
+  function getAllRowsFromDB(callback) {
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const rows = [];
+    store.openCursor().onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        rows.push({ id: cursor.key, ...cursor.value });
+        cursor.continue();
+      } else {
+        callback(rows);
+      }
+    };
+  }
+
+  function updateRowInDB(id, updatedData) {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    const getRequest = store.get(id);
+    getRequest.onsuccess = () => {
+      const data = getRequest.result;
+      if (!data) return;
+      const newData = { ...data, ...updatedData };
+      store.put(newData);
+      tx.oncomplete = () => {
+        loadFromDB();
+      };
+    };
+  }
+
+  function deleteRowFromDB(id) {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).delete(id);
+    tx.oncomplete = loadFromDB;
+  }
+
+  function clearDB() {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).clear();
+    tx.oncomplete = () => {
+      loadFromDB();
+    };
+  }
+
+  function addToTable() {
+    const title = document.getElementById('title').value.trim();
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+
+    if (!title || !fromDate || !toDate) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    if (new Date(toDate) < new Date(fromDate)) {
+      alert("To Date cannot be before From Date");
+      return;
+    }
+
+    getAllRowsFromDB((rows) => {
+      const duplicate = rows.find(row =>
+        row.title.toLowerCase() === title.toLowerCase() &&
+        row.fromDate === fromDate &&
+        row.toDate === toDate
+      );
+      if (duplicate) {
+        alert("Duplicate entry not allowed");
+        return;
+      }
+      addRowToDB({ title, fromDate, toDate });
+    });
+  }
+
+  function loadFromDB() {
+    getAllRowsFromDB((rows) => {
+      rows.sort((a, b) => new Date(a.fromDate) - new Date(b.fromDate));
+      const tbody = document.querySelector('#dataTable tbody');
+      tbody.innerHTML = '';
+      rows.forEach(data => {
+        const newRow = tbody.insertRow();
+        newRow.dataset.id = data.id;
+
+        const titleCell = newRow.insertCell(0);
+        titleCell.textContent = data.title;
+
+        const days = calcBalanceDays(data.fromDate, data.toDate);
+        const balanceCell = newRow.insertCell(1);
+        balanceCell.textContent = `${days} days left`;
+
+        newRow.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          selectedRow = newRow;
+          showContextMenu(e.pageX, e.pageY);
+        });
+      });
+    });
+  }
+
+  function clearForm() {
+    document.getElementById('title').value = '';
+    document.getElementById('fromDate').value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('toDate').value = `${yyyy}-${mm}-${dd}`;
+  }
+
+  function captureImage() {
+    const element = document.getElementById("snapshotContainer");
+    html2canvas(element, {
+      backgroundColor: null,
+      scale: 2,
+      scrollY: -window.scrollY
+    }).then(canvas => {
+      const base64Image = canvas.toDataURL('image/png');
+      if (window.ImageChannel && window.ImageChannel.postMessage) {
+        window.ImageChannel.postMessage(base64Image);
+      }
+
+      const link = document.createElement('a');
+      link.download = 'dayscount_schedule.png';
+      link.href = base64Image;
+      link.click();
+    });
+  }
+
+  function confirmClear() {
+    if (confirm("Are you sure you want to clear everything?")) {
+      clearDB();
+    }
+  }
+
+  function showContextMenu(x, y) {
+    const menu = document.getElementById('contextMenu');
+    menu.style.top = `${y}px`;
+    menu.style.left = `${x}px`;
+    menu.classList.remove('d-none');
+  }
+
+  function hideContextMenu() {
+    document.getElementById('contextMenu').classList.add('d-none');
+  }
+
+  document.addEventListener('click', () => {
+    hideContextMenu();
+    selectedRow = null;
+  });
+
+  function editRow() {
+    if (!selectedRow) return;
+    const id = Number(selectedRow.dataset.id);
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const request = store.get(id);
+    request.onsuccess = () => {
+      const data = request.result;
+      if (!data) return;
+      document.getElementById('title').value = data.title;
+      document.getElementById('fromDate').value = data.fromDate;
+      document.getElementById('toDate').value = data.toDate;
+
+      // Delete old record to replace on save
+      deleteRowFromDB(id);
+      selectedRow = null;
+      hideContextMenu();
+    };
+  }
+
+  function deleteRow() {
+    if (!selectedRow) return;
+    const id = Number(selectedRow.dataset.id);
+    deleteRowFromDB(id);
+    selectedRow = null;
+    hideContextMenu();
+  }
+
+  // Export JSON excluding 'name' and 'active' fields
+  function exportData() {
+    getAllRowsFromDB((rows) => {
+      const filteredRows = rows.map(({ id, title, fromDate, toDate }) => ({
+        id, title, fromDate, toDate
+      }));
+
+      const dataStr = JSON.stringify(filteredRows, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'dayscount_export.json';
+      link.click();
+
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  // Import JSON and exclude 'name' and 'active' fields
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedData = JSON.parse(e.target.result);
+
+        const cleanData = importedData.map(({ id, title, fromDate, toDate }) => ({
+          id, title, fromDate, toDate
+        }));
+
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+
+        cleanData.forEach(item => {
+          store.put(item);
+        });
+
+        tx.oncomplete = () => {
+          alert('Import successful!');
+          loadFromDB();
+        };
+        tx.onerror = () => alert('Import error!');
+      } catch (err) {
+        alert('Invalid JSON file!');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  window.onload = openDB;
+</script>
+
+</body>
+</html>
