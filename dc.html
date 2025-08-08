@@ -58,6 +58,18 @@
   <button class="dropdown-item" onclick="hideContextMenu()">❌ Cancel</button>
 </div>
 
+<!-- Toast container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11000">
+  <div id="saveToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        ✅ Added successfully!
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
 <script src="js/bootstrap.bundle.min.js"></script>
 <script>
   const dbName = 'dayscount';
@@ -97,6 +109,13 @@
     return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
   }
 
+  function showSaveToast(message = "✅ Added successfully!") {
+    const toastEl = document.getElementById('saveToast');
+    toastEl.querySelector('.toast-body').textContent = message;
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
+  }
+
   function addRowToDB(data) {
     const tx = db.transaction(storeName, 'readwrite');
     const store = tx.objectStore(storeName);
@@ -104,7 +123,7 @@
     tx.oncomplete = () => {
       loadFromDB();
       clearForm();
-      alert("✅ Added successfully!");
+      showSaveToast();
     };
   }
 
@@ -183,7 +202,12 @@
 
   function loadFromDB() {
     getAllRowsFromDB((rows) => {
-      rows.sort((a, b) => new Date(a.fromDate) - new Date(b.fromDate));
+      rows.sort((a, b) => {
+        const daysA = calcBalanceDays(a.fromDate, a.toDate);
+        const daysB = calcBalanceDays(b.fromDate, b.toDate);
+        return daysA - daysB;
+      });
+
       const container = document.getElementById('cardsContainer');
       container.innerHTML = '';
 
@@ -215,7 +239,6 @@
         cardCol.appendChild(card);
         container.appendChild(cardCol);
 
-        // Context menu on right click
         card.addEventListener('contextmenu', (e) => {
           e.preventDefault();
           selectedRow = card;
@@ -342,7 +365,7 @@
         });
 
         tx.oncomplete = () => {
-          alert('Import successful!');
+          showSaveToast('Import successful!');
           loadFromDB();
         };
         tx.onerror = () => alert('Import error!');
