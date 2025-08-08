@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Days Counter</title>
-  <link rel="stylesheet" href="css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     #contextMenu {
@@ -70,15 +70,16 @@
   </div>
 </div>
 
-<script src="js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   const dbName = 'dayscount';
   const storeName = 'entries';
   let db;
 
+  // Set today's date in YYYY-MM-DD format
   const today = new Date();
   const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, '0');  // month is 0-indexed
   const dd = String(today.getDate()).padStart(2, '0');
 
   document.getElementById('fromDate').value = `${yyyy}-${mm}-${dd}`;
@@ -101,16 +102,18 @@
     };
   }
 
-function calcBalanceDays(toDateStr) {
-  const today = new Date();
-  const toDate = new Date(toDateStr);
-  const diffMs = toDate - today;
-  if (diffMs < 0) return 0;
-  return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-}
+  // Calculate days left from today to the given toDate string (YYYY-MM-DD)
+  function calcBalanceDays(toDateStr) {
+    const today = new Date();
+    // Clear time part for accurate day difference
+    today.setHours(0,0,0,0);
+    const toDate = new Date(toDateStr);
+    toDate.setHours(0,0,0,0);
 
-
-  
+    const diffMs = toDate - today;
+    if (diffMs < 0) return 0;
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+  }
 
   function showSaveToast(message = "✅ Added successfully!") {
     const toastEl = document.getElementById('saveToast');
@@ -205,9 +208,10 @@ function calcBalanceDays(toDateStr) {
 
   function loadFromDB() {
     getAllRowsFromDB((rows) => {
+      // Sort by days left (from today to toDate)
       rows.sort((a, b) => {
-        const daysA = calcBalanceDays(a.fromDate, a.toDate);
-        const daysB = calcBalanceDays(b.fromDate, b.toDate);
+        const daysA = calcBalanceDays(a.toDate);
+        const daysB = calcBalanceDays(b.toDate);
         return daysA - daysB;
       });
 
@@ -227,7 +231,7 @@ function calcBalanceDays(toDateStr) {
       }
 
       rows.forEach(data => {
-        const days = calcBalanceDays(data.fromDate, data.toDate);
+        const days = calcBalanceDays(data.toDate);
 
         const cardCol = document.createElement('div');
         cardCol.className = 'col-12 col-md-6';
@@ -364,8 +368,6 @@ function calcBalanceDays(toDateStr) {
     if (!selectedRow) return;
 
     const id = Number(selectedRow.dataset.id);
-    const title = selectedRow.querySelector('.card-title').textContent;
-    const daysLeftText = selectedRow.querySelector('.card-text').textContent;
 
     getAllRowsFromDB((rows) => {
       const row = rows.find(r => r.id === id);
@@ -375,62 +377,86 @@ function calcBalanceDays(toDateStr) {
       document.getElementById('fromDate').value = row.fromDate;
       document.getElementById('toDate').value = row.toDate;
 
-      // Remove old entry before saving update
-      deleteRowFromDB(id);
       hideContextMenu();
+
+      // When user clicks Add, update instead of insert
+      selectedRow.isEditing = true;
+      selectedRow.idEditing = id;
     });
   }
 
   function deleteRow() {
     if (!selectedRow) return;
-    if (!confirm("Are you sure you want to delete this entry?")) {
-      hideContextMenu();
-      return;
-    }
     const id = Number(selectedRow.dataset.id);
-    deleteRowFromDB(id);
-    selectedRow = null;
-    hideContextMenu();
+    if (confirm("Delete this entry?")) {
+      deleteRowFromDB(id);
+      hideContextMenu();
+    }
   }
 
-  // Long press detection
+  // Long press detection for cards (mobile friendly)
+
+  let longPressTimer;
 
   function addLongPressListener(element) {
-    let pressTimer;
+    element.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
 
     element.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      pressTimer = setTimeout(() => {
+      longPressTimer = setTimeout(() => {
         selectedRow = element;
         showContextMenu(e.pageX, e.pageY);
-      }, 700);
+      }, 600);
     });
 
     element.addEventListener('mouseup', () => {
-      clearTimeout(pressTimer);
+      clearTimeout(longPressTimer);
     });
 
     element.addEventListener('mouseleave', () => {
-      clearTimeout(pressTimer);
+      clearTimeout(longPressTimer);
     });
 
+    // Touch support
     element.addEventListener('touchstart', (e) => {
-      pressTimer = setTimeout(() => {
+      longPressTimer = setTimeout(() => {
         selectedRow = element;
         showContextMenu(e.touches[0].pageX, e.touches[0].pageY);
-      }, 700);
+      }, 600);
     });
-
     element.addEventListener('touchend', () => {
-      clearTimeout(pressTimer);
-    });
-
-    element.addEventListener('touchcancel', () => {
-      clearTimeout(pressTimer);
+      clearTimeout(longPressTimer);
     });
   }
 
-  // Hide context menu on clicking outside
+  // Handle update mode when Add clicked
+  document.querySelector('button.btn-primary').addEventListener('click', () => {
+    if (selectedRow && selectedRow.isEditing) {
+      const id = selectedRow.idEditing;
+      const title = document.getElementById('title').value.trim();
+      const fromDate = document.getElementById('fromDate').value;
+      const toDate = document.getElementById('toDate').value;
+
+      if (!title || !fromDate || !toDate) {
+        alert("Please fill all fields");
+        return;
+      }
+
+      if (new Date(toDate) < new Date(fromDate)) {
+        alert("To Date cannot be before From Date");
+        return;
+      }
+
+      updateRowInDB(id, { title, fromDate, toDate });
+      selectedRow.isEditing = false;
+      selectedRow = null;
+      clearForm();
+      showSaveToast("✅ Updated successfully!");
+    }
+  });
+
+  // Close context menu when clicking outside
   window.addEventListener('click', (e) => {
     if (!contextMenu.contains(e.target)) {
       hideContextMenu();
@@ -438,7 +464,6 @@ function calcBalanceDays(toDateStr) {
   });
 
   openDB();
-
 </script>
 
 </body>
