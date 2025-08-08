@@ -74,11 +74,19 @@
         <label for="monthFilter" class="fw-semibold">Filter by Month:</label>
         <input type="month" id="monthFilter" class="form-control d-inline-block" style="width:auto;">
       </div>
-      <div id="paginationControls" class="d-flex align-items-center gap-2">
-        <button id="prevPage" class="btn btn-outline-secondary btn-sm">⬅ Prev</button>
-        <span id="pageInfo" class="fw-semibold"></span>
-        <button id="nextPage" class="btn btn-outline-secondary btn-sm">Next ➡</button>
-      </div>
+     <div id="paginationControls" class="d-flex align-items-center gap-2">
+  <label class="fw-semibold">Rows:</label>
+  <select id="rowsPerPageSelect" class="form-select form-select-sm" style="width:auto;">
+    <option value="5" selected>5</option>
+    <option value="10">10</option>
+    <option value="15">15</option>
+    <option value="20">20</option>
+  </select>
+  <button id="prevPage" class="btn btn-outline-secondary btn-sm">⬅ Prev</button>
+  <span id="pageInfo" class="fw-semibold"></span>
+  <button id="nextPage" class="btn btn-outline-secondary btn-sm">Next ➡</button>
+</div>
+
     </div>
 
     <div id="summaryCounts" class="alert alert-info px-4 mb-3" style="display:none;"></div>
@@ -116,7 +124,14 @@
   let allEntries = [];
   let filteredEntries = [];
   let currentPage = 1;
-  const rowsPerPage = 5;
+ let rowsPerPage = 5;
+
+
+document.getElementById('rowsPerPageSelect').addEventListener('change', (e) => {
+  rowsPerPage = parseInt(e.target.value, 10);
+  currentPage = 1;
+  applyFiltersAndPagination();
+});
 
   const dateInput = document.getElementById('date');
   const timeInput = document.getElementById('startTime');
@@ -232,9 +247,9 @@
     `;
     summaryDiv.style.display = 'block';
   }
-
+1
   function updatePaginationInfo(totalPages) {
-    document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+    document.getElementById('pageInfo').textContent = `Pa ${currentPage} of ${totalPages}`;
     document.getElementById('prevPage').disabled = currentPage === 1;
     document.getElementById('nextPage').disabled = currentPage === totalPages;
   }
@@ -453,6 +468,14 @@
       contextMenu.classList.add("d-none");
     }
   });
+
+  form.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+    e.preventDefault();
+    form.requestSubmit();
+  }
+});
+
 
   window.onload = openDB;
 </script>
