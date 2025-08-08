@@ -2,104 +2,178 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>STC Meditation Tracker 2</title>
+<title>STC Meditation Tracker 1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
-  body { padding: 20px; }
-  table td, table th { vertical-align: middle; }
+  .table-responsive {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  td, th {
+    white-space: nowrap;
+  }
 </style>
 </head>
-<body>
+<body class="bg-light">
 
-<h2>Meditation Tracker</h2>
+<div class="container my-4">
+  <h2 class="mb-4">🧘‍♂️ Meditation Tracker</h2>
 
-<!-- Top controls -->
-<div class="mb-3 d-flex flex-wrap gap-2">
-  <input type="month" id="monthFilter" class="form-control w-auto">
-  <button id="clearAllBtn" class="btn btn-danger btn-sm">Clear All</button>
-  <button id="downloadJsonBtn" class="btn btn-success btn-sm">Download JSON</button>
-  <input type="file" id="uploadJsonInput" class="form-control form-control-sm w-auto">
-  <button id="downloadImgBtn" class="btn btn-primary btn-sm">Download Image</button>
-</div>
+  <!-- Form -->
+  <form id="entryForm" class="row g-3">
+    <div class="col-md-3">
+      <label class="form-label">Date</label>
+      <input type="text" id="date" class="form-control" placeholder="dd-mm-yyyy" required>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Meditation</label>
+      <input type="text" id="meditation" class="form-control" required>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Time</label>
+      <input type="text" id="time" class="form-control" required>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Duration (mins)</label>
+      <input type="number" id="duration" class="form-control" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Notes</label>
+      <input type="text" id="notes" class="form-control">
+    </div>
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary">Add Entry</button>
+    </div>
+  </form>
 
-<!-- Summary row -->
-<div class="mb-2">
-  <span class="badge bg-success">Yes: <span id="yesCount">0</span></span>
-  <span class="badge bg-danger">No: <span id="noCount">0</span></span>
-  <span class="ms-3 fw-bold" id="monthLabel">All Months</span>
-</div>
+  <hr>
 
-<!-- Table -->
-<div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-  <table class="table table-bordered" id="meditationTable">
-    <thead class="table-light">
-      <tr>
-        <th>Date</th>
-        <th>Meditation</th>
-        <th>Time</th>
-        <th>Duration</th>
-        <th>Notes</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-    <tfoot>
-      <tr class="fw-bold">
-        <td colspan="3">Total</td>
-        <td id="totalDuration">0</td>
-        <td colspan="2"></td>
-      </tr>
-    </tfoot>
-  </table>
-</div>
-
-<!-- Form -->
-<form id="entryForm" class="mt-3">
-  <div class="row g-2">
-    <div class="col"><input type="date" id="date" class="form-control" required></div>
-    <div class="col"><input type="text" id="meditation" class="form-control" placeholder="Meditation" required></div>
-    <div class="col"><input type="time" id="time" class="form-control" required></div>
-    <div class="col"><input type="number" id="duration" class="form-control" placeholder="Minutes" required></div>
-    <div class="col"><input type="text" id="notes" class="form-control" placeholder="Notes"></div>
-    <div class="col"><button type="submit" class="btn btn-primary w-100">Add</button></div>
+  <!-- Filter -->
+  <div class="row mb-3">
+    <div class="col-md-3">
+      <label class="form-label fw-semibold">Filter by Month</label>
+      <select id="monthFilter" class="form-select">
+        <option value="">All Months</option>
+        <option value="01">January</option>
+        <option value="02">February</option>
+        <option value="03">March</option>
+        <option value="04">April</option>
+        <option value="05">May</option>
+        <option value="06">June</option>
+        <option value="07">July</option>
+        <option value="08">August</option>
+        <option value="09">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+      </select>
+    </div>
   </div>
-</form>
+
+  <!-- Month display -->
+  <div id="monthDisplay" class="fw-semibold mb-2"></div>
+
+  <!-- Table -->
+  <div id="snapshotContainer">
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped" id="meditationTable">
+        <thead class="table-dark">
+          <tr>
+            <th>Date</th>
+            <th>Meditation</th>
+            <th>Time</th>
+            <th>Duration</th>
+            <th>Notes</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr class="table-secondary fw-bold">
+            <td colspan="3">Total</td>
+            <td id="totalDuration">0</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Stats display -->
+  <div id="statsSummary" class="fw-bold mt-2"></div>
+
+  <!-- Buttons -->
+  <div class="mt-3">
+    <button id="downloadJsonBtn" class="btn btn-success btn-sm">Download JSON</button>
+    <button id="downloadImgBtn" class="btn btn-info btn-sm">Download Table Image</button>
+    <button id="importJsonBtn" class="btn btn-secondary btn-sm">Import JSON</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none">
+    <button id="clearAllBtn" class="btn btn-danger btn-sm">Clear All</button>
+  </div>
+</div>
 
 <script>
-// IndexedDB setup
+const DB_NAME = "MeditationDB";
+const DB_VERSION = 1;
+const STORE_NAME = "entries";
 let db;
-const request = indexedDB.open("MeditationDB", 1);
-request.onupgradeneeded = e => {
-  db = e.target.result;
-  db.createObjectStore("entries", { keyPath: "id", autoIncrement: true });
-};
-request.onsuccess = e => {
-  db = e.target.result;
-  loadEntries();
-};
-request.onerror = e => console.error("DB error:", e.target.error);
+let allEntries = [];
 
-// Load entries
-function loadEntries(month = "") {
-  const tx = db.transaction("entries", "readonly");
-  const store = tx.objectStore("entries");
-  const req = store.getAll();
-  req.onsuccess = () => {
-    let data = req.result;
-    if (month) {
-      const [y, m] = month.split("-");
-      data = data.filter(e => e.date.startsWith(`${y}-${m}`));
+window.onload = () => {
+  const request = indexedDB.open(DB_NAME, DB_VERSION);
+  request.onerror = e => console.error("DB error:", e.target.error);
+  request.onsuccess = e => { db = e.target.result; loadEntries(); };
+  request.onupgradeneeded = e => {
+    db = e.target.result;
+    if (!db.objectStoreNames.contains(STORE_NAME)) {
+      db.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
     }
-    renderTable(data);
+  };
+};
+
+document.getElementById("entryForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const newEntry = {
+    date: date.value.trim(),
+    meditation: meditation.value.trim(),
+    time: time.value.trim(),
+    duration: parseInt(duration.value.trim()) || 0,
+    notes: notes.value.trim()
+  };
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  tx.objectStore(STORE_NAME).add(newEntry);
+  tx.oncomplete = () => {
+    entryForm.reset();
+    loadEntries(true);
+  };
+});
+
+function loadEntries(scrollToLast = false) {
+  const tx = db.transaction(STORE_NAME, "readonly");
+  const store = tx.objectStore(STORE_NAME);
+  const entries = [];
+  store.openCursor().onsuccess = e => {
+    const cursor = e.target.result;
+    if (cursor) { entries.push(cursor.value); cursor.continue(); }
+    else {
+      entries.sort((a, b) => {
+        const [dA, mA, yA] = a.date.split("-");
+        const [dB, mB, yB] = b.date.split("-");
+        return new Date(`${yA}-${mA}-${dA}`) - new Date(`${yB}-${mB}-${dB}`);
+      });
+      allEntries = entries;
+      applyFilter(scrollToLast);
+    }
   };
 }
 
-// Render table + counts
 function renderTable(data, scrollToLast) {
   const tbody = document.querySelector("#meditationTable tbody");
   tbody.innerHTML = "";
   let total = 0;
+
   data.forEach((entry, idx) => {
     total += entry.duration;
     const row = document.createElement("tr");
@@ -119,78 +193,54 @@ function renderTable(data, scrollToLast) {
       setTimeout(() => row.scrollIntoView({ behavior: "smooth" }), 100);
     }
   });
+
   document.getElementById("totalDuration").innerText = total;
-  updateSummaryAndMonthLabel(data);
+
+  // Stats: total days, yes/no count
+  const uniqueDates = new Set(data.map(e => e.date));
+  const yesCount = data.filter(e => e.meditation.toLowerCase() === "yes").length;
+  const noCount = data.filter(e => e.meditation.toLowerCase() === "no").length;
+  document.getElementById("statsSummary").innerText =
+    `Total Days: ${uniqueDates.size} | Yes: ${yesCount} | No: ${noCount}`;
 }
 
-// Update Yes/No count + month label
-function updateSummaryAndMonthLabel(data) {
-  let yes = 0, no = 0;
-  data.forEach(e => e.duration > 0 ? yes++ : no++);
-  document.getElementById("yesCount").innerText = yes;
-  document.getElementById("noCount").innerText = no;
+function applyFilter(scrollToLast = false) {
   const monthVal = document.getElementById("monthFilter").value;
-  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  document.getElementById("monthLabel").innerText = monthVal
-    ? monthNames[parseInt(monthVal.split("-")[1]) - 1]
-    : "All Months";
+  const monthNameMap = {
+    "01": "January", "02": "February", "03": "March", "04": "April",
+    "05": "May", "06": "June", "07": "July", "08": "August",
+    "09": "September", "10": "October", "11": "November", "12": "December"
+  };
+  document.getElementById("monthDisplay").innerText =
+    monthVal ? `Month: ${monthNameMap[monthVal]}` : "";
+
+  if (!monthVal) renderTable(allEntries, scrollToLast);
+  else {
+    const filtered = allEntries.filter(e => e.date.split("-")[1] === monthVal);
+    renderTable(filtered, scrollToLast);
+  }
 }
 
-// Add entry
-document.getElementById("entryForm").addEventListener("submit", e => {
-  e.preventDefault();
-  const entry = {
-    date: date.value,
-    meditation: meditation.value,
-    time: time.value,
-    duration: parseInt(duration.value) || 0,
-    notes: notes.value
-  };
-  const tx = db.transaction("entries", "readwrite");
-  tx.objectStore("entries").add(entry);
-  tx.oncomplete = () => {
-    loadEntries(monthFilter.value);
-    e.target.reset();
-  };
-});
+document.getElementById("monthFilter").addEventListener("change", () => applyFilter());
 
-// Edit entry
 function editEntry(id) {
-  const tx = db.transaction("entries", "readonly");
-  const store = tx.objectStore("entries");
-  const req = store.get(id);
-  req.onsuccess = () => {
-    const entry = req.result;
-    date.value = entry.date;
-    meditation.value = entry.meditation;
-    time.value = entry.time;
-    duration.value = entry.duration;
-    notes.value = entry.notes;
-    deleteEntry(id, false);
-  };
+  const entry = allEntries.find(e => e.id === id);
+  if (!entry) return;
+  date.value = entry.date;
+  meditation.value = entry.meditation;
+  time.value = entry.time;
+  duration.value = entry.duration;
+  notes.value = entry.notes;
+  deleteEntry(id, false);
 }
 
-// Delete entry
 function deleteEntry(id, reload = true) {
-  const tx = db.transaction("entries", "readwrite");
-  tx.objectStore("entries").delete(id);
-  tx.oncomplete = () => { if (reload) loadEntries(monthFilter.value); };
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  tx.objectStore(STORE_NAME).delete(id);
+  tx.oncomplete = () => { if (reload) loadEntries(); };
 }
 
-// Clear all
-document.getElementById("clearAllBtn").addEventListener("click", () => {
-  if (!confirm("Delete all entries?")) return;
-  const tx = db.transaction("entries", "readwrite");
-  tx.objectStore("entries").clear();
-  tx.oncomplete = () => loadEntries(monthFilter.value);
-});
-
-// Month filter
-document.getElementById("monthFilter").addEventListener("change", e => {
-  loadEntries(e.target.value);
-});
-
-// JSON download (filtered)
+// JSON download
 document.getElementById("downloadJsonBtn").addEventListener("click", () => {
   const displayedData = [];
   document.querySelectorAll("#meditationTable tbody tr").forEach(row => {
@@ -203,10 +253,7 @@ document.getElementById("downloadJsonBtn").addEventListener("click", () => {
       notes: cells[4].innerText
     });
   });
-  const blob = new Blob(
-    [JSON.stringify({ form: "stc_meditation", data: displayedData }, null, 2)],
-    { type: "application/json" }
-  );
+  const blob = new Blob([JSON.stringify({ form: "stc_meditation", data: displayedData }, null, 2)], { type: "application/json" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "meditation_data.json";
@@ -214,49 +261,59 @@ document.getElementById("downloadJsonBtn").addEventListener("click", () => {
   URL.revokeObjectURL(link.href);
 });
 
-// JSON upload
-document.getElementById("uploadJsonInput").addEventListener("change", e => {
+// 📸 Download table as image without actions column
+document.getElementById('downloadImgBtn').addEventListener('click', () => {
+  const tableElement = document.getElementById('meditationTable');
+
+  // Hide last column
+  tableElement.querySelectorAll("th:last-child, td:last-child").forEach(cell => {
+    cell.style.display = "none";
+  });
+
+  html2canvas(document.getElementById('snapshotContainer'), { backgroundColor: "#fff", scale: 2 }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'meditation_table.png';
+    link.href = canvas.toDataURL();
+    link.click();
+
+    // Restore last column
+    tableElement.querySelectorAll("th:last-child, td:last-child").forEach(cell => {
+      cell.style.display = "";
+    });
+  }).catch(err => {
+    console.error('Image download failed:', err);
+  });
+});
+
+// Import JSON
+document.getElementById("importJsonBtn").addEventListener("click", () => {
+  document.getElementById("importFile").click();
+});
+document.getElementById("importFile").addEventListener("change", e => {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = evt => {
     try {
       const json = JSON.parse(evt.target.result);
-      if (!Array.isArray(json.data)) throw new Error("Invalid file");
-      const tx = db.transaction("entries", "readwrite");
-      const store = tx.objectStore("entries");
-      json.data.forEach(item => store.add(item));
-      tx.oncomplete = () => loadEntries(monthFilter.value);
+      if (!json.data) throw new Error("Invalid file");
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      json.data.forEach(entry => store.add(entry));
+      tx.oncomplete = () => loadEntries(true);
     } catch (err) {
-      alert("Invalid JSON file");
+      alert("Import failed: " + err.message);
     }
   };
   reader.readAsText(file);
 });
 
-// Image download without actions column
-document.getElementById('downloadImgBtn').addEventListener('click', () => {
-  const originalTable = document.getElementById('meditationTable');
-  const clone = originalTable.cloneNode(true);
-  clone.querySelectorAll('tr').forEach(row => {
-    if (row.cells.length > 0) {
-      row.deleteCell(row.cells.length - 1);
-    }
-  });
-  const tempContainer = document.createElement('div');
-  tempContainer.style.backgroundColor = '#fff';
-  tempContainer.appendChild(clone);
-  document.body.appendChild(tempContainer);
-  html2canvas(tempContainer, { scale: 2 }).then(canvas => {
-    const link = document.createElement('a');
-    link.download = 'meditation_table.png';
-    link.href = canvas.toDataURL();
-    link.click();
-    document.body.removeChild(tempContainer);
-  }).catch(err => {
-    console.error('Image download failed:', err);
-    document.body.removeChild(tempContainer);
-  });
+// Clear all
+document.getElementById("clearAllBtn").addEventListener("click", () => {
+  if (!confirm("Are you sure you want to delete all entries?")) return;
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  tx.objectStore(STORE_NAME).clear();
+  tx.oncomplete = () => loadEntries();
 });
 </script>
 
