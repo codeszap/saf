@@ -336,15 +336,38 @@
     });
 
     // Download table image (filtered view)
-    document.getElementById('downloadImgBtn').addEventListener('click', () => {
-      html2canvas(document.getElementById('snapshotContainer'), {backgroundColor:'#fff', scale:2})
-        .then(canvas=>{
-          const link = document.createElement('a');
-          link.download = 'meditation_table.png';
-          link.href = canvas.toDataURL();
-          link.click();
-        });
+   document.getElementById('downloadImgBtn').addEventListener('click', () => {
+  const snapshotContainer = document.getElementById('snapshotContainer');
+  const tableResponsive = snapshotContainer.querySelector('.table-responsive');
+
+  // Store old style
+  const oldMaxHeight = tableResponsive.style.maxHeight;
+  const oldOverflowY = tableResponsive.style.overflowY;
+
+  // Temporarily expand to full height
+  tableResponsive.style.maxHeight = 'none';
+  tableResponsive.style.overflowY = 'visible';
+
+  html2canvas(snapshotContainer, {backgroundColor:'#fff', scale:2})
+    .then(canvas=>{
+      // Restore original scrollable style
+      tableResponsive.style.maxHeight = oldMaxHeight;
+      tableResponsive.style.overflowY = oldOverflowY;
+
+      // Trigger download
+      const link = document.createElement('a');
+      link.download = 'meditation_table.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    })
+    .catch(err => {
+      // Restore styles if error occurs
+      tableResponsive.style.maxHeight = oldMaxHeight;
+      tableResponsive.style.overflowY = oldOverflowY;
+      console.error(err);
     });
+});
+
 
     window.onload = openDB;
   </script>
