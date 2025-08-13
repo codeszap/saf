@@ -77,11 +77,11 @@
      <div id="paginationControls" class="d-flex align-items-center gap-2">
   <label class="fw-semibold">Rows:</label>
   <select id="rowsPerPageSelect" class="form-select form-select-sm" style="width:auto;">
-    <option value="5" selected>5</option>
+    <option value="5" >5</option>
     <option value="10">10</option>
     <option value="15">15</option>
     <option value="20">20</option>
-    <option value="30">30</option>
+    <option value="30" selected>30</option>
   </select>
   <button id="prevPage" class="btn btn-outline-secondary btn-sm">⬅ Prev</button>
   <span id="pageInfo" class="fw-semibold"></span>
@@ -125,7 +125,7 @@
   let allEntries = [];
   let filteredEntries = [];
   let currentPage = 1;
- let rowsPerPage = 5;
+ let rowsPerPage = 30;
 
 
 document.getElementById('rowsPerPageSelect').addEventListener('change', (e) => {
@@ -150,9 +150,17 @@ document.getElementById('rowsPerPageSelect').addEventListener('change', (e) => {
     const request = indexedDB.open(DB_NAME, 1);
     request.onerror = () => alert("Failed to open DB");
     request.onsuccess = (e) => {
-      db = e.target.result;
-      loadEntries();
-    };
+  db = e.target.result;
+
+  // ✅ Set default filter to current month
+  const monthFilter = document.getElementById('monthFilter');
+  const todayDate = new Date();
+  const currentYearMonth = todayDate.toISOString().slice(0, 7); // YYYY-MM
+  monthFilter.value = currentYearMonth;
+
+  loadEntries();
+};
+
     request.onupgradeneeded = (e) => {
       db = e.target.result;
       db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
