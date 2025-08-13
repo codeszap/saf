@@ -124,6 +124,7 @@
     const STORE_NAME = "entries";
     let db;
     let selectedRowId = null;
+    let skipYesterdayInsertOnce = false;
 
     let allEntries = [];
     let filteredEntries = [];
@@ -201,15 +202,19 @@
           allEntries = entries;
 
           // ✅ Auto-add "No" for yesterday if missing
+          // ✅ Auto-add "No" for yesterday if missing — but skip if just edited/deleted
           const today = new Date();
           const yesterday = new Date(today);
           yesterday.setDate(today.getDate() - 1);
-          const yesterdayStr = String(yesterday.getDate()).padStart(2, '0') + '-' +
+
+          const yesterdayStr =
+            String(yesterday.getDate()).padStart(2, '0') + '-' +
             String(yesterday.getMonth() + 1).padStart(2, '0') + '-' +
             yesterday.getFullYear();
 
           const yesterdayExists = allEntries.some(e => e.date === yesterdayStr);
-          if (!yesterdayExists) {
+
+          if (!yesterdayExists && !skipYesterdayInsertOnce) {
             addEntry({
               date: yesterdayStr,
               meditation: 'No',
@@ -217,10 +222,14 @@
               duration: '',
               notes: ''
             });
-            return; // Reload will happen inside addEntry
+            return; // addEntry kuppura reload varum
           }
 
+          // reload cycle mudinjuduchu; next time allow auto-insert again
+          skipYesterdayInsertOnce = false;
+
           applyFiltersAndPagination();
+
         }
       };
     }
@@ -309,30 +318,30 @@
       }
     });
 
-  form.addEventListener('submit', function (e) {
-  e.preventDefault();
-  const dateVal = dateInput.value.split('-').reverse().join('-');
-  const medVal = document.querySelector('input[name="meditation"]:checked').value === 'yes' ? 'Yes' : 'No';
-  let timeVal = '', t12 = '', duration = '', notes = '';
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const dateVal = dateInput.value.split('-').reverse().join('-');
+      const medVal = document.querySelector('input[name="meditation"]:checked').value === 'yes' ? 'Yes' : 'No';
+      let timeVal = '', t12 = '', duration = '', notes = '';
 
-  if (medVal === 'Yes') {
-    timeVal = timeInput.value;
-    let [h, m] = timeVal.split(':');
-    h = Number(h);
-    t12 = (h % 12 || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
-    duration = document.getElementById('duration').value;
-    notes = document.getElementById('notes').value;
-  }
+      if (medVal === 'Yes') {
+        timeVal = timeInput.value;
+        let [h, m] = timeVal.split(':');
+        h = Number(h);
+        t12 = (h % 12 || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
+        duration = document.getElementById('duration').value;
+        notes = document.getElementById('notes').value;
+      }
 
-  // 🚫 Duplicate date check
-  const duplicateExists = allEntries.some(e => e.date === dateVal);
-  if (duplicateExists) {
-    alert("❌ An entry for this date already exists!");
-    return;
-  }
+      // 🚫 Duplicate date check
+      const duplicateExists = allEntries.some(e => e.date === dateVal);
+      if (duplicateExists) {
+        alert("❌ An entry for this date already exists!");
+        return;
+      }
 
-  addEntry({ date: dateVal, meditation: medVal, time: t12, duration, notes });
-});
+      addEntry({ date: dateVal, meditation: medVal, time: t12, duration, notes });
+    });
 
 
     document.getElementById('clearBtn').addEventListener('click', () => {
@@ -448,25 +457,41 @@
 
     document.getElementById('editRow').addEventListener('click', () => {
       if (!selectedRowId) return;
+
       const tx = db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
+
       store.get(selectedRowId).onsuccess = function (e) {
         const entry = e.target.result;
+
+        // form fill
         const [d, m, y] = entry.date.split('-');
         dateInput.value = `${y}-${m}-${d}`;
         document.getElementById(entry.meditation === 'Yes' ? 'medYes' : 'medNo').checked = true;
-        const [t, ampm] = entry.time.split(' ');
-        let [hh, mm] = t.split(':');
-        hh = parseInt(hh);
-        if (ampm === 'PM' && hh !== 12) hh += 12;
-        if (ampm === 'AM' && hh === 12) hh = 0;
-        timeInput.value = `${String(hh).padStart(2, '0')}:${mm}`;
-        document.getElementById('duration').value = entry.duration;
-        document.getElementById('notes').value = entry.notes;
+
+        // time (empty irundha handle)
+        if (entry.time && entry.time.trim()) {
+          const [t, ampm] = entry.time.split(' ');
+          let [hh, mm] = t.split(':');
+          hh = parseInt(hh, 10);
+          if (ampm === 'PM' && hh !== 12) hh += 12;
+          if (ampm === 'AM' && hh === 12) hh = 0;
+          timeInput.value = `${String(hh).padStart(2, '0')}:${mm}`;
+        } else {
+          timeInput.value = '';
+        }
+
+        document.getElementById('duration').value = entry.duration || '';
+        document.getElementById('notes').value = entry.notes || '';
+
+        // 🔑 Intha reload cycle-la yesterday auto-insert skip pannanum
+        skipYesterdayInsertOnce = true;
+
         store.delete(selectedRowId).onsuccess = loadEntries;
         contextMenu.classList.add("d-none");
       };
     });
+
 
     document.getElementById('deleteRow').addEventListener('click', () => {
       if (!selectedRowId) return;
