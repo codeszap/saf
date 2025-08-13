@@ -144,6 +144,19 @@
     const tableBody = document.querySelector('#meditationTable tbody');
     const contextMenu = document.getElementById('contextMenu');
 
+
+    document.getElementById('duration').addEventListener('input', function () {
+      const durationMinutes = parseInt(this.value, 10);
+      if (isNaN(durationMinutes) || durationMinutes <= 0) return;
+
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - durationMinutes);
+
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      timeInput.value = `${hh}:${mm}`;
+    });
+
     const today = new Date();
     if (!dateInput.value) {
       dateInput.valueAsDate = today;
