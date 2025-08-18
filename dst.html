@@ -3,11 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monthly Schedule Tracker</title>
-  <!-- Bootstrap CSS -->
+  <title>Monthly Schedule Tracker (IndexedDB)</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    /* Make day cards touch-friendly */
     #calendar .col > div {
       min-height: 60px;
       display: flex;
@@ -17,10 +15,11 @@
       cursor: pointer;
       transition: background-color 0.2s, color 0.2s;
     }
-
-    /* Summary spacing on small devices */
-    @media (max-width: 576px) {
-      .card-body { padding: 1rem; }
+    #controlButtons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
     }
   </style>
 </head>
@@ -35,56 +34,101 @@
         <h4 id="monthTitle" class="mb-0 fw-bold text-primary text-center text-sm-start"></h4>
       </div>
 
-      <!-- Summary -->
       <div class="card-body">
+        <div id="controlButtons">
+          <button class="btn btn-success btn-sm" id="exportJsonBtn">Export JSON</button>
+          <input type="file" id="importJsonInput" class="form-control form-control-sm" style="max-width:200px;" />
+          <button class="btn btn-warning btn-sm" id="downloadImageBtn">Download Image</button>
+        </div>
+
         <div class="alert alert-info text-center mb-4" id="summary">
           Total Days: <span id="totalDays">0</span> |
           ✅ Yes: <span id="yesCount">0</span> |
           ❌ No: <span id="noCount">0</span>
         </div>
-
-        <!-- Calendar Grid -->
-        <div class="row g-1 row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-7" id="calendar"></div>
+        <div class="row g-1 row-cols-4 row-cols-sm-3 row-cols-md-4 row-cols-lg-7" id="calendar"></div>
       </div>
     </div>
   </div>
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script>
+    let db;
+    const request = indexedDB.open("ScheduleDB", 1);
+
+    request.onupgradeneeded = (event) => {
+      db = event.target.result;
+      if (!db.objectStoreNames.contains("schedule")) {
+        db.createObjectStore("schedule", { keyPath: "date" });
+      }
+    };
+
+    request.onsuccess = (event) => {
+      db = event.target.result;
+      renderCalendar(currentYear, currentMonth);
+    };
+
+    request.onerror = (event) => {
+      console.error("IndexedDB error:", event.target.errorCode);
+    };
+
     const calendar = document.getElementById("calendar");
     const monthTitle = document.getElementById("monthTitle");
     const prevBtn = document.getElementById("prevBtn");
     const nextBtn = document.getElementById("nextBtn");
-
     const totalDaysEl = document.getElementById("totalDays");
     const yesCountEl = document.getElementById("yesCount");
     const noCountEl = document.getElementById("noCount");
 
-    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const exportJsonBtn = document.getElementById("exportJsonBtn");
+    const importJsonInput = document.getElementById("importJsonInput");
+    const downloadImageBtn = document.getElementById("downloadImageBtn");
 
+    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
     let today = new Date();
     let currentYear = today.getFullYear();
     let currentMonth = today.getMonth();
 
-    function updateSummary(y, m, daysInMonth) {
+    function saveDate(dateStr, value) {
+      const tx = db.transaction("schedule", "readwrite");
+      const store = tx.objectStore("schedule");
+      store.put({ date: dateStr, value: value });
+    }
+
+    function getDate(dateStr) {
+      return new Promise((resolve) => {
+        const tx = db.transaction("schedule", "readonly");
+        const store = tx.objectStore("schedule");
+        const request = store.get(dateStr);
+        request.onsuccess = () => resolve(request.result ? request.result.value : false);
+      });
+    }
+
+    function getAllData() {
+      return new Promise((resolve) => {
+        const tx = db.transaction("schedule", "readonly");
+        const store = tx.objectStore("schedule");
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+      });
+    }
+
+    async function updateSummary(y, m, daysInMonth) {
       let yes = 0, no = 0;
       for (let d = 1; d <= daysInMonth; d++) {
         let dateStr = `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-        let saved = localStorage.getItem("schedule-" + dateStr);
-        if (saved === "true") yes++;
-        else no++;
+        let saved = await getDate(dateStr);
+        if (saved) yes++; else no++;
       }
       totalDaysEl.textContent = daysInMonth;
       yesCountEl.textContent = yes;
       noCountEl.textContent = no;
     }
 
-    function renderCalendar(y, m) {
+    async function renderCalendar(y, m) {
       calendar.innerHTML = "";
       monthTitle.textContent = `${monthNames[m]} ${y}`;
-
       const daysInMonth = new Date(y, m + 1, 0).getDate();
 
       for (let d = 1; d <= daysInMonth; d++) {
@@ -95,34 +139,25 @@
         const isToday = (d === today.getDate() && m === today.getMonth() && y === today.getFullYear());
         const borderClass = isToday ? "border border-primary" : "border border-secondary";
 
-        div.innerHTML = `
-          <div class="d-flex align-items-center justify-content-center ${borderClass} rounded p-2 fw-bold" data-date="${dateStr}">
-            ${d}
-          </div>
-        `;
+        div.innerHTML = `<div class="d-flex align-items-center justify-content-center ${borderClass} rounded p-2 fw-bold" data-date="${dateStr}">${d}</div>`;
         calendar.appendChild(div);
-
         const card = div.querySelector("div");
 
-        // Load saved state
-        let saved = localStorage.getItem("schedule-" + dateStr);
-        if (saved === "true") {
-          card.classList.add("bg-success", "text-white");
-        }
+        let saved = await getDate(dateStr);
+        if (saved) card.classList.add("bg-success", "text-white");
 
-        // Toggle on click
-        card.addEventListener("click", () => {
-          if (card.classList.contains("bg-success")) {
+        card.addEventListener("click", async () => {
+          let current = await getDate(dateStr);
+          if (current) {
             card.classList.remove("bg-success", "text-white");
-            localStorage.setItem("schedule-" + dateStr, false);
+            saveDate(dateStr, false);
           } else {
             card.classList.add("bg-success", "text-white");
-            localStorage.setItem("schedule-" + dateStr, true);
+            saveDate(dateStr, true);
           }
           updateSummary(y, m, daysInMonth);
         });
       }
-
       updateSummary(y, m, daysInMonth);
     }
 
@@ -138,7 +173,42 @@
       renderCalendar(currentYear, currentMonth);
     });
 
-    renderCalendar(currentYear, currentMonth);
+    // Export JSON
+    exportJsonBtn.addEventListener("click", async () => {
+      let data = await getAllData();
+      let blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+      let a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "calendar_data.json";
+      a.click();
+    });
+
+    // Import JSON
+    importJsonInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const text = await file.text();
+      try {
+        const data = JSON.parse(text);
+        const tx = db.transaction("schedule", "readwrite");
+        const store = tx.objectStore("schedule");
+        data.forEach(item => store.put(item));
+        tx.oncomplete = () => renderCalendar(currentYear, currentMonth);
+      } catch(err) {
+        alert("Invalid JSON file");
+      }
+    });
+
+    // Download Image
+    downloadImageBtn.addEventListener("click", () => {
+      html2canvas(calendar).then(canvas => {
+        const link = document.createElement("a");
+        link.download = `calendar_${currentYear}_${currentMonth+1}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    });
+
   </script>
 </body>
 </html>
