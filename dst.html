@@ -2,29 +2,49 @@
 <html lang="ta">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monthly Schedule Tracker</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* Make day cards touch-friendly */
+    #calendar .col > div {
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    /* Summary spacing on small devices */
+    @media (max-width: 576px) {
+      .card-body { padding: 1rem; }
+    }
+  </style>
 </head>
 <body class="bg-light">
-  <div class="container my-5">
+  <div class="container col-lg-12 my-4">
     <div class="card shadow-lg rounded-4">
-      <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <button class="btn btn-outline-primary btn-sm" id="prevBtn">⟨ Prev</button>
-        <h4 id="monthTitle" class="mb-0 fw-bold text-primary"></h4>
-        <button class="btn btn-outline-primary btn-sm" id="nextBtn">Next ⟩</button>
+      <div class="card-header bg-white d-flex flex-column flex-sm-row justify-content-between align-items-center col-12">
+        <div class="d-flex justify-content-between w-100 mb-2 mb-sm-0">
+          <button class="btn btn-outline-primary btn-sm" id="prevBtn">⟨ Prev</button>
+          <button class="btn btn-outline-primary btn-sm" id="nextBtn">Next ⟩</button>
+        </div>
+        <h4 id="monthTitle" class="mb-0 fw-bold text-primary text-center text-sm-start"></h4>
       </div>
 
-      <!-- ✅ Summary Section -->
+      <!-- Summary -->
       <div class="card-body">
-        <div class="alert alert-info text-center" id="summary">
+        <div class="alert alert-info text-center mb-4" id="summary">
           Total Days: <span id="totalDays">0</span> |
           ✅ Yes: <span id="yesCount">0</span> |
           ❌ No: <span id="noCount">0</span>
         </div>
 
-        <!-- Calendar grid -->
-        <div class="row row-cols-2 row-cols-sm-4 row-cols-md-7 g-3" id="calendar"></div>
+        <!-- Calendar Grid -->
+        <div class="row g-1 row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-7" id="calendar"></div>
       </div>
     </div>
   </div>
@@ -73,16 +93,16 @@
         div.className = "col";
 
         const isToday = (d === today.getDate() && m === today.getMonth() && y === today.getFullYear());
-        const baseClass = isToday ? "border border-primary" : "border border-secondary";
+        const borderClass = isToday ? "border border-primary" : "border border-secondary";
 
         div.innerHTML = `
-          <div class="dayCard rounded p-3 text-center h-100 ${baseClass}" data-date="${dateStr}" style="cursor:pointer;">
-            <div class="fw-bold fs-5">${d}</div>
+          <div class="d-flex align-items-center justify-content-center ${borderClass} rounded p-2 fw-bold" data-date="${dateStr}">
+            ${d}
           </div>
         `;
         calendar.appendChild(div);
 
-        const card = div.querySelector(".dayCard");
+        const card = div.querySelector("div");
 
         // Load saved state
         let saved = localStorage.getItem("schedule-" + dateStr);
@@ -106,7 +126,6 @@
       updateSummary(y, m, daysInMonth);
     }
 
-    // Navigation
     prevBtn.addEventListener("click", () => {
       currentMonth--;
       if (currentMonth < 0) { currentMonth = 11; currentYear--; }
