@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cash On Hand Calculator</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body class="bg-light p-3">
+
+<div class="container my-4">
+  <div class="card shadow rounded p-4 mx-auto" style="max-width: 600px;">
+    <h2 class="text-center mb-4">Cash On Hand Calculator</h2>
+
+    <!-- Balance field -->
+    <div class="mb-3">
+      <label for="totalBalance" class="form-label">Total Balance</label>
+      <input type="number" id="totalBalance" class="form-control" placeholder="Enter total balance" />
+    </div>
+
+    <div class="mb-3">
+      <label for="name" class="form-label">Name</label>
+      <input type="text" id="name" placeholder="Enter name" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label for="amount" class="form-label">Amount</label>
+      <input type="number" id="amount" placeholder="Enter amount" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label for="notes" class="form-label">Notes (Optional)</label>
+      <input type="text" id="notes" placeholder="Enter notes (optional)" class="form-control" />
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end flex-wrap">
+      <button class="btn btn-primary" onclick="addToTable()">Add</button>
+      <button class="btn btn-danger" onclick="confirmClear()">Clear</button>
+      <button class="btn btn-success" onclick="captureImage()">📸 Get Image</button>
+    </div>
+  </div>
+
+  <div class="card shadow p-3 mt-5" id="snapshotContainer">
+    <!-- Latest entry date top-right -->
+    <div class="d-flex justify-content-between mb-2">
+      <h6 class="text-muted">Balance: ₹<span id="balanceAmount">0</span></h6>
+      <h6 class="text-muted">Last Entry: <span id="lastEntryDate">--/--/----</span></h6>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover table-striped align-middle text-nowrap" id="dataTable">
+        <thead class="table-primary">
+          <tr>
+            <th>Name</th>
+            <th>Amount</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div id="contextMenu" class="position-absolute bg-white border shadow-sm rounded d-none z-3">
+  <button class="dropdown-item" onclick="editRow()">📝 Edit</button>
+  <button class="dropdown-item" onclick="deleteRow()">🗑️ Delete</button>
+  <button class="dropdown-item" onclick="hideContextMenu()">❌ Cancel</button>
+</div>
+
+<script src="js/bootstrap.bundle.min.js"></script>
+<script>
+  const dbName = 'CashOnHandDB';
+  const storeName = 'entries';
+  let db;
+  let selectedRow = null;
+
+  function openDB() {
+    const request = indexedDB.open(dbName, 1);
+    request.onerror = () => alert("DB Error!");
+    request.onsuccess = (event) => {
+      db = event.target.result;
+      loadFromDB();
+    };
+    request.onupgradeneeded = (event) => {
+      db = event.target.result;
+      const store = db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+      store.createIndex("type", "type", { unique: false });
+    };
+  }
+
+  // Save balance separately
+  function saveBalance(balance) {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    store.put({ id: "balance", type: "balance", value: balance });
+  }
+
+  function loadBalance(callback) {
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const req = store.get("balance");
+    req.onsuccess = () => {
+      callback(req.result ? req.result.value : 0);
+    };
+  }
+
+  function addToTable() {
+    const name = document.getElementById('name').value.trim();
+    const amount = parseFloat(document.getElementById('amount').value.trim());
+    const notes = document.getElementById('notes').value.trim();
+    let totalBalance = parseFloat(document.getElementById('totalBalance').value.trim());
+
+    if (!name || isNaN(amount)) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    // If total balance not yet set, initialize
+    loadBalance((balance) => {
+      if (balance === 0 && !isNaN(totalBalance)) {
+        saveBalance(totalBalance);
+        document.getElementById("balanceAmount").textContent = totalBalance;
+      } else {
+        totalBalance = balance;
+      }
+
+      const newBalance = totalBalance - amount;
+      saveBalance(newBalance);
+
+      const data = {
+        name,
+        amount,
+        notes,
+        createdAt: new Date().toLocaleDateString("en-GB") // ✅ date only
+      };
+
+      const tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).add(data);
+      tx.oncomplete = () => {
+        clearForm();
+        loadFromDB();
+      };
+    });
+  }
+
+  function loadFromDB() {
+    const tbody = document.querySelector('#dataTable tbody');
+    tbody.innerHTML = '';
+
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const rows = [];
+    store.openCursor().onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        if (cursor.value.type !== "balance") {
+          rows.push({ id: cursor.key, ...cursor.value });
+        }
+        cursor.continue();
+      } else {
+        rows.sort((a, b) => a.id - b.id);
+        rows.forEach(data => {
+          const newRow = tbody.insertRow();
+          newRow.dataset.id = data.id;
+          newRow.insertCell(0).textContent = data.name;
+          newRow.insertCell(1).textContent = data.amount;
+          newRow.insertCell(2).textContent = data.notes || "";
+
+          newRow.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+            selectedRow = newRow;
+            showContextMenu(e.pageX, e.pageY);
+          });
+        });
+
+        if (rows.length > 0) {
+            
+          document.getElementById("lastEntryDate").textContent = rows[rows.length - 1].createdAt;
+        } else {
+          document.getElementById("lastEntryDate").textContent = "--/--/----";
+        }
+      }
+    };
+
+    loadBalance((balance) => {
+      document.getElementById("balanceAmount").textContent = balance;
+    });
+  }
+
+  function clearForm() {
+    document.getElementById('name').value = '';
+    document.getElementById('amount').value = '';
+    document.getElementById('notes').value = '';
+  }
+
+  function captureImage() {
+    const element = document.getElementById("snapshotContainer");
+    html2canvas(element, {
+      backgroundColor: null,
+      scale: 2,
+      scrollY: -window.scrollY
+    }).then(canvas => {
+      const base64Image = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = 'cash_on_hand.png';
+      link.href = base64Image;
+      link.click();
+    });
+  }
+
+  function confirmClear() {
+    if (confirm("Are you sure you want to clear everything?")) {
+      const tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).clear();
+      tx.oncomplete = () => loadFromDB();
+    }
+  }
+
+  function showContextMenu(x, y) {
+    const menu = document.getElementById('contextMenu');
+    menu.style.top = `${y}px`;
+    menu.style.left = `${x}px`;
+    menu.classList.remove('d-none');
+  }
+
+  function hideContextMenu() {
+    document.getElementById('contextMenu').classList.add('d-none');
+  }
+
+  document.addEventListener('click', hideContextMenu);
+
+  function editRow() {
+    if (!selectedRow) return;
+    document.getElementById('name').value = selectedRow.cells[0].textContent;
+    document.getElementById('amount').value = selectedRow.cells[1].textContent;
+    document.getElementById('notes').value = selectedRow.cells[2].textContent;
+
+    const id = Number(selectedRow.dataset.id);
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).delete(id);
+    tx.oncomplete = () => loadFromDB();
+    selectedRow = null;
+  }
+
+  function deleteRow() {
+    if (!selectedRow) return;
+    const id = Number(selectedRow.dataset.id);
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).delete(id);
+    tx.oncomplete = () => loadFromDB();
+    selectedRow = null;
+  }
+
+  window.onload = openDB;
+</script>
+</body>
+</html>
