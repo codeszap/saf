@@ -1,6 +1,6 @@
 ---
 created: 2025-09-22T19:39:00+05:30
-modified: 2025-09-22T20:35:10+05:30
+modified: 2025-09-22T20:39:41+05:30
 ---
 
 # Driver App
@@ -16,3 +16,4 @@ modified: 2025-09-22T20:35:10+05:30
 9. Rider accept pannathum OTP databaseku poonum
 10. Ride accept, reached customer, trip start, complete destination update pannanum.
 11. Toggle on off slowva process aakuthu.
+12. Customer ride request pannum poothu customer id send pannuvaaru atha use panni trip screenla detail kaatanum
