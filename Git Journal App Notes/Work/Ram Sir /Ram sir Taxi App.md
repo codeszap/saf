@@ -1,6 +1,6 @@
 ---
 created: 2025-09-22T18:46:25+05:30
-modified: 2025-09-22T19:49:28+05:30
+modified: 2025-09-22T20:21:30+05:30
 ---
 
 # Customer App
@@ -12,4 +12,8 @@ modified: 2025-09-22T19:49:28+05:30
 5. Defaultta current time allow Pannanum.
 6. Search ride defaultta oru 30sec try Pannunum.
 7. Estimate time and kms check pannanum.
-8.
+8. customer OTP enter panna appram oru loading kaatanum.
+9. Tracking screen mela driver vara location kaatanum.
+10. OTP enter pannathu apparam customerku destination trip screen kaatanum.
+11. Home screenla location turn on panna oodane update aaganum location.
+12. Splash screenla circular vara koodathu.
