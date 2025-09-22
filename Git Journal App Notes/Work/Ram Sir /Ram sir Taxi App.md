@@ -1,6 +1,6 @@
 ---
 created: 2025-09-22T18:46:25+05:30
-modified: 2025-09-22T20:21:30+05:30
+modified: 2025-09-22T20:38:26+05:30
 ---
 
 # Customer App
@@ -17,3 +17,4 @@ modified: 2025-09-22T20:21:30+05:30
 10. OTP enter pannathu apparam customerku destination trip screen kaatanum.
 11. Home screenla location turn on panna oodane update aaganum location.
 12. Splash screenla circular vara koodathu.
+13. Rider ride accept pannum poothu riderid push pannuvaaru atha use panni driver details kaatanum.
