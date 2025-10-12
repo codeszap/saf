@@ -1,6 +1,6 @@
 ---
 created: 2025-09-23T22:20:51+05:30
-modified: 2025-10-12T23:35:16+05:30
+modified: 2025-10-12T23:36:03+05:30
 ---
 
 # Life Goal
@@ -14,4 +14,5 @@ modified: 2025-10-12T23:35:16+05:30
 7. Mattavangala pesum poothu trigger aakuna
 * Ennaku Ithu thevaiya question kaekanum.
 * ivanga ithuthaan solla pooranganu judgement pannaatha.
+* Ennathaan personalla aedukatha.
 8. Nammaku Mariyaatha tharatha idathula namma irukanumnu avasiyam illa.
