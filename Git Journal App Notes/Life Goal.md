@@ -1,6 +1,6 @@
 ---
 created: 2025-09-23T22:20:51+05:30
-modified: 2025-10-12T23:36:03+05:30
+modified: 2025-11-14T18:59:46+05:30
 ---
 
 # Life Goal
@@ -16,3 +16,8 @@ modified: 2025-10-12T23:36:03+05:30
 * ivanga ithuthaan solla pooranganu judgement pannaatha.
 * Ennathaan personalla aedukatha.
 8. Nammaku Mariyaatha tharatha idathula namma irukanumnu avasiyam illa.
+9. MB panrathu naala nammalooda lifela achieve panna kudiya naal thalli poovuthu. Yeppudina 
+* Nalla creative thoughts varathu.
+* Body romba week aaguhum.
+* Yeppayum fear thoughts irunthutae irukum.
+10. Daily nalla nadantha brainku nallathu. Brain helathyya Irukum.
