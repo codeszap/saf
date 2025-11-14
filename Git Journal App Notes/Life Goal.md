@@ -1,6 +1,6 @@
 ---
 created: 2025-09-23T22:20:51+05:30
-modified: 2025-11-14T18:59:46+05:30
+modified: 2025-11-14T19:00:49+05:30
 ---
 
 # Life Goal
@@ -21,3 +21,4 @@ modified: 2025-11-14T18:59:46+05:30
 * Body romba week aaguhum.
 * Yeppayum fear thoughts irunthutae irukum.
 10. Daily nalla nadantha brainku nallathu. Brain helathyya Irukum.
+11. Enna panna poratha irunthalum tick tick appla oru plan pannitu panu appathan mind clearra decide pannum.
