@@ -1,6 +1,6 @@
 ---
 created: 2025-09-23T22:20:51+05:30
-modified: 2025-11-14T19:00:49+05:30
+modified: 2025-11-16T15:15:45+05:30
 ---
 
 # Life Goal
@@ -22,3 +22,5 @@ modified: 2025-11-14T19:00:49+05:30
 * Yeppayum fear thoughts irunthutae irukum.
 10. Daily nalla nadantha brainku nallathu. Brain helathyya Irukum.
 11. Enna panna poratha irunthalum tick tick appla oru plan pannitu panu appathan mind clearra decide pannum.
+12. En surrounding suthi knowledge person set pannu environmentta and also mediavum
+13. Knowledge gain pannu athan power athan demand.
