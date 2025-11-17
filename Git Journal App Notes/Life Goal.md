@@ -1,9 +1,9 @@
 ---
 created: 2025-09-23T22:20:51+05:30
-modified: 2025-11-16T15:15:45+05:30
+modified: 2025-11-17T17:47:35+05:30
 ---
 
-# Life Goal
+# Always remember
 
 1. Yeppayum engayum enna happyya vaikanum. Ithan first goal.
 2. Namma onenum perfect illa so nammalum thappu pannuvom.
