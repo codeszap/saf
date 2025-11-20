@@ -1,6 +1,6 @@
 ---
 created: 2025-09-23T22:20:51+05:30
-modified: 2025-11-17T17:47:35+05:30
+modified: 2025-11-20T10:14:04+05:30
 ---
 
 # Always remember
@@ -24,3 +24,4 @@ modified: 2025-11-17T17:47:35+05:30
 11. Enna panna poratha irunthalum tick tick appla oru plan pannitu panu appathan mind clearra decide pannum.
 12. En surrounding suthi knowledge person set pannu environmentta and also mediavum
 13. Knowledge gain pannu athan power athan demand.
+14. Nammalta oru energy Iruku atha koraiya vittama paathukanum and aethu energy gain and loss pannuthunu paakanum.
