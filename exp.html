@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Expense Tracker</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f2f2f2;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin-left: 160px;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        margin-left: 0;
+      }
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      flex: 1;
+      margin: 0 5px;
+    }
+
+    .add-btn {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .clear-btn {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .view-btn {
+      background-color: #2196F3;
+      color: white;
+    }
+
+    @media (max-width: 480px) {
+      .buttons {
+        flex-direction: column;
+      }
+      button {
+        margin: 5px 0;
+      }
+      .form-actions {
+        justify-content: center;
+      }
+    }
+
+    .custom-alert {
+      display: none;
+      position: fixed;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      min-width: 250px;
+      background: #323232;
+      color: #fff;
+      padding: 16px 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 9999;
+      font-size: 16px;
+      text-align: center;
+      transition: opacity 0.3s;
+    }
+    .custom-alert.success {
+      background: #4CAF50;
+    }
+    .custom-alert.error {
+      background: #f44336;
+    }
+
+    .record {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .record-header {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .record-detail {
+      margin-left: 10px;
+    }
+
+    .back-btn {
+      background: #f44336;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      cursor: pointer;
+    }
+
+    .no-records {
+      text-align: center;
+      color: #888;
+      font-size: 1.1em;
+      margin: 40px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Sidebar styles */
+    #side-menu {
+      position: fixed;
+      top: 0;
+      left: -220px;
+      width: 200px;
+      height: 100%;
+      background: #2196F3;
+      color: #fff;
+      z-index: 10000;
+      transition: left 0.3s;
+      padding: 30px 15px 15px 15px;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+    }
+
+    #side-menu h3 {
+      margin-top: 40px;
+    }
+
+    #side-menu ul {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0 0 0;
+    }
+
+    #side-menu ul li a {
+      color: #fff;
+      text-decoration: none;
+      display: block;
+      padding: 8px 0;
+    }
+
+    #menu-bar {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10001;
+    }
+
+    #menu-bar button {
+      font-size: 24px;
+      padding: 8px 16px;
+      border: none;
+      background: #000; /* Changed from #323232 or #2196F3 to black */
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- Menu Bar Button -->
+  <div id="menu-bar" style="position:fixed;top:20px;left:20px;z-index:10001;">
+    <button onclick="openMenu()" style="font-size:24px;padding:8px 16px;border:none;background:#000;color:#fff;border-radius:8px;cursor:pointer;">☰</button>
+  </div>
+
+  <!-- Sidebar Menu -->
+  <div id="side-menu" style="position:fixed;top:0;left:-220px;width:200px;height:100%;background:#2196F3;color:#fff;z-index:10000;transition:left 0.3s;padding:30px 15px 15px 15px;box-shadow:2px 0 8px rgba(0,0,0,0.1);">
+    <button onclick="closeMenu()" style="background:none;border:none;color:#fff;font-size:22px;float:right;cursor:pointer;">×</button>
+    <h3 style="margin-top:40px;">Menu</h3>
+    <ul style="list-style:none;padding:0;margin:20px 0 0 0;">
+      <li><a href="#" onclick="showForm();closeMenu();" style="color:#fff;text-decoration:none;display:block;padding:8px 0;">Add Expense</a></li>
+      <li><a href="#" onclick="viewExpenses();closeMenu();" style="color:#fff;text-decoration:none;display:block;padding:8px 0;">View Expenses</a></li>
+      <li><a href="#" onclick="backupExpenses();closeMenu();" style="color:#fff;text-decoration:none;display:block;padding:8px 0;">Backup</a></li>
+      <li><a href="#" onclick="document.getElementById('restore-file').click();closeMenu();" style="color:#fff;text-decoration:none;display:block;padding:8px 0;">Restore</a></li>
+    </ul>
+  </div>
+
+  <div class="container" id="form-container">
+    <h2>Expense Tracker</h2>
+
+    <div class="form-group">
+      <label for="date">Date</label>
+      <input type="date" id="date" />
+    </div>
+
+    <div class="form-group">
+      <label for="name">Name</label>
+      <input type="text" id="name" placeholder="Eg: Mani, Siva" list="name-list" autocomplete="off" />
+      <datalist id="name-list"></datalist>
+    </div>
+
+    <div class="form-group">
+      <label for="category">Category</label>
+      <input type="text" id="category" placeholder="Eg: Food, Travel" list="category-list" autocomplete="off" />
+      <datalist id="category-list"></datalist>
+    </div>
+
+    <div class="form-group">
+      <label for="description">Description</label>
+      <input type="text" id="description" placeholder="Eg: Lunch, Bus fare" list="description-list" autocomplete="off" />
+      <datalist id="description-list"></datalist>
+    </div>
+
+    <div class="form-group">
+      <label for="amount">Amount (₹)</label>
+      <input type="number" id="amount" placeholder="Eg: 250" inputmode="numeric" pattern="[0-9]*" />
+    </div>
+
+    <div class="buttons">
+      <button class="add-btn" type="button" onclick="addExpense()">Add</button>
+      <button class="clear-btn" type="button" onclick="clearFields()">Clear</button>
+      <button class="view-btn" type="button" onclick="viewExpenses()">View</button>
+    </div>
+    <div id="custom-alert" class="custom-alert"></div>
+  </div>
+
+  <div class="container" id="records-container" style="display:none;">
+    <h2 style="text-align:center;margin-bottom:10px;">View Expenses</h2>
+    <form id="filter-form" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px;">
+      <input type="text" id="filter-name" placeholder="Name" style="flex:1;min-width:100px;">
+      <input type="date" id="filter-date" style="flex:1;min-width:120px;">
+      <button type="button" onclick="viewExpenses()">Filter</button>
+      <button type="button" onclick="clearFilters()">Clear</button>
+    </form>
+    <div id="total-expense" style="text-align:center;font-weight:bold;margin-bottom:15px;"></div>
+    <div id="records"></div>
+  </div>
+
+  <input type="file" id="restore-file" style="display:none" accept=".json" onchange="restoreExpenses(event)">
+
+  <script>
+    let db;
+    const request = indexedDB.open("ExpenseTrackerDB", 1);
+
+    request.onupgradeneeded = function(event) {
+      db = event.target.result;
+      if (!db.objectStoreNames.contains("expenses")) {
+        db.createObjectStore("expenses", { keyPath: "id", autoIncrement: true });
+      }
+    };
+
+    request.onsuccess = function(event) {
+      db = event.target.result;
+      updateSuggestions();
+    };
+
+    request.onerror = function(event) {
+      console.error("IndexedDB error:", event.target.errorCode);
+    };
+
+    function showCustomAlert(message, type = "success") {
+      const alertDiv = document.getElementById('custom-alert');
+      alertDiv.textContent = message;
+      alertDiv.className = `custom-alert ${type}`;
+      alertDiv.style.display = 'block';
+      alertDiv.style.opacity = '1';
+      setTimeout(() => {
+        alertDiv.style.opacity = '0';
+        setTimeout(() => {
+          alertDiv.style.display = 'none';
+        }, 300);
+      }, 2000);
+    }
+
+    function addExpense() {
+      let date = document.getElementById('date').value;
+      const name = document.getElementById('name').value;
+      const category = document.getElementById('category').value;
+      const description = document.getElementById('description').value;
+      const amount = document.getElementById('amount').value;
+
+      if (!date || !name || !category || !amount) {
+        showCustomAlert("All fields are required!", "error");
+        return;
+      }
+
+      const [yyyy, mm, dd] = date.split("-");
+      date = `${dd}-${mm}-${yyyy}`;
+
+      const expense = { date, name, category, description, amount: parseFloat(amount) };
+
+      const transaction = db.transaction(["expenses"], "readwrite");
+      const store = transaction.objectStore("expenses");
+      store.add(expense);
+
+      transaction.oncomplete = function() {
+        clearFields();
+        showCustomAlert("Expense added!", "success");
+        updateSuggestions();
+      };
+
+      transaction.onerror = function() {
+        showCustomAlert("Failed to add expense.", "error");
+      };
+    }
+
+    function clearFields() {
+      document.getElementById('name').value = '';
+      document.getElementById('category').value = '';
+      document.getElementById('description').value = '';
+      document.getElementById('amount').value = '';
+    }
+
+    function updateSuggestions() {
+      const nameList = document.getElementById('name-list');
+      const categoryList = document.getElementById('category-list');
+      const descriptionList = document.getElementById('description-list');
+      nameList.innerHTML = '';
+      categoryList.innerHTML = '';
+      descriptionList.innerHTML = '';
+      if (!db) return;
+      const transaction = db.transaction(['expenses'], 'readonly');
+      const store = transaction.objectStore('expenses');
+      const namesSet = new Set();
+      const categoriesSet = new Set();
+      const descriptionsSet = new Set();
+      store.openCursor().onsuccess = function(event) {
+        const cursor = event.target.result;
+        if (cursor) {
+          if (cursor.value.name) namesSet.add(cursor.value.name);
+          if (cursor.value.category) categoriesSet.add(cursor.value.category);
+          if (cursor.value.description) descriptionsSet.add(cursor.value.description);
+          cursor.continue();
+        } else {
+          namesSet.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            nameList.appendChild(option);
+          });
+          categoriesSet.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            categoryList.appendChild(option);
+          });
+          descriptionsSet.forEach(description => {
+            const option = document.createElement('option');
+            option.value = description;
+            descriptionList.appendChild(option);
+          });
+        }
+      };
+    }
+
+    function showForm() {
+      document.getElementById('records-container').style.display = 'none';
+      document.getElementById('form-container').style.display = 'block';
+    }
+
+    function viewExpenses() {
+      const recordsDiv = document.getElementById('records');
+      const totalDiv = document.getElementById('total-expense');
+      document.getElementById('form-container').style.display = 'none';
+      document.getElementById('records-container').style.display = 'block';
+      recordsDiv.innerHTML = '';
+
+      // Get filter values
+      const filterName = document.getElementById('filter-name')?.value.trim().toLowerCase();
+      const filterDate = document.getElementById('filter-date')?.value;
+
+      let total = 0;
+      if (!db) return;
+      const transaction = db.transaction(['expenses'], 'readonly');
+      const store = transaction.objectStore('expenses');
+      store.openCursor().onsuccess = function(event) {
+        const cursor = event.target.result;
+        if (cursor) {
+          let { date, name, category, description, amount } = cursor.value;
+
+          // Convert stored dd-mm-yyyy to yyyy-mm-dd for comparison
+          let dbDate = date;
+          if (dbDate && dbDate.includes('-') && dbDate.split('-')[0].length === 2) {
+            const [dd, mm, yyyy] = dbDate.split('-');
+            dbDate = `${yyyy}-${mm}-${dd}`;
+          }
+
+          // Filter logic
+          if (
+            (!filterName || name.toLowerCase().includes(filterName)) &&
+            (!filterDate || dbDate === filterDate)
+          ) {
+            total += parseFloat(amount) || 0;
+            const recordDiv = document.createElement('div');
+            recordDiv.className = 'record';
+            recordDiv.innerHTML = `
+              <div class="record-header">${name} - ₹${amount}</div>
+              <div class="record-detail">Date: ${date}</div>
+              <div class="record-detail">Category: ${category}</div>
+              <div class="record-detail">Description: ${description}</div>
+            `;
+            recordsDiv.appendChild(recordDiv);
+          }
+          cursor.continue();
+        } else {
+          totalDiv.textContent = "Total Expense: ₹" + total.toFixed(2);
+          if (!recordsDiv.hasChildNodes()) {
+            recordsDiv.innerHTML = '<div class="no-records"><span style="font-size:2em;">📄</span><span>No records found.</span></div>';
+            totalDiv.textContent = "";
+          }
+        }
+      };
+    }
+
+    function backupExpenses() {
+      const transaction = db.transaction(['expenses'], 'readonly');
+      const store = transaction.objectStore('expenses');
+      const allData = [];
+      store.openCursor().onsuccess = function(event) {
+        const cursor = event.target.result;
+        if (cursor) {
+          allData.push(cursor.value);
+          cursor.continue();
+        } else {
+          const blob = new Blob([JSON.stringify(allData, null, 2)], {type: "application/json"});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = "expenses_backup.json";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showCustomAlert("Backup downloaded!", "success");
+        }
+      };
+    }
+
+    function restoreExpenses(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // Confirmation before restore
+      if (!confirm("Are you sure you want to restore? This will add all expenses from the backup.")) {
+        event.target.value = ""; // Reset file input
+        showCustomAlert("Restore cancelled.", "error");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!Array.isArray(data)) throw new Error("Invalid backup file");
+          const transaction = db.transaction(['expenses'], 'readwrite');
+          const store = transaction.objectStore('expenses');
+          data.forEach(item => {
+            const {id, ...rest} = item;
+            store.add(rest);
+          });
+          transaction.oncomplete = function() {
+            showCustomAlert("Restore completed!", "success");
+            updateSuggestions();
+            viewExpenses();
+          };
+          transaction.onerror = function() {
+            showCustomAlert("Restore failed!", "error");
+          };
+        } catch (err) {
+          showCustomAlert("Invalid backup file!", "error");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Set today's date as default
+    window.onload = function() {
+      const today = new Date();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      document.getElementById('date').value = `${yyyy}-${mm}-${dd}`;
+    };
+
+    // Menu open/close functions
+    function openMenu() {
+      document.getElementById('side-menu').style.left = '0';
+      document.getElementById('menu-bar').style.display = 'none'; // Hide menu icon
+    }
+    function closeMenu() {
+      document.getElementById('side-menu').style.left = '-220px';
+      document.getElementById('menu-bar').style.display = 'block'; // Show menu icon
+    }
+  </script>
+</body>
+</html>

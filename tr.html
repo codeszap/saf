@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>STC Trigger Tracker</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <style>
+    #triggerTable, 
+    #triggerTable th, 
+    #triggerTable td {
+      border: 1px solid #dee2e6 !important;
+    }
+
+    #triggerTable {
+      border-collapse: collapse !important;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+<div class="container my-4">
+
+  <form id="triggerForm" class="card p-4 shadow rounded">
+    <div class="mb-3">
+      <label for="date" class="form-label fw-semibold">Date</label>
+      <input type="date" id="date" class="form-control" required />
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Trigger (What Happened?)</label>
+      <textarea id="whathappened" rows="3" class="form-control"></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">What I Felt Inside</label>
+      <textarea id="whatifelt" rows="3" class="form-control"></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">What I did</label>
+      <textarea id="whatidid" rows="3" class="form-control"></textarea>
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end flex-wrap">
+      <button type="submit" class="btn btn-primary">Save</button>
+      <button type="button" id="clearBtn" class="btn btn-danger">Clear</button>
+      <button type="button" id="downloadImgBtn" class="btn btn-success">📸 Download</button>
+    </div>
+  </form>
+
+  <div class="card shadow p-3 mt-5" id="snapshotContainer">
+    <div class="table-responsive">
+      <h2 class="text-center mb-4">Reactions Tracker - Confident Professional</h2>
+      <table class="table table-bordered table-hover table-striped align-middle text-nowrap" id="triggerTable">
+        <thead class="table-primary">
+          <tr>
+            <th class="text-nowrap">Date</th>
+            <th class="text-nowrap">Trigger (What Happened?)</th>
+            <th class="text-nowrap">What I Felt Inside</th>
+            <th class="text-nowrap">What I did</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div id="contextMenu" class="position-absolute bg-white border shadow-sm rounded d-none z-3">
+  <button class="dropdown-item" id="editRow">📝 Edit</button>
+  <button class="dropdown-item" id="deleteRow">🗑️ Delete</button>
+  <button class="dropdown-item" id="cancelMenu">❌ Cancel</button>
+</div>
+
+<script>
+  const DB_NAME = "TriggerDB";
+  const STORE_NAME = "entries";
+  let db;
+  let selectedRowId = null;
+
+  const dateInput = document.getElementById('date');
+  const form = document.getElementById('triggerForm');
+  const tableBody = document.querySelector('#triggerTable tbody');
+  const contextMenu = document.getElementById('contextMenu');
+
+  dateInput.valueAsDate = new Date();
+
+  function openDB() {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onerror = () => alert("Failed to open DB");
+    request.onsuccess = (e) => {
+      db = e.target.result;
+      loadEntries();
+    };
+    request.onupgradeneeded = (e) => {
+      db = e.target.result;
+      db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+    };
+  }
+
+  function addEntry(entry) {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).add(entry);
+    tx.oncomplete = () => {
+      loadEntries();
+      form.reset();
+      dateInput.valueAsDate = new Date();
+    };
+  }
+
+  function loadEntries() {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const entries = [];
+
+    store.openCursor().onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        entries.push(cursor.value);
+        cursor.continue();
+      } else {
+        tableBody.innerHTML = '';
+        entries.forEach(entry => {
+          const row = document.createElement('tr');
+          row.dataset.id = entry.id;
+          row.innerHTML = `
+            <td class="text-nowrap">${entry.date}</td>
+            <td class="text-nowrap">${entry.whathappened}</td>
+            <td class="text-nowrap">${entry.whatifelt}</td>
+            <td class="text-nowrap">${entry.whatidid}</td>
+          `;
+          row.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+            selectedRowId = entry.id;
+            contextMenu.style.top = `${e.pageY}px`;
+            contextMenu.style.left = `${e.pageX}px`;
+            contextMenu.classList.remove("d-none");
+          });
+          tableBody.appendChild(row);
+        });
+      }
+    };
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const dateVal = dateInput.value.split('-').reverse().join('-');
+    const whathappened = document.getElementById('whathappened').value;
+    const whatifelt = document.getElementById('whatifelt').value;
+    const whatidid = document.getElementById('whatidid').value;
+
+    addEntry({ date: dateVal, whathappened, whatifelt, whatidid });
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    if (confirm("Clear all entries?")) {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).clear();
+      tx.oncomplete = loadEntries;
+    }
+  });
+
+  document.getElementById('downloadImgBtn').addEventListener('click', () => {
+    const snapshot = document.getElementById('snapshotContainer');
+    const clone = snapshot.cloneNode(true);
+
+    Object.assign(clone.style, {
+      maxWidth: "100%",
+      border: "2px solid #dee2e6",
+      borderRadius: "0.5rem",
+      padding: "1rem",
+      backgroundColor: "white",
+      margin: "10px",
+      boxSizing: "border-box",
+      minHeight: "100px"
+    });
+
+    const tableBodyClone = clone.querySelector('tbody');
+    if (!tableBodyClone || tableBodyClone.children.length === 0) {
+      const dummyRow = document.createElement('tr');
+      dummyRow.innerHTML = `<td colspan="4" style="text-align:center; padding:20px; color:#888;">No data available</td>`;
+      tableBodyClone.appendChild(dummyRow);
+    }
+
+    const tableClone = clone.querySelector('table');
+    tableClone.style.border = "1px solid #dee2e6";
+    tableClone.style.borderCollapse = "collapse";
+    clone.querySelectorAll('th, td').forEach(cell => {
+      cell.style.border = "1px solid #dee2e6";
+    });
+
+    const hiddenContainer = document.createElement('div');
+    Object.assign(hiddenContainer.style, {
+      position: 'fixed',
+      top: '-9999px',
+      left: '-9999px',
+      zIndex: '-1'
+    });
+
+    hiddenContainer.appendChild(clone);
+    document.body.appendChild(hiddenContainer);
+
+    html2canvas(clone, {
+      backgroundColor: "#fff",
+      scale: 2
+    }).then(canvas => {
+      const base64Image = canvas.toDataURL("image/png");
+      if (window.ImageChannel && window.ImageChannel.postMessage) {
+        window.ImageChannel.postMessage(base64Image);
+      } else {
+        const link = document.createElement('a');
+        link.download = 'trigger_log.png';
+        link.href = base64Image;
+        link.click();
+      }
+    }).finally(() => {
+      document.body.removeChild(hiddenContainer);
+    });
+  });
+
+  document.getElementById('editRow').addEventListener('click', () => {
+    if (!selectedRowId) return;
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    store.get(selectedRowId).onsuccess = function (e) {
+      const entry = e.target.result;
+      const [d, m, y] = entry.date.split('-');
+      dateInput.value = `${y}-${m}-${d}`;
+      document.getElementById('whathappened').value = entry.whathappened;
+      document.getElementById('whatifelt').value = entry.whatifelt;
+      document.getElementById('whatidid').value = entry.whatidid;
+      store.delete(selectedRowId).onsuccess = loadEntries;
+      contextMenu.classList.add("d-none");
+    };
+  });
+
+  document.getElementById('deleteRow').addEventListener('click', () => {
+    if (!selectedRowId) return;
+    if (confirm("Delete this entry?")) {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).delete(selectedRowId).onsuccess = loadEntries;
+    }
+    contextMenu.classList.add("d-none");
+  });
+
+  document.getElementById('cancelMenu').addEventListener('click', () => {
+    contextMenu.classList.add("d-none");
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!contextMenu.contains(e.target)) {
+      contextMenu.classList.add("d-none");
+    }
+  });
+
+  window.onload = openDB;
+</script>
+
+</body>
+</html>

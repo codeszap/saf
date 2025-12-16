@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Days Counter</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    #contextMenu {
+      z-index: 10000;
+    }
+  </style>
+</head>
+<body class="bg-light p-3">
+
+<div class="container my-4">
+  <div class="card shadow rounded p-4 mx-auto" style="max-width: 600px;">
+    <h2 class="text-center mb-4">Days Counter</h2>
+
+    <div class="mb-3">
+      <label for="title" class="form-label">Title</label>
+      <input type="text" id="title" placeholder="Enter title" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label for="fromDate" class="form-label">From Date</label>
+      <input type="date" id="fromDate" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label for="toDate" class="form-label">To Date</label>
+      <input type="date" id="toDate" class="form-control" />
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end flex-wrap">
+      <button class="btn btn-primary" onclick="addToTable()">Add</button>
+      <button class="btn btn-danger" onclick="confirmClear()">Clear</button>
+      <button class="btn btn-success" onclick="captureImage()">📸 Get Image</button>
+      <button class="btn btn-info" onclick="exportData()">Export JSON</button>
+      <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)" />
+      <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import JSON</button>
+    </div>
+  </div>
+
+  <div class="card shadow p-3 mt-5" id="snapshotContainer">
+    <h2 class="text-center mb-3">Days Count Schedule</h2>
+    <div id="cardsContainer" class="row g-3">
+      <!-- Cards will be rendered here -->
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div id="contextMenu" class="position-absolute bg-white border shadow-sm rounded d-none">
+  <button class="dropdown-item" onclick="editRow()">📝 Edit</button>
+  <button class="dropdown-item" onclick="deleteRow()">🗑️ Delete</button>
+  <button class="dropdown-item" onclick="hideContextMenu()">❌ Cancel</button>
+</div>
+
+<!-- Toast container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11000">
+  <div id="saveToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        ✅ Added successfully!
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const dbName = 'dayscount';
+  const storeName = 'entries';
+  let db;
+
+  // Set today's date in YYYY-MM-DD format
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');  // month is 0-indexed
+  const dd = String(today.getDate()).padStart(2, '0');
+
+  document.getElementById('fromDate').value = `${yyyy}-${mm}-${dd}`;
+  document.getElementById('toDate').value = `${yyyy}-${mm}-${dd}`;
+
+  let selectedRow = null;
+
+  function openDB() {
+    const request = indexedDB.open(dbName, 1);
+    request.onerror = () => alert("DB Error!");
+    request.onsuccess = (event) => {
+      db = event.target.result;
+      loadFromDB();
+    };
+    request.onupgradeneeded = (event) => {
+      db = event.target.result;
+      if (!db.objectStoreNames.contains(storeName)) {
+        db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+  }
+
+  // Calculate days left from today to the given toDate string (YYYY-MM-DD)
+  function calcBalanceDays(toDateStr) {
+    const today = new Date();
+    // Clear time part for accurate day difference
+    today.setHours(0,0,0,0);
+    const toDate = new Date(toDateStr);
+    toDate.setHours(0,0,0,0);
+
+    const diffMs = toDate - today;
+    if (diffMs < 0) return 0;
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+  }
+
+  function showSaveToast(message = "✅ Added successfully!") {
+    const toastEl = document.getElementById('saveToast');
+    toastEl.querySelector('.toast-body').textContent = message;
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
+  }
+
+  function addRowToDB(data) {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    store.add(data);
+    tx.oncomplete = () => {
+      loadFromDB();
+      clearForm();
+      showSaveToast();
+    };
+  }
+
+  function getAllRowsFromDB(callback) {
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const rows = [];
+    store.openCursor().onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        rows.push({ id: cursor.key, ...cursor.value });
+        cursor.continue();
+      } else {
+        callback(rows);
+      }
+    };
+  }
+
+  function updateRowInDB(id, updatedData) {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    const getRequest = store.get(id);
+    getRequest.onsuccess = () => {
+      const data = getRequest.result;
+      if (!data) return;
+      const newData = { ...data, ...updatedData };
+      store.put(newData);
+      tx.oncomplete = () => {
+        loadFromDB();
+      };
+    };
+  }
+
+  function deleteRowFromDB(id) {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).delete(id);
+    tx.oncomplete = loadFromDB;
+  }
+
+  function clearDB() {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).clear();
+    tx.oncomplete = () => {
+      loadFromDB();
+    };
+  }
+
+  function addToTable() {
+    const title = document.getElementById('title').value.trim();
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+
+    if (!title || !fromDate || !toDate) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    if (new Date(toDate) < new Date(fromDate)) {
+      alert("To Date cannot be before From Date");
+      return;
+    }
+
+    getAllRowsFromDB((rows) => {
+      const duplicate = rows.find(row =>
+        row.title.toLowerCase() === title.toLowerCase() &&
+        row.fromDate === fromDate &&
+        row.toDate === toDate
+      );
+      if (duplicate) {
+        alert("Duplicate entry not allowed");
+        return;
+      }
+      addRowToDB({ title, fromDate, toDate });
+    });
+  }
+
+  function loadFromDB() {
+    getAllRowsFromDB((rows) => {
+      // Sort by days left (from today to toDate)
+      rows.sort((a, b) => {
+        const daysA = calcBalanceDays(a.toDate);
+        const daysB = calcBalanceDays(b.toDate);
+        return daysA - daysB;
+      });
+
+      const container = document.getElementById('cardsContainer');
+      container.innerHTML = '';
+
+      function formatFullDate(dateStr) {
+        const date = new Date(dateStr);
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear();
+        const months = [
+          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+        const month = months[date.getMonth()];
+        return `${day} ${month} ${year}`;
+      }
+
+      rows.forEach(data => {
+        const days = calcBalanceDays(data.toDate);
+
+        const cardCol = document.createElement('div');
+        cardCol.className = 'col-12 col-md-6';
+
+        const card = document.createElement('div');
+        card.className = 'card shadow-sm h-100';
+        card.dataset.id = data.id;
+
+        const cardBody = document.createElement('div');
+        cardBody.className = 'card-body d-flex flex-column justify-content-between';
+
+        const titleEl = document.createElement('h5');
+        titleEl.className = 'card-title';
+        titleEl.textContent = data.title;
+
+        const toDateFormatted = formatFullDate(data.toDate);
+
+        const dateRow = document.createElement('div');
+        dateRow.className = 'd-flex justify-content-between align-items-center';
+
+        const daysEl = document.createElement('p');
+        daysEl.className = 'card-text text-primary fw-bold mb-0';
+        daysEl.textContent = `${days} days left`;
+
+        const toDateEl = document.createElement('small');
+        toDateEl.className = 'text-muted';
+        toDateEl.textContent = `To: ${toDateFormatted}`;
+
+        dateRow.appendChild(daysEl);
+        dateRow.appendChild(toDateEl);
+
+        cardBody.appendChild(titleEl);
+        cardBody.appendChild(dateRow);
+
+        card.appendChild(cardBody);
+        cardCol.appendChild(card);
+        container.appendChild(cardCol);
+
+        // Add long press listener instead of right-click context menu
+        addLongPressListener(card);
+      });
+    });
+  }
+
+  function clearForm() {
+    document.getElementById('title').value = '';
+    document.getElementById('fromDate').value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('toDate').value = `${yyyy}-${mm}-${dd}`;
+  }
+
+  function captureImage() {
+    const element = document.getElementById("snapshotContainer");
+    html2canvas(element, {
+      backgroundColor: null,
+      scale: 2,
+      scrollY: -window.scrollY
+    }).then(canvas => {
+      const base64Image = canvas.toDataURL('image/png');
+      if (window.AndroidInterface && window.AndroidInterface.saveImage) {
+        window.AndroidInterface.saveImage(base64Image);
+      } else {
+        // Fallback: download image
+        const link = document.createElement('a');
+        link.download = 'days_count_schedule.png';
+        link.href = base64Image;
+        link.click();
+      }
+    });
+  }
+
+  function exportData() {
+    getAllRowsFromDB((rows) => {
+      const dataStr = JSON.stringify(rows, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'days_count_schedule.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!Array.isArray(data)) throw new Error("Invalid JSON");
+        clearDB();
+        setTimeout(() => {
+          const tx = db.transaction(storeName, 'readwrite');
+          const store = tx.objectStore(storeName);
+          data.forEach(item => {
+            delete item.id;
+            store.add(item);
+          });
+          tx.oncomplete = () => loadFromDB();
+        }, 200);
+      } catch {
+        alert("Invalid JSON file");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function confirmClear() {
+    if (confirm("Are you sure you want to clear all entries?")) {
+      clearDB();
+    }
+  }
+
+  // Context Menu logic
+
+  const contextMenu = document.getElementById('contextMenu');
+
+  function showContextMenu(x, y) {
+    contextMenu.style.top = y + 'px';
+    contextMenu.style.left = x + 'px';
+    contextMenu.classList.remove('d-none');
+  }
+
+  function hideContextMenu() {
+    contextMenu.classList.add('d-none');
+    selectedRow = null;
+  }
+
+  function editRow() {
+    if (!selectedRow) return;
+
+    const id = Number(selectedRow.dataset.id);
+
+    getAllRowsFromDB((rows) => {
+      const row = rows.find(r => r.id === id);
+      if (!row) return;
+
+      document.getElementById('title').value = row.title;
+      document.getElementById('fromDate').value = row.fromDate;
+      document.getElementById('toDate').value = row.toDate;
+
+      hideContextMenu();
+
+      // When user clicks Add, update instead of insert
+      selectedRow.isEditing = true;
+      selectedRow.idEditing = id;
+    });
+  }
+
+  function deleteRow() {
+    if (!selectedRow) return;
+    const id = Number(selectedRow.dataset.id);
+    if (confirm("Delete this entry?")) {
+      deleteRowFromDB(id);
+      hideContextMenu();
+    }
+  }
+
+  // Long press detection for cards (mobile friendly)
+
+  let longPressTimer;
+
+  function addLongPressListener(element) {
+    element.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
+
+    element.addEventListener('mousedown', (e) => {
+      longPressTimer = setTimeout(() => {
+        selectedRow = element;
+        showContextMenu(e.pageX, e.pageY);
+      }, 600);
+    });
+
+    element.addEventListener('mouseup', () => {
+      clearTimeout(longPressTimer);
+    });
+
+    element.addEventListener('mouseleave', () => {
+      clearTimeout(longPressTimer);
+    });
+
+    // Touch support
+    element.addEventListener('touchstart', (e) => {
+      longPressTimer = setTimeout(() => {
+        selectedRow = element;
+        showContextMenu(e.touches[0].pageX, e.touches[0].pageY);
+      }, 600);
+    });
+    element.addEventListener('touchend', () => {
+      clearTimeout(longPressTimer);
+    });
+  }
+
+  // Handle update mode when Add clicked
+  document.querySelector('button.btn-primary').addEventListener('click', () => {
+    if (selectedRow && selectedRow.isEditing) {
+      const id = selectedRow.idEditing;
+      const title = document.getElementById('title').value.trim();
+      const fromDate = document.getElementById('fromDate').value;
+      const toDate = document.getElementById('toDate').value;
+
+      if (!title || !fromDate || !toDate) {
+        alert("Please fill all fields");
+        return;
+      }
+
+      if (new Date(toDate) < new Date(fromDate)) {
+        alert("To Date cannot be before From Date");
+        return;
+      }
+
+      updateRowInDB(id, { title, fromDate, toDate });
+      selectedRow.isEditing = false;
+      selectedRow = null;
+      clearForm();
+      showSaveToast("✅ Updated successfully!");
+    }
+  });
+
+  // Close context menu when clicking outside
+  window.addEventListener('click', (e) => {
+    if (!contextMenu.contains(e.target)) {
+      hideContextMenu();
+    }
+  });
+
+  openDB();
+</script>
+
+</body>
+</html>

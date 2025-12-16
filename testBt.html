@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline Bootstrap Grid Columns</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css" />
+</head>
+<body>
+
+  <div class="container mt-5">
+    <div class="d-grid gap-3" style="grid-template-columns: 1fr 1fr;">
+      <div class="bg-light p-3 text-center border">
+        <h5 class="text-primary">Left Column</h5>
+        <button class="btn btn-success">Click Left</button>
+      </div>
+      <div class="bg-light p-3 text-center border">
+        <h5 class="text-danger">Right Column</h5>
+        <button class="btn btn-warning">Click Right</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

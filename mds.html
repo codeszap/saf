@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Monthly Due Schedule Maker</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body class="bg-light p-3">
+
+<div class="container my-4">
+  <div class="card shadow rounded p-4 mx-auto" style="max-width: 600px;">
+    <h2 class="text-center mb-4">Monthly Due Schedule Maker</h2>
+
+    <div class="mb-3">
+      <label for="month" class="form-label">Month</label>
+      <input type="month" id="month" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label for="newDate" class="form-label">Date</label>
+      <input type="date" id="newDate" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label for="name" class="form-label">Name</label>
+      <input type="text" id="name" placeholder="Enter name" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label for="amount" class="form-label">Amount</label>
+      <input type="number" id="amount" placeholder="Enter amount" class="form-control" />
+    </div>
+
+    <div class="form-check mb-3">
+      <input type="checkbox" id="active" class="form-check-input" checked />
+      <label for="active" class="form-check-label">Active</label>
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end flex-wrap">
+      <button class="btn btn-primary" onclick="addToTable()">Add</button>
+      <button class="btn btn-danger" onclick="confirmClear()">Clear</button>
+      <button class="btn btn-success" onclick="captureImage()">📸 Get Image</button>
+    </div>
+  </div>
+
+  <div class="card shadow p-3 mt-5" id="snapshotContainer">
+    <h2 class="text-center" id="monthLabel"></h2>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover table-striped align-middle text-nowrap" id="dataTable">
+        <thead class="table-primary">
+          <tr>
+            <th>Date</th>
+            <th>Name</th>
+            <th>Amount</th>
+            <th>Active</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4">
+              <strong>T:</strong> ₹<span id="totalAmount">0</span> |
+              <strong>P:</strong> ₹<span id="activeAmount">0</span> |
+              <strong>Pe:</strong> ₹<span id="inactiveAmount">0</span>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div id="contextMenu" class="position-absolute bg-white border shadow-sm rounded d-none z-3">
+  <button class="dropdown-item" onclick="editRow()">📝 Edit</button>
+  <button class="dropdown-item" onclick="deleteRow()">🗑️ Delete</button>
+  <button class="dropdown-item" onclick="hideContextMenu()">❌ Cancel</button>
+</div>
+
+<script src="js/bootstrap.bundle.min.js"></script>
+<script>
+  const dbName = 'DueScheduleDB';
+  const storeName = 'entries';
+  let db;
+
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  document.getElementById('month').value = `${yyyy}-${mm}`;
+  document.getElementById('newDate').value = `${yyyy}-${mm}-${dd}`;
+
+  let selectedRow = null;
+
+  function openDB() {
+    const request = indexedDB.open(dbName, 1);
+    request.onerror = () => alert("DB Error!");
+    request.onsuccess = (event) => {
+      db = event.target.result;
+      loadFromDB();
+    };
+    request.onupgradeneeded = (event) => {
+      db = event.target.result;
+      db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+    };
+  }
+
+  function formatDate(dateStr) {
+    const parts = dateStr.split("-");
+    return `${parts[2]}/${parts[1]}`;
+  }
+
+  function addRowToDB(data) {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    store.add(data);
+    tx.oncomplete = () => {
+      loadFromDB();
+      clearForm();
+      alert("✅ Added successfully!");
+    };
+  }
+
+  function getAllRowsFromDB(callback) {
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const rows = [];
+    store.openCursor().onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        rows.push({ id: cursor.key, ...cursor.value });
+        cursor.continue();
+      } else {
+        callback(rows);
+      }
+    };
+  }
+
+  function deleteRowFromDB(id) {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).delete(id);
+    tx.oncomplete = loadFromDB;
+  }
+
+  function clearDB() {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).clear();
+    tx.oncomplete = () => {
+      loadFromDB();
+      document.getElementById('monthLabel').style.display = 'none';
+    };
+  }
+
+  function addToTable() {
+    const name = document.getElementById('name').value.trim();
+    const amount = document.getElementById('amount').value.trim();
+    const active = document.getElementById('active').checked;
+    const date = document.getElementById('newDate').value;
+
+    if (!name || !amount || !date) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    const newDate = formatDate(date);
+
+    getAllRowsFromDB((rows) => {
+      const duplicate = rows.find(row => row.date === newDate && row.name.toLowerCase() === name.toLowerCase() && row.amount === amount);
+      if (duplicate) {
+        alert("Duplicate entry not allowed");
+        return;
+      }
+      addRowToDB({ date: newDate, name, amount, active });
+    });
+  }
+
+  function loadFromDB() {
+    getAllRowsFromDB((rows) => {
+      rows.sort((a, b) => {
+        const [d1, m1] = a.date.split("/").map(Number);
+        const [d2, m2] = b.date.split("/").map(Number);
+        return new Date(2000, m1 - 1, d1) - new Date(2000, m2 - 1, d2);
+      });
+
+      const tbody = document.querySelector('#dataTable tbody');
+      tbody.innerHTML = '';
+      rows.forEach(data => {
+        const newRow = tbody.insertRow();
+        newRow.dataset.id = data.id;
+        newRow.insertCell(0).textContent = data.date;
+        newRow.insertCell(1).textContent = data.name;
+        newRow.insertCell(2).textContent = data.amount;
+        const activeCell = newRow.insertCell(3);
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.disabled = true;
+        checkbox.checked = data.active;
+        activeCell.appendChild(checkbox);
+
+        newRow.addEventListener('contextmenu', function (e) {
+          e.preventDefault();
+          selectedRow = newRow;
+          showContextMenu(e.pageX, e.pageY);
+        });
+      });
+
+      updateTotal();
+      showMonthLabel();
+    });
+  }
+
+  function updateTotal() {
+    let total = 0, pay = 0, pend = 0;
+    const rows = document.querySelectorAll('#dataTable tbody tr');
+    rows.forEach(row => {
+      const amt = parseFloat(row.cells[2].textContent);
+      const active = row.cells[3].querySelector('input').checked;
+      total += amt;
+      active ? pay += amt : pend += amt;
+    });
+    document.getElementById('totalAmount').textContent = total;
+    document.getElementById('activeAmount').textContent = pay;
+    document.getElementById('inactiveAmount').textContent = pend;
+  }
+
+  function clearForm() {
+    document.getElementById('name').value = '';
+    document.getElementById('amount').value = '';
+    document.getElementById('active').checked = true;
+    document.getElementById('newDate').value = `${yyyy}-${mm}-${dd}`;
+  }
+
+  function showMonthLabel() {
+    const [year, month] = document.getElementById('month').value.split("-");
+    const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
+    const label = document.getElementById('monthLabel');
+    label.textContent = `${monthName} Month Schedule`;
+    label.style.display = 'block';
+  }
+
+  function captureImage() {
+    const element = document.getElementById("snapshotContainer");
+    html2canvas(element, {
+      backgroundColor: null,
+      scale: 2,
+      scrollY: -window.scrollY
+    }).then(canvas => {
+      const base64Image = canvas.toDataURL('image/png');
+      // Optionally send to Flutter
+      if (window.ImageChannel && window.ImageChannel.postMessage) {
+        window.ImageChannel.postMessage(base64Image);
+      }
+
+      // Also download locally
+      const link = document.createElement('a');
+      link.download = 'due_schedule.png';
+      link.href = base64Image;
+      link.click();
+    });
+  }
+
+  function confirmClear() {
+    if (confirm("Are you sure you want to clear everything?")) {
+      clearDB();
+    }
+  }
+
+  function showContextMenu(x, y) {
+    const menu = document.getElementById('contextMenu');
+    menu.style.top = `${y}px`;
+    menu.style.left = `${x}px`;
+    menu.classList.remove('d-none');
+  }
+
+  function hideContextMenu() {
+    document.getElementById('contextMenu').classList.add('d-none');
+  }
+
+  document.addEventListener('click', hideContextMenu);
+
+  function editRow() {
+    if (!selectedRow) return;
+    const [d, m] = selectedRow.cells[0].textContent.split("/");
+    document.getElementById('newDate').value = `${yyyy}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    document.getElementById('name').value = selectedRow.cells[1].textContent;
+    document.getElementById('amount').value = selectedRow.cells[2].textContent;
+    document.getElementById('active').checked = selectedRow.cells[3].querySelector('input').checked;
+
+    const id = Number(selectedRow.dataset.id);
+    deleteRowFromDB(id);
+    selectedRow = null;
+  }
+
+  function deleteRow() {
+    if (!selectedRow) return;
+    const id = Number(selectedRow.dataset.id);
+    deleteRowFromDB(id);
+    selectedRow = null;
+  }
+
+  window.onload = openDB;
+</script>
+</body>
+</html>

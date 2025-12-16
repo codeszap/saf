@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monthly Schedule Tracker (IndexedDB)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    #calendar .col > div {
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background-color 0.2s, color 0.2s;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    table th, table td {
+      border: 1px solid #000;
+      padding: 5px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container col-lg-12 my-4">
+    <div class="card shadow-lg rounded-4">
+      <div class="card-header bg-white d-flex flex-column flex-sm-row justify-content-between align-items-center col-12">
+        <div class="d-flex justify-content-between w-100 mb-2 mb-sm-0">
+          <button class="btn btn-outline-primary btn-sm" id="prevBtn">⟨ Prev</button>
+          <button class="btn btn-outline-primary btn-sm" id="nextBtn">Next ⟩</button>
+        </div>
+        <h4 id="monthTitle" class="mb-0 fw-bold text-primary text-center text-sm-start"></h4>
+      </div>
+
+      <div class="card-body">
+        <div class="row g-1 row-cols-4 row-cols-sm-3 row-cols-md-4 row-cols-lg-7 mb-3" id="calendar"></div>
+
+        <div class="d-flex gap-2 mb-3">
+          <button class="btn btn-success btn-sm" id="downloadImageBtn">Download Image</button>
+          <button class="btn btn-secondary btn-sm" id="exportJsonBtn">Export JSON</button>
+          <button class="btn btn-secondary btn-sm" id="importJsonBtn">Import JSON</button>
+          <input type="file" id="importFile" style="display:none;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script>
+    let db;
+    const request = indexedDB.open("ScheduleDB", 1);
+    request.onupgradeneeded = (event) => {
+      db = event.target.result;
+      if (!db.objectStoreNames.contains("schedule")) {
+        db.createObjectStore("schedule", { keyPath: "date" });
+      }
+    };
+    request.onsuccess = (event) => {
+      db = event.target.result;
+      renderCalendar(currentYear, currentMonth);
+    };
+    request.onerror = (event) => { console.error("IndexedDB error:", event.target.errorCode); }
+
+    const calendar = document.getElementById("calendar");
+    const monthTitle = document.getElementById("monthTitle");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
+    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    let today = new Date();
+    let currentYear = today.getFullYear();
+    let currentMonth = today.getMonth();
+
+    function saveDate(dateStr, value) {
+      const tx = db.transaction("schedule", "readwrite");
+      const store = tx.objectStore("schedule");
+      store.put({ date: dateStr, value: value });
+    }
+
+    function getDate(dateStr) {
+      return new Promise((resolve) => {
+        const tx = db.transaction("schedule", "readonly");
+        const store = tx.objectStore("schedule");
+        const request = store.get(dateStr);
+        request.onsuccess = () => resolve(request.result ? request.result.value : false);
+      });
+    }
+
+    async function updateSummary(y, m, daysInMonth) {
+      let yes = 0, no = 0;
+      for (let d=1; d<=daysInMonth; d++){
+        let dateStr = `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+        let saved = await getDate(dateStr);
+        if(saved) yes++; else no++;
+      }
+      return {total: daysInMonth, yes, no};
+    }
+
+    async function renderCalendar(y, m) {
+      calendar.innerHTML = "";
+      monthTitle.textContent = `${monthNames[m]} ${y}`;
+      const daysInMonth = new Date(y, m+1, 0).getDate();
+      const summary = await updateSummary(y,m,daysInMonth);
+
+      for(let d=1; d<=daysInMonth; d++){
+        let dateStr = `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+        let div = document.createElement("div");
+        div.className = "col";
+        const isToday = (d===today.getDate() && m===today.getMonth() && y===today.getFullYear());
+        const borderClass = isToday ? "border border-primary" : "border border-secondary";
+
+        div.innerHTML = `<div class="d-flex align-items-center justify-content-center ${borderClass} rounded p-2 fw-bold" data-date="${dateStr}">${d}</div>`;
+        calendar.appendChild(div);
+        const card = div.querySelector("div");
+
+        let saved = await getDate(dateStr);
+        if(saved) card.classList.add("bg-success","text-white");
+
+        card.addEventListener("click", async ()=>{
+          let current = await getDate(dateStr);
+          if(current){
+            card.classList.remove("bg-success","text-white");
+            saveDate(dateStr,false);
+          } else {
+            card.classList.add("bg-success","text-white");
+            saveDate(dateStr,true);
+          }
+          renderCalendar(currentYear,currentMonth);
+        });
+      }
+    }
+
+    prevBtn.addEventListener("click", ()=>{ currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;} renderCalendar(currentYear,currentMonth); });
+    nextBtn.addEventListener("click", ()=>{ currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;} renderCalendar(currentYear,currentMonth); });
+
+    // Download image with table + month
+   document.getElementById("downloadImageBtn").addEventListener("click", async ()=>{
+  const daysInMonth = new Date(currentYear,currentMonth+1,0).getDate();
+  const summary = await updateSummary(currentYear,currentMonth,daysInMonth);
+
+  const wrapper = document.createElement("div");
+  wrapper.style.background = "white"; 
+  wrapper.style.padding = "20px"; 
+  wrapper.style.display = "inline-block"; // tight fit
+  wrapper.style.textAlign = "center";
+
+  // Month Title
+  const titleClone = monthTitle.cloneNode(true);
+  titleClone.style.marginBottom = "20px";
+  titleClone.style.fontSize = "24px";
+   titleClone.style.padding = "20px"; 
+  wrapper.appendChild(titleClone);
+
+  // Summary Table
+  const table = document.createElement("table");
+  table.style.margin = "0 auto 20px auto"; // center + bottom spacing
+  table.style.borderCollapse = "collapse";
+  table.innerHTML = `
+    <tr>
+      <th style="border:1px solid #000;padding:8px;">Total Days</th>
+      <th style="border:1px solid #000;padding:8px;">✅ Yes</th>
+      <th style="border:1px solid #000;padding:8px;">❌ No</th>
+    </tr>
+    <tr>
+      <td style="border:1px solid #000;padding:8px;">${summary.total}</td>
+      <td style="border:1px solid #000;padding:8px;">${summary.yes}</td>
+      <td style="border:1px solid #000;padding:8px;">${summary.no}</td>
+    </tr>
+  `;
+  wrapper.appendChild(table);
+
+  // Calendar Clone
+  const calendarClone = calendar.cloneNode(true);
+  calendarClone.style.marginTop = "10px";
+  wrapper.appendChild(calendarClone);
+
+  document.body.appendChild(wrapper);
+  html2canvas(wrapper).then(canvas=>{
+    const link = document.createElement("a");
+    link.download = `calendar_${currentYear}_${currentMonth+1}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+    document.body.removeChild(wrapper);
+  });
+});
+
+    // Export JSON
+    document.getElementById("exportJsonBtn").addEventListener("click", ()=>{
+      const tx = db.transaction("schedule","readonly");
+      const store = tx.objectStore("schedule");
+      const request = store.getAll();
+      request.onsuccess = ()=>{
+        const dataStr = JSON.stringify(request.result,null,2);
+        const blob = new Blob([dataStr],{type:"application/json"});
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "schedule.json";
+        link.click();
+      }
+    });
+
+    // Import JSON
+    const importFile = document.getElementById("importFile");
+    document.getElementById("importJsonBtn").addEventListener("click", ()=>importFile.click());
+    importFile.addEventListener("change",(e)=>{
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        const data = JSON.parse(reader.result);
+        const tx = db.transaction("schedule","readwrite");
+        const store = tx.objectStore("schedule");
+        data.forEach(item=>store.put(item));
+        tx.oncomplete = ()=>renderCalendar(currentYear,currentMonth);
+      };
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>

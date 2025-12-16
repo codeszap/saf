@@ -1,0 +1,167 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Due Amount Calculator</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body class="bg-light d-flex justify-content-center align-items-center min-vh-100">
+
+<div class="container bg-white p-4 rounded shadow" style="max-width: 450px;">
+  <h2 class="text-center mb-4">Due Amount Calculator</h2>
+
+  <div class="mb-3">
+    <label for="title" class="form-label fw-bold">Title</label>
+    <input type="text" id="title" class="form-control" placeholder="Ex: Bike EMI, Loan">
+  </div>
+
+  <div class="row">
+    <div class="col mb-3">
+      <label for="totalAmount" class="form-label fw-bold">Total Amount</label>
+      <input type="number" id="totalAmount" class="form-control" placeholder="₹">
+    </div>
+    <div class="col mb-3">
+      <label for="monthlyDue" class="form-label fw-bold">Monthly Due</label>
+      <input type="number" id="monthlyDue" class="form-control" placeholder="₹">
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label for="startDate" class="form-label fw-bold">Start Date (Optional)</label>
+    <input type="date" id="startDate" class="form-control">
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mt-3">
+    <button class="btn btn-primary flex-fill" onclick="calculate()">Calculate</button>
+    <button class="btn btn-info text-white flex-fill" onclick="showBreakdown()">View</button>
+    <button class="btn btn-secondary flex-fill" onclick="clearFields()">Clear</button>
+    <button class="btn btn-success flex-fill" onclick="captureImage()">Get Image</button>
+  </div>
+
+  <div class="result text-center mt-3 fs-5 text-muted" id="result"></div>
+
+  <div class="mt-4 p-3 bg-white border rounded" id="snapshotContainer">
+    <div id="breakdown"></div>
+  </div>
+</div>
+
+<script src="js/bootstrap.bundle.min.js"></script>
+  <script>
+    function calculate() {
+      const total = parseFloat(document.getElementById("totalAmount").value);
+      const monthly = parseFloat(document.getElementById("monthlyDue").value);
+
+      if (isNaN(total) || isNaN(monthly) || monthly <= 0) {
+        document.getElementById("result").innerText = "Please enter valid amounts.";
+        return;
+      }
+
+      const months = Math.ceil(total / monthly);
+      document.getElementById("result").innerText = `It will take ${months} months to complete the payment.`;
+    }
+
+    function showBreakdown() {
+      const title = document.getElementById("title").value.trim();
+      const total = parseFloat(document.getElementById("totalAmount").value);
+      const monthly = parseFloat(document.getElementById("monthlyDue").value);
+      const startDateStr = document.getElementById("startDate").value;
+      const breakdownDiv = document.getElementById("breakdown");
+
+      if (!title) {
+        breakdownDiv.innerHTML = `<p style="color:red;text-align:center;">Please enter a title.</p>`;
+        return;
+      }
+
+      if (isNaN(total) || isNaN(monthly) || monthly <= 0) {
+        breakdownDiv.innerHTML = `<p style="color:red;text-align:center;">Please enter valid amounts.</p>`;
+        return;
+      }
+
+      let remaining = total;
+      let month = 1;
+      let totalPaid = 0;
+
+      const startDateObj = startDateStr ? new Date(startDateStr) : null;
+      const createdAt = new Date();
+
+      const formattedCreatedAt = createdAt.toLocaleDateString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric'
+      });
+
+      let displayHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; font-size:16px;">
+          <div><strong>📌 Title:</strong> ${title}</div>
+          <div>
+            ${startDateObj ? `<strong>📅 Start:</strong> ${startDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}` : ""}
+          </div>
+        </div>
+        <div style="text-align:right; font-size:13px; color:#666; margin-top:5px;">
+          🕒 Created At: ${formattedCreatedAt}
+        </div>
+      `;
+
+      displayHTML += `<table><tr><th>Month</th><th>Paid Amount</th></tr>`;
+
+      while (remaining > 0) {
+        let paidThisMonth = remaining >= monthly ? monthly : remaining;
+        let monthLabel;
+
+        if (startDateObj) {
+          const dateClone = new Date(startDateObj);
+          dateClone.setMonth(dateClone.getMonth() + month - 1);
+          monthLabel = dateClone.toLocaleDateString('en-GB', {
+            day: '2-digit', month: 'short', year: 'numeric'
+          });
+        } else {
+          monthLabel = month;
+        }
+
+        displayHTML += `<tr><td>${monthLabel}</td><td>₹${paidThisMonth.toFixed(2)}</td></tr>`;
+        remaining -= paidThisMonth;
+        totalPaid += paidThisMonth;
+        month++;
+      }
+
+      const totalMonths = month - 1;
+      displayHTML += `<tr><td>Total</td><td>₹${totalPaid.toFixed(2)} in ${totalMonths} Months</td></tr>`;
+      displayHTML += `</table>`;
+
+      breakdownDiv.innerHTML = displayHTML;
+    }
+
+    function clearFields() {
+      document.getElementById("title").value = "";
+      document.getElementById("totalAmount").value = "";
+      document.getElementById("monthlyDue").value = "";
+      document.getElementById("startDate").value = "";
+      document.getElementById("result").innerText = "";
+      document.getElementById("breakdown").innerHTML = "";
+    }
+
+     function captureImage() {
+    const element = document.getElementById("snapshotContainer");
+    html2canvas(element, {
+      backgroundColor: null,
+      scale: 2,
+      scrollY: -window.scrollY
+    }).then(canvas => {
+      const base64Image = canvas.toDataURL('image/png');
+      // Optionally send to Flutter
+      if (window.ImageChannel && window.ImageChannel.postMessage) {
+        window.ImageChannel.postMessage(base64Image);
+      }
+
+      // Also download locally
+      const link = document.createElement('a');
+      link.download = 'due_schedule.png';
+      link.href = base64Image;
+      link.click();
+    });
+  }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Expense Tracker</title>
+   <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Menu Bar Button -->
+  <div id="menu-bar" style="position:fixed;top:20px;left:20px;z-index:10001;">
+    <button onclick="openMenu()" style="font-size:24px;padding:8px 16px;border:none;background:#000;color:#fff;border-radius:8px;cursor:pointer;">☰</button>
+  </div>
+
+  <!-- Sidebar Menu -->
+  <div id="side-menu" style="position:fixed;top:0;left:-220px;width:200px;height:100%;background:#2196F3;color:#fff;z-index:10000;transition:left 0.3s;padding:30px 15px 15px 15px;box-shadow:2px 0 8px rgba(0,0,0,0.1);">
+    <button onclick="closeMenu()" style="background:none;border:none;color:#fff;font-size:22px;float:right;cursor:pointer;">×</button>
+    <h3 style="margin-top:40px;">Menu</h3>
+    <ul style="list-style:none;padding:0;margin:20px 0 0 0;">
+      <li><a href="#" onclick="showForm();closeMenu();" style="color:#fff;text-decoration:none;display:block;padding:8px 0;">Add Expense</a></li>
+      <li><a href="#" onclick="viewExpenses();closeMenu();" style="color:#fff;text-decoration:none;display:block;padding:8px 0;">View Expenses</a></li>
+      <li><a href="#" onclick="backupExpenses();closeMenu();" style="color:#fff;text-decoration:none;display:block;padding:8px 0;">Backup</a></li>
+      <li><a href="#" onclick="document.getElementById('restore-file').click();closeMenu();" style="color:#fff;text-decoration:none;display:block;padding:8px 0;">Restore</a></li>
+    </ul>
+  </div>
+
+  <div class="container" id="form-container">
+    <h2>Expense Tracker</h2>
+
+    <div class="form-group">
+      <label for="date">Date</label>
+      <input type="date" id="date" />
+    </div>
+
+    <div class="form-group">
+      <label for="name">Name</label>
+      <input type="text" id="name" placeholder="Eg: Mani, Siva" list="name-list" autocomplete="off" />
+      <datalist id="name-list"></datalist>
+    </div>
+
+    <div class="form-group">
+      <label for="category">Category</label>
+      <input type="text" id="category" placeholder="Eg: Food, Travel" list="category-list" autocomplete="off" />
+      <datalist id="category-list"></datalist>
+    </div>
+
+    <div class="form-group">
+      <label for="description">Description</label>
+      <input type="text" id="description" placeholder="Eg: Lunch, Bus fare" list="description-list" autocomplete="off" />
+      <datalist id="description-list"></datalist>
+    </div>
+
+    <div class="form-group">
+      <label for="amount">Amount (₹)</label>
+      <input type="number" id="amount" placeholder="Eg: 250" inputmode="numeric" pattern="[0-9]*" />
+    </div>
+
+    <div class="buttons">
+      <button class="add-btn" type="button" onclick="addExpense()">Add</button>
+      <button class="clear-btn" type="button" onclick="clearFields()">Clear</button>
+      <button class="view-btn" type="button" onclick="viewExpenses()">View</button>
+    </div>
+    <div id="custom-alert" class="custom-alert"></div>
+  </div>
+
+  <div class="container" id="records-container" style="display:none;">
+    <h2 style="text-align:center;margin-bottom:10px;">View Expenses</h2>
+    <form id="filter-form" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px;">
+      <input type="text" id="filter-name" placeholder="Name" style="flex:1;min-width:100px;">
+      <input type="date" id="filter-date" style="flex:1;min-width:120px;">
+      <button type="button" onclick="viewExpenses()">Filter</button>
+      <button type="button" onclick="clearFilters()">Clear</button>
+    </form>
+    <div id="total-expense" style="text-align:center;font-weight:bold;margin-bottom:15px;"></div>
+    <div id="records"></div>
+  </div>
+
+  <input type="file" id="restore-file" style="display:none" accept=".json" onchange="restoreExpenses(event)">
+
+
+</body>
+</html>

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STC Meditation Tracker</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <style>
+    /* 👇 Force border visibility for table in general rendering */
+    #meditationTable,
+    #meditationTable th,
+    #meditationTable td {
+      border: 1px solid #dee2e6 !important;
+    }
+
+    #meditationTable {
+      border-collapse: collapse !important;
+    }
+  </style>
+</head>
+
+<body class="bg-light">
+
+  <div class="container my-4">
+    <h2 class="text-center mb-4">STC Meditation Tracker</h2>
+
+    <form id="meditationForm" class="card p-4 shadow rounded">
+      <div class="mb-3">
+        <label for="date" class="form-label fw-semibold">Date</label>
+        <input type="date" id="date" class="form-control" required />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Meditation</label>
+        <div class="form-check form-check-inline">
+          <input type="radio" id="medYes" name="meditation" value="yes" class="form-check-input" checked />
+          <label for="medYes" class="form-check-label">Yes</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input type="radio" id="medNo" name="meditation" value="no" class="form-check-input" />
+          <label for="medNo" class="form-check-label">No</label>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="startTime" class="form-label fw-semibold">Start Time</label>
+        <input type="time" id="startTime" class="form-control" />
+      </div>
+
+      <div class="mb-3">
+        <label for="duration" class="form-label fw-semibold">Duration (minutes)</label>
+        <input type="number" id="duration" class="form-control" min="1" />
+      </div>
+
+      <div class="mb-3">
+        <label for="notes" class="form-label fw-semibold">Notes</label>
+        <textarea id="notes" rows="3" class="form-control"></textarea>
+      </div>
+
+      <div class="d-flex gap-2 justify-content-end flex-wrap">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" id="clearBtn" class="btn btn-danger">Clear</button>
+        <button type="button" id="downloadImgBtn" class="btn btn-success">📸 Download Table</button>
+        <button type="button" id="downloadJsonBtn" class="btn btn-warning">💾 Download JSON</button>
+        <input type="file" id="importInput" accept=".json" class="d-none">
+        <button type="button" id="importBtn" class="btn btn-info">📥 Import JSON</button>
+      </div>
+    </form>
+
+    <div class="card shadow p-3 mt-5" id="snapshotContainer">
+      <!-- Filter & Pagination Controls -->
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+          <label for="monthFilter" class="fw-semibold">Filter by Month:</label>
+          <input type="month" id="monthFilter" class="form-control d-inline-block" style="width:auto;">
+        </div>
+        <div id="paginationControls" class="d-flex align-items-center gap-2">
+          <label class="fw-semibold">Rows:</label>
+          <select id="rowsPerPageSelect" class="form-select form-select-sm" style="width:auto;">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+            <option value="30" selected>30</option>
+          </select>
+          <button id="prevPage" class="btn btn-outline-secondary btn-sm">⬅ Prev</button>
+          <span id="pageInfo" class="fw-semibold"></span>
+          <button id="nextPage" class="btn btn-outline-secondary btn-sm">Next ➡</button>
+        </div>
+
+      </div>
+
+      <div id="summaryCounts" class="alert alert-info px-4 mb-3" style="display:none;"></div>
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover table-striped align-middle text-nowrap" id="meditationTable">
+          <thead class="table-primary">
+            <tr>
+              <th class="text-nowrap">Date</th>
+              <th class="text-nowrap">Meditation</th>
+              <th class="text-nowrap">Time</th>
+              <th class="text-nowrap">Duration</th>
+              <th class="text-nowrap">Notes</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context Menu -->
+  <div id="contextMenu" class="position-absolute bg-white border shadow-sm rounded d-none z-3">
+    <button class="dropdown-item" id="editRow">📝 Edit</button>
+    <button class="dropdown-item" id="deleteRow">🗑️ Delete</button>
+    <button class="dropdown-item" id="cancelMenu">❌ Cancel</button>
+  </div>
+
+  <script src="js/bootstrap.bundle.min.js"></script>
+  <script>
+    const DB_NAME = "MeditationDB";
+    const STORE_NAME = "entries";
+    let db;
+    let selectedRowId = null;
+    let skipYesterdayInsertOnce = false;
+
+    let allEntries = [];
+    let filteredEntries = [];
+    let currentPage = 1;
+    let rowsPerPage = 30;
+
+
+    document.getElementById('rowsPerPageSelect').addEventListener('change', (e) => {
+      rowsPerPage = parseInt(e.target.value, 10);
+      currentPage = 1;
+      applyFiltersAndPagination();
+    });
+
+    const dateInput = document.getElementById('date');
+    const timeInput = document.getElementById('startTime');
+    const form = document.getElementById('meditationForm');
+    const tableBody = document.querySelector('#meditationTable tbody');
+    const contextMenu = document.getElementById('contextMenu');
+
+
+    document.getElementById('duration').addEventListener('input', function () {
+      const durationMinutes = parseInt(this.value, 10);
+      if (isNaN(durationMinutes) || durationMinutes <= 0) return;
+
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - durationMinutes);
+
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      timeInput.value = `${hh}:${mm}`;
+    });
+
+    const today = new Date();
+    if (!dateInput.value) {
+      dateInput.valueAsDate = today;
+    }
+    timeInput.value = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+    function openDB() {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onerror = () => alert("Failed to open DB");
+      request.onsuccess = (e) => {
+        db = e.target.result;
+
+        // ✅ Set default filter to current month
+        const monthFilter = document.getElementById('monthFilter');
+        const todayDate = new Date();
+        const currentYearMonth = todayDate.toISOString().slice(0, 7); // YYYY-MM
+        monthFilter.value = currentYearMonth;
+
+        loadEntries();
+      };
+
+      request.onupgradeneeded = (e) => {
+        db = e.target.result;
+        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+      };
+    }
+
+    function addEntry(entry) {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).add(entry);
+      tx.oncomplete = () => {
+        loadEntries();
+        document.getElementById('duration').value = '';
+        document.getElementById('notes').value = '';
+        timeInput.value = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      };
+    }
+
+    function loadEntries() {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const entries = [];
+
+      store.openCursor().onsuccess = (e) => {
+        const cursor = e.target.result;
+        if (cursor) {
+          entries.push(cursor.value);
+          cursor.continue();
+        } else {
+          entries.sort((a, b) => {
+            const [dayA, monthA, yearA] = a.date.split('-');
+            const [dayB, monthB, yearB] = b.date.split('-');
+            return new Date(`${yearA}-${monthA}-${dayA}`) - new Date(`${yearB}-${monthB}-${dayB}`);
+          });
+
+          allEntries = entries;
+
+          // ✅ Auto-add "No" for yesterday if missing
+          // ✅ Auto-add "No" for yesterday if missing — but skip if just edited/deleted
+          const today = new Date();
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+
+          const yesterdayStr =
+            String(yesterday.getDate()).padStart(2, '0') + '-' +
+            String(yesterday.getMonth() + 1).padStart(2, '0') + '-' +
+            yesterday.getFullYear();
+
+          const yesterdayExists = allEntries.some(e => e.date === yesterdayStr);
+
+          if (!yesterdayExists && !skipYesterdayInsertOnce) {
+            addEntry({
+              date: yesterdayStr,
+              meditation: 'No',
+              time: '',
+              duration: '',
+              notes: ''
+            });
+            return; // addEntry kuppura reload varum
+          }
+
+          // reload cycle mudinjuduchu; next time allow auto-insert again
+          skipYesterdayInsertOnce = false;
+
+          applyFiltersAndPagination();
+
+        }
+      };
+    }
+
+
+    function applyFiltersAndPagination() {
+      const monthFilterVal = document.getElementById('monthFilter').value;
+      if (monthFilterVal) {
+        const [year, month] = monthFilterVal.split('-');
+        filteredEntries = allEntries.filter(e => {
+          const [day, m, y] = e.date.split('-');
+          return m === month && y === year;
+        });
+      } else {
+        filteredEntries = [...allEntries];
+      }
+
+      const totalPages = Math.max(1, Math.ceil(filteredEntries.length / rowsPerPage));
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      const start = (currentPage - 1) * rowsPerPage;
+      const paginatedData = filteredEntries.slice(start, start + rowsPerPage);
+
+      renderTable(paginatedData);
+      updatePaginationInfo(totalPages);
+    }
+
+    function renderTable(entries) {
+      tableBody.innerHTML = '';
+      entries.forEach(entry => {
+        const row = document.createElement('tr');
+        row.dataset.id = entry.id;
+        row.innerHTML = `
+        <td class="text-nowrap">${entry.date}</td>
+        <td class="text-nowrap">${entry.meditation}</td>
+        <td class="text-nowrap">${entry.time}</td>
+        <td class="text-nowrap">${entry.duration}</td>
+        <td class="text-nowrap">${entry.notes}</td>
+      `;
+        row.addEventListener('contextmenu', function (e) {
+          e.preventDefault();
+          selectedRowId = entry.id;
+          contextMenu.style.top = `${e.pageY}px`;
+          contextMenu.style.left = `${e.pageX}px`;
+          contextMenu.classList.remove("d-none");
+        });
+        tableBody.appendChild(row);
+      });
+
+      const totalDays = new Set(filteredEntries.map(e => e.date)).size;
+      const yesCount = filteredEntries.filter(e => e.meditation === "Yes").length;
+      const noCount = filteredEntries.filter(e => e.meditation === "No").length;
+      const summaryDiv = document.getElementById('summaryCounts');
+      summaryDiv.innerHTML = `
+      <b>Total days recorded:</b> ${totalDays} &nbsp; | 
+      <span class="text-success"><b>Meditated (Yes):</b> ${yesCount}</span> &nbsp; | 
+      <span class="text-danger"><b>Not Meditated (No):</b> ${noCount}</span>
+    `;
+      summaryDiv.style.display = 'block';
+    }
+
+    function updatePaginationInfo(totalPages) {
+      document.getElementById('pageInfo').textContent = `Pa ${currentPage} of ${totalPages}`;
+      document.getElementById('prevPage').disabled = currentPage === 1;
+      document.getElementById('nextPage').disabled = currentPage === totalPages;
+    }
+
+    // Filter and Pagination Events
+    document.getElementById('monthFilter').addEventListener('change', () => {
+      currentPage = 1;
+      applyFiltersAndPagination();
+    });
+
+    document.getElementById('prevPage').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        applyFiltersAndPagination();
+      }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', () => {
+      const totalPages = Math.ceil(filteredEntries.length / rowsPerPage);
+      if (currentPage < totalPages) {
+        currentPage++;
+        applyFiltersAndPagination();
+      }
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const dateVal = dateInput.value.split('-').reverse().join('-');
+      const medVal = document.querySelector('input[name="meditation"]:checked').value === 'yes' ? 'Yes' : 'No';
+      let timeVal = '', t12 = '', duration = '', notes = '';
+
+      if (medVal === 'Yes') {
+        timeVal = timeInput.value;
+        let [h, m] = timeVal.split(':');
+        h = Number(h);
+        t12 = (h % 12 || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
+        duration = document.getElementById('duration').value;
+        notes = document.getElementById('notes').value;
+      }
+
+      // 🚫 Duplicate date check
+      const duplicateExists = allEntries.some(e => e.date === dateVal);
+      if (duplicateExists) {
+        alert("❌ An entry for this date already exists!");
+        return;
+      }
+
+      addEntry({ date: dateVal, meditation: medVal, time: t12, duration, notes });
+    });
+
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      if (confirm("Clear all entries?")) {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).clear();
+        tx.oncomplete = loadEntries;
+      }
+    });
+
+    document.getElementById('importBtn').addEventListener('click', () => {
+      document.getElementById('importInput').click();
+    });
+
+    document.getElementById('importInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const jsonData = JSON.parse(event.target.result);
+          if (!jsonData.data || !Array.isArray(jsonData.data)) {
+            throw new Error('Invalid JSON format');
+          }
+
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          const store = tx.objectStore(STORE_NAME);
+          let successCount = 0;
+          let errorCount = 0;
+
+          jsonData.data.forEach(entry => {
+            const request = store.add(entry);
+            request.onsuccess = () => {
+              successCount++;
+              if (successCount + errorCount === jsonData.data.length) {
+                showImportResult(successCount, errorCount);
+              }
+            };
+            request.onerror = () => {
+              errorCount++;
+              if (successCount + errorCount === jsonData.data.length) {
+                showImportResult(successCount, errorCount);
+              }
+            };
+          });
+
+          tx.oncomplete = () => {
+            loadEntries();
+            e.target.value = '';
+          };
+
+        } catch (error) {
+          alert('❌ Error: Invalid JSON file format');
+        }
+      };
+
+      reader.onerror = () => {
+        alert('❌ Error reading file');
+      };
+
+      reader.readAsText(file);
+    });
+
+    function showImportResult(success, error) {
+      const message = `Import completed!\n✅ ${success} entries imported successfully\n${error > 0 ? `❌ ${error} entries failed` : ''}`;
+      alert(message);
+    }
+
+    document.getElementById('downloadImgBtn').addEventListener('click', () => {
+      const snapshot = document.getElementById('snapshotContainer');
+      const clone = snapshot.cloneNode(true);
+      Object.assign(clone.style, {
+        maxWidth: "100%",
+        border: "2px solid #dee2e6",
+        borderRadius: "0.5rem",
+        padding: "1rem",
+        backgroundColor: "white",
+        margin: "10px",
+        boxSizing: "border-box",
+        minHeight: "100px"
+      });
+
+      const tableBodyClone = clone.querySelector('tbody');
+      if (!tableBodyClone || tableBodyClone.children.length === 0) {
+        const dummyRow = document.createElement('tr');
+        dummyRow.innerHTML = `<td colspan="5" style="text-align:center; padding:20px; color:#888;">No data available</td>`;
+        tableBodyClone.appendChild(dummyRow);
+      }
+
+      const tableClone = clone.querySelector('table');
+      tableClone.style.border = "1px solid #dee2e6";
+      tableClone.style.borderCollapse = "collapse";
+      clone.querySelectorAll('th, td').forEach(cell => {
+        cell.style.border = "1px solid #dee2e6";
+      });
+
+      const hiddenContainer = document.createElement('div');
+      Object.assign(hiddenContainer.style, { position: 'fixed', top: '-9999px', left: '-9999px', zIndex: '-1' });
+      hiddenContainer.appendChild(clone);
+      document.body.appendChild(hiddenContainer);
+
+      html2canvas(clone, { backgroundColor: "#fff", scale: 2 }).then(canvas => {
+        const base64Image = canvas.toDataURL("image/png");
+        const link = document.createElement('a');
+        link.download = 'meditation_table.png';
+        link.href = base64Image;
+        link.click();
+      }).finally(() => {
+        document.body.removeChild(hiddenContainer);
+      });
+    });
+
+    document.getElementById('editRow').addEventListener('click', () => {
+      if (!selectedRowId) return;
+
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+
+      store.get(selectedRowId).onsuccess = function (e) {
+        const entry = e.target.result;
+
+        // form fill
+        const [d, m, y] = entry.date.split('-');
+        dateInput.value = `${y}-${m}-${d}`;
+        document.getElementById(entry.meditation === 'Yes' ? 'medYes' : 'medNo').checked = true;
+
+        // time (empty irundha handle)
+        if (entry.time && entry.time.trim()) {
+          const [t, ampm] = entry.time.split(' ');
+          let [hh, mm] = t.split(':');
+          hh = parseInt(hh, 10);
+          if (ampm === 'PM' && hh !== 12) hh += 12;
+          if (ampm === 'AM' && hh === 12) hh = 0;
+          timeInput.value = `${String(hh).padStart(2, '0')}:${mm}`;
+        } else {
+          timeInput.value = '';
+        }
+
+        document.getElementById('duration').value = entry.duration || '';
+        document.getElementById('notes').value = entry.notes || '';
+
+        // 🔑 Intha reload cycle-la yesterday auto-insert skip pannanum
+        skipYesterdayInsertOnce = true;
+
+        store.delete(selectedRowId).onsuccess = loadEntries;
+        contextMenu.classList.add("d-none");
+      };
+    });
+
+
+    document.getElementById('deleteRow').addEventListener('click', () => {
+      if (!selectedRowId) return;
+      if (confirm("Delete this entry?")) {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).delete(selectedRowId).onsuccess = loadEntries;
+      }
+      contextMenu.classList.add("d-none");
+    });
+
+    document.getElementById('cancelMenu').addEventListener('click', () => {
+      contextMenu.classList.add("d-none");
+    });
+
+    document.getElementById('downloadJsonBtn').addEventListener('click', () => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const entries = [];
+
+      store.openCursor().onsuccess = (e) => {
+        const cursor = e.target.result;
+        if (cursor) {
+          entries.push(cursor.value);
+          cursor.continue();
+        } else {
+          const payload = { form: 'stc_meditation', data: entries };
+          const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = 'meditation_data.json';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(link.href);
+        }
+      };
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!contextMenu.contains(e.target)) {
+        contextMenu.classList.add("d-none");
+      }
+    });
+
+    form.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+
+    window.onload = openDB;
+  </script>
+</body>
+
+</html>

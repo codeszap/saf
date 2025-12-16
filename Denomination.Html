@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8" />
+    <title>Denominations Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background-color: #121212;
+            color: #f1f1f1;
+        }
+        h2 {
+            text-align: center;
+            color: #fff;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        label {
+            min-width: 110px;
+            font-size: 25px;
+        }
+        input[type="number"] {
+            font-size: 25px;
+            width: 100px;
+            padding: 5px;
+            margin-right: 10px;
+            text-align: right;
+            background-color: #1e1e1e;
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 4px;
+        }
+        .amount {
+            font-size: 25px;
+            min-width: 80px;
+            text-align: right;
+            font-weight: bold;
+            color: #00ffcc;
+            font-feature-settings: "tnum";
+            line-height: 1;
+        }
+        .currency {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 20px;
+            color: #00ffcc;
+            white-space: nowrap;
+            line-height: 1;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 20px;
+            text-align: center;
+            background: #222;
+            padding: 12px;
+            border-radius: 8px;
+            color: #fff;
+            border: 1px solid #333;
+        }
+        #dateDisplay {
+            font-weight: bold;
+            text-align: right;
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        .buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .buttons button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+        .buttons button.clear {
+            background-color: #dc3545;
+        }
+        .balance-row {
+            color: #ffcc00;
+            font-weight: bold;
+            font-size: 20px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="dateDisplay"></div>
+    <h2>Denominations Calculator</h2>
+
+    <div class="row"><label>2000 x</label> <input type="number" id="note2000" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total2000" class="amount">0</span></span></div>
+    <div class="row"><label>500 x</label> <input type="number" id="note500" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total500" class="amount">0</span></span></div>
+    <div class="row"><label>200 x</label> <input type="number" id="note200" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total200" class="amount">0</span></span></div>
+    <div class="row"><label>100 x</label> <input type="number" id="note100" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total100" class="amount">0</span></span></div>
+    <div class="row"><label>50 x</label> <input type="number" id="note50" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total50" class="amount">0</span></span></div>
+    <div class="row"><label>20 x</label> <input type="number" id="note20" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total20" class="amount">0</span></span></div>
+    <div class="row"><label>10 x</label> <input type="number" id="note10" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total10" class="amount">0</span></span></div>
+    <div class="row"><label>2 x</label> <input type="number" id="note2" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total2" class="amount">0</span></span></div>
+    <div class="row"><label>1 x</label> <input type="number" id="note1" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total1" class="amount">0</span></span></div>
+
+    <!-- Coins row without account -->
+    <div class="row"><label>Acc x</label> <input type="number" id="coins" autocomplete="off" min="0" /> = <span class="currency">₹<span id="totalCoins" class="amount">0</span></span></div>
+
+    <div class="row"><label>Syst ₹</label> <input type="number" id="systemAmount" autocomplete="off" min="0" /></div>
+
+    <div id="result">
+        மொத்தம்: ₹<span id="grandTotal">0</span><br />
+        <div class="balance-row">Balance: ₹<span id="balance">0</span></div>
+    </div>
+
+    <div class="buttons">
+        <button id="saveBtn">Save</button>
+        <button id="clearBtn" class="clear">Clear</button>
+    </div>
+
+    <script>
+        const denominations = [
+            { id: 'note2000', value: 2000 },
+            { id: 'note500', value: 500 },
+            { id: 'note200', value: 200 },
+            { id: 'note100', value: 100 },
+            { id: 'note50', value: 50 },
+            { id: 'note20', value: 20 },
+            { id: 'note10', value: 10 },
+            { id: 'note2', value: 2 },
+            { id: 'note1', value: 1 }
+        ];
+
+        function calculate() {
+            let total = 0;
+            denominations.forEach(denom => {
+                const count = parseInt(document.getElementById(denom.id).value) || 0;
+                const amount = denom.value * count;
+                document.getElementById('total' + denom.id.replace('note', '')).textContent = amount;
+                total += amount;
+            });
+            // Coins calculation (coins count x 1)
+            const coinsCount = parseInt(document.getElementById('coins').value) || 0;
+            const coinsAmount = coinsCount; // 1 rupee per coin
+            document.getElementById('totalCoins').textContent = coinsAmount;
+            total += coinsAmount;
+
+            document.getElementById('grandTotal').textContent = total;
+
+            const systemAmt = parseInt(document.getElementById('systemAmount').value) || 0;
+            const balance = systemAmt - total;
+            document.getElementById('balance').textContent = balance;
+        }
+
+        function showCurrentDate() {
+            const now = new Date();
+            const dd = String(now.getDate()).padStart(2, '0');
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const yyyy = now.getFullYear();
+            document.getElementById('dateDisplay').textContent = `Date: ${dd}-${mm}-${yyyy}`;
+        }
+
+        function saveToLocalStorage() {
+            const data = {};
+            denominations.forEach(denom => {
+                data[denom.id] = document.getElementById(denom.id).value;
+            });
+            data['coins'] = document.getElementById('coins').value;
+            data['systemAmount'] = document.getElementById('systemAmount').value;
+            localStorage.setItem('denominationsData', JSON.stringify(data));
+        }
+
+        function clearLocalStorage() {
+            if (confirm("Are you sure you want to clear the data?")) {
+                localStorage.removeItem('denominationsData');
+                alert('Data cleared from local storage');
+                location.reload();
+            }
+        }
+
+        function loadFromLocalStorage() {
+            const storedData = localStorage.getItem('denominationsData');
+            if (storedData) {
+                const data = JSON.parse(storedData);
+                Object.keys(data).forEach(key => {
+                    const el = document.getElementById(key);
+                    if (el) el.value = data[key];
+                });
+                calculate();
+            }
+        }
+
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            saveToLocalStorage();
+            alert('Data saved to local storage');
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', clearLocalStorage);
+
+        denominations.forEach(denom => {
+            const inputElement = document.getElementById(denom.id);
+            inputElement.addEventListener('input', () => {
+                calculate();
+                saveToLocalStorage();
+            });
+        });
+
+        document.getElementById('coins').addEventListener('input', () => {
+            calculate();
+            saveToLocalStorage();
+        });
+
+        document.getElementById('systemAmount').addEventListener('input', () => {
+            calculate();
+            saveToLocalStorage();
+        });
+
+        showCurrentDate();
+        loadFromLocalStorage();
+    </script>
+</body>
+</html>

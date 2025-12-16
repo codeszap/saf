@@ -1,0 +1,215 @@
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f2f2f2;
+       justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin-left: 160px;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        margin-left: 0;
+      }
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      flex: 1;
+      margin: 0 5px;
+    }
+
+    .add-btn {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .clear-btn {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .view-btn {
+      background-color: #2196F3;
+      color: white;
+    }
+
+    @media (max-width: 480px) {
+      .buttons {
+        flex-direction: column;
+      }
+      button {
+        margin: 5px 0;
+      }
+      .form-actions {
+        justify-content: center;
+      }
+    }
+
+    .custom-alert {
+      display: none;
+      position: fixed;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      min-width: 250px;
+      background: #323232;
+      color: #fff;
+      padding: 16px 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 9999;
+      font-size: 16px;
+      text-align: center;
+      transition: opacity 0.3s;
+    }
+    .custom-alert.success {
+      background: #4CAF50;
+    }
+    .custom-alert.error {
+      background: #f44336;
+    }
+
+    .record {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .record-header {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .record-detail {
+      margin-left: 10px;
+    }
+
+    .back-btn {
+      background: #f44336;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      cursor: pointer;
+    }
+
+    .no-records {
+      text-align: center;
+      color: #888;
+      font-size: 1.1em;
+      margin: 40px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Sidebar styles */
+    #side-menu {
+      position: fixed;
+      top: 0;
+      left: -220px;
+      width: 200px;
+      height: 100%;
+      background: #2196F3;
+      color: #fff;
+      z-index: 10000;
+      transition: left 0.3s;
+      padding: 30px 15px 15px 15px;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+    }
+
+    #side-menu h3 {
+      margin-top: 40px;
+    }
+
+    #side-menu ul {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0 0 0;
+    }
+
+    #side-menu ul li a {
+      color: #fff;
+      text-decoration: none;
+      display: block;
+      padding: 8px 0;
+    }
+
+    #menu-bar {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10001;
+    }
+
+    #menu-bar button {
+      font-size: 24px;
+      padding: 8px 16px;
+      border: none;
+      background: #000; /* Changed from #323232 or #2196F3 to black */
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+ 

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>^Daily Purchase Note</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9f9f9;
+    }
+
+    h2 { text-align: center; }
+
+    .form-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+    }
+
+    .form-container input, .form-container button {
+      flex: 1 1 100%;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    .form-container button {
+      flex: 1 1 48%;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      color: white;
+      transition: background 0.3s ease;
+    }
+
+    .form-container button:nth-child(5) {
+      background-color: #28a745;
+    }
+
+    .form-container button:nth-child(5):hover {
+      background-color: #218838;
+    }
+
+    .form-container button:nth-child(6) {
+      background-color: #dc3545;
+    }
+
+    .form-container button:nth-child(6):hover {
+      background-color: #c82333;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: #fff;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    thead { background-color: #f2f2f2; }
+    tfoot { background-color: #e7f4e4; }
+
+    @media (min-width: 600px) {
+      .form-container input { flex: 1 1 22%; }
+      .form-container button { flex: 1 1 22%; }
+    }
+  </style>
+</head>
+<body>
+
+  <h2>💸 Daily Purchase Note</h2>
+
+  <div class="form-container">
+    <input type="text" id="date" placeholder="DD-MM-YYYY" />
+    <input type="text" id="name" placeholder="Name" />
+    <input type="number" id="amount" placeholder="Amount" />
+    <input type="text" id="desc" placeholder="Description (optional)" />
+    <button onclick="addEntry()">Add</button>
+    <button onclick="clearAll()">Clear</button>
+  </div>
+
+  <table id="purchaseTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Name</th>
+        <th>Amount</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2">Total</td>
+        <td id="totalAmount">0</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <script>
+    let total = 0;
+    let entries = [];
+
+    window.onload = () => {
+      const today = new Date();
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      document.getElementById("date").value = `${dd}-${mm}-${yyyy}`;
+      loadFromSession();
+    };
+
+    function isValidDate(dateStr) {
+      const parts = dateStr.split("-");
+      if (parts.length !== 3) return false;
+      const [dd, mm, yyyy] = parts;
+      const date = new Date(`${yyyy}-${mm}-${dd}`);
+      return !isNaN(date);
+    }
+
+    function addEntry() {
+      const dateVal = document.getElementById("date").value.trim();
+      const name = document.getElementById("name").value.trim();
+      const amount = parseFloat(document.getElementById("amount").value);
+      const desc = document.getElementById("desc").value.trim();
+
+      if (!dateVal || !name || isNaN(amount)) {
+        alert("Date, Name and Amount are required!");
+        return;
+      }
+
+      if (!isValidDate(dateVal)) {
+        alert("Invalid date format. Use DD-MM-YYYY.");
+        return;
+      }
+
+      const entry = { date: dateVal, name, amount, desc };
+      entries.push(entry);
+      saveToSession();
+      renderTable();
+      clearForm();
+    }
+
+    function clearForm() {
+      document.getElementById("name").value = "";
+      document.getElementById("amount").value = "";
+      document.getElementById("desc").value = "";
+      document.getElementById("name").focus();
+    }
+
+    function clearAll() {
+      if (confirm("Are you sure you want to clear all data?")) {
+        entries = [];
+        saveToSession();
+        renderTable();
+      }
+    }
+
+    function saveToSession() {
+      sessionStorage.setItem("purchaseEntries", JSON.stringify(entries));
+    }
+
+    function loadFromSession() {
+      const data = sessionStorage.getItem("purchaseEntries");
+      if (data) {
+        entries = JSON.parse(data);
+        renderTable();
+      }
+    }
+
+    function renderTable() {
+      const tableBody = document.querySelector("#purchaseTable tbody");
+      tableBody.innerHTML = "";
+      total = 0;
+
+      entries.forEach((entry, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${entry.date}</td>
+          <td>${entry.name}</td>
+          <td>${entry.amount.toFixed(2)}</td>
+          <td>${entry.desc || "-"}</td>
+        `;
+
+        // Long press listener for delete
+        let pressTimer;
+        row.addEventListener('touchstart', () => {
+          pressTimer = setTimeout(() => {
+            confirmDelete(index);
+          }, 700); // Long press = 700ms
+        });
+        row.addEventListener('touchend', () => {
+          clearTimeout(pressTimer);
+        });
+        row.addEventListener('mousedown', () => {
+          pressTimer = setTimeout(() => {
+            confirmDelete(index);
+          }, 700);
+        });
+        row.addEventListener('mouseup', () => {
+          clearTimeout(pressTimer);
+        });
+
+        total += entry.amount;
+        tableBody.appendChild(row);
+      });
+
+      document.getElementById("totalAmount").textContent = total.toFixed(2);
+    }
+
+    function confirmDelete(index) {
+      const entry = entries[index];
+      if (confirm(`Delete this entry?\n${entry.name} - ₹${entry.amount.toFixed(2)}`)) {
+        entries.splice(index, 1);
+        saveToSession();
+        renderTable();
+      }
+    }
+  </script>
+
+</body>
+</html>
