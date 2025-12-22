@@ -1,167 +1,391 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Transactions</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>Transactions - Pro Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
 
-  <style>
-    #overlayLoader {
-      position: fixed;
-      top:0; left:0;
-      width:100%; height:100%;
-      background: rgba(0,0,0,0.5);
-      display:flex; align-items:center; justify-content:center;
-      z-index:9999; display:none;
-    }
-  </style>
+        body {
+            background: var(--bg-main);
+            color: var(--text-main);
+            overflow-x: hidden;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        #overlayLoader {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(3px);
+        }
+
+        #topBar {
+            position: sticky;
+            top: 0;
+            z-index: 1001;
+            background: var(--bg-card);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Search Box with Clear Button */
+        .search-wrapper {
+            flex-grow: 1;
+            margin: 0 10px;
+            position: relative;
+        }
+
+        #searchInput {
+            border-radius: 20px;
+            padding-left: 35px;
+            padding-right: 35px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        #searchInput:focus {
+            border-color: var(--primary-color);
+            box-shadow: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        #clearSearchBtn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: none;
+            font-size: 16px;
+        }
+
+        #balanceSummary {
+            position: sticky;
+            top: 52px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 15px;
+            box-shadow: 0 4px 6px -1px var(--shadow-color);
+        }
+
+        .compact-stat {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .swipe-container {
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-card);
+            touch-action: pan-y;
+            margin-bottom: 1px;
+        }
+
+        .swipe-actions {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100%;
+            display: flex;
+            visibility: hidden;
+        }
+
+        .swipe-actions button {
+            width: 65px;
+            border: none;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .btn-edit {
+            background: var(--primary-color);
+        }
+
+        .btn-delete {
+            background: #dc3545;
+        }
+
+        .swipe-content {
+            width: 100%;
+            background: var(--bg-card);
+            transition: transform .25s ease;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .date-header {
+            background: var(--bg-input);
+            padding: 6px 15px;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .day-total-in {
+            color: #198754;
+            margin-right: 8px;
+        }
+
+        .day-total-out {
+            color: #dc3545;
+        }
+
+        #addBtn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 54px;
+            height: 54px;
+            font-size: 24px;
+            border-radius: 50%;
+            z-index: 1002;
+            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4);
+            border: none;
+            background: var(--primary-color);
+            color: #fff;
+        }
+    </style>
 </head>
-<body class="bg-light">
 
-<!-- Overlay Loader -->
-<div id="overlayLoader">
-  <div class="text-center text-white">
-    <div class="spinner-border text-light" style="width:3rem;height:3rem"></div>
-    <div class="mt-2">Loading transactions...</div>
-  </div>
-</div>
+<body>
 
-<div class="container py-3" style="max-width:420px">
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="mb-0 fw-bold">Transactions</h5>
-  </div>
-
-  <!-- Transactions list -->
-  <div id="transactionList"></div>
-</div>
-
-<!-- Floating Add Button -->
-<a href="add.html" class="btn btn-success rounded-circle position-fixed bottom-0 end-0 m-3 shadow">+</a>
-
-<!-- Action Modal -->
-<div class="modal fade" id="actionModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content p-3">
-      <h6>Select action</h6>
-      <button id="editBtn" class="btn btn-primary w-100 mb-2">Edit</button>
-      <button id="deleteBtn" class="btn btn-danger w-100">Delete</button>
-      <button class="btn btn-secondary w-100 mt-2" data-bs-dismiss="modal">Cancel</button>
+    <div id="overlayLoader">
+        <div class="spinner-border text-primary"></div>
     </div>
-  </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxkuaCmPHJfIaEwudHRQakcvOy8aiv5jDeq8uT8Ma-k0aQkg6wgHOTTN1pDK0YnON6Wlw/exec"; // replace with your Apps Script URL
-const DELETE_URL = "https://script.google.com/macros/s/AKfycbxkuaCmPHJfIaEwudHRQakcvOy8aiv5jDeq8uT8Ma-k0aQkg6wgHOTTN1pDK0YnON6Wlw/exec";   // replace with same Apps Script URL
-const overlay = document.getElementById("overlayLoader");
-const list = document.getElementById("transactionList");
-const actionModal = new bootstrap.Modal(document.getElementById('actionModal'));
-let selectedTx = null;
-
-// Long press detection
-let timer;
-function addLongPress(el, callback){
-  el.addEventListener('mousedown', () => timer = setTimeout(callback, 800));
-  el.addEventListener('touchstart', () => timer = setTimeout(callback, 800));
-  el.addEventListener('mouseup', () => clearTimeout(timer));
-  el.addEventListener('mouseleave', () => clearTimeout(timer));
-  el.addEventListener('touchend', () => clearTimeout(timer));
-}
-
-// Load transactions
-async function loadTransactions(){
-  overlay.style.display = "flex";
-  try{
-    const res = await fetch(API_URL);
-    const data = await res.json();
-    list.innerHTML = "";
-
-    if(data.length===0){
-      list.innerHTML = `<div class="text-center text-muted mt-5">No transactions yet</div>`;
-      return;
-    }
-
-    // Group by date
-    const grouped = {};
-    data.forEach(t=>{
-      const dateKey = new Date(t.date).toDateString();
-      if(!grouped[dateKey]) grouped[dateKey]=[];
-      grouped[dateKey].push(t);
-    });
-
-    Object.keys(grouped).reverse().forEach(dateKey=>{
-      let incomeTotal=0, expenseTotal=0;
-      grouped[dateKey].forEach(t=>{
-        if(t.type==="Income") incomeTotal+=Number(t.amount);
-        if(t.type==="Expense") expenseTotal+=Number(t.amount);
-      });
-
-      // Date header + summary
-      list.innerHTML += `
-        <div class="mb-2">
-          <div class="fw-bold">${dateKey}</div>
-          <div class="d-flex justify-content-between small text-muted mb-2">
-            <span>Income: <span class="text-success fw-semibold">₹${incomeTotal}</span></span>
-            <span>Expense: <span class="text-danger fw-semibold">₹${expenseTotal}</span></span>
-          </div>
+    <div class="container px-0" style="max-width:450px">
+        <div id="topBar">
+            <i class="bi bi-grid-fill fs-5 text-primary" onclick="toggleDrawer(true)"></i>
+            <div class="search-wrapper">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" id="searchInput" class="form-control form-control-sm"
+                    placeholder="SEARCH CAT, AMT, DESC..." oninput="handleSearch()">
+                <i class="bi bi-x-circle-fill" id="clearSearchBtn" onclick="clearSearch()"></i>
+            </div>
+            <i class="bi bi-bar-chart-line fs-5 text-dark" onclick="window.location.href='summary.html'"></i>
         </div>
-      `;
 
-      grouped[dateKey].forEach(t=>{
-        const card = document.createElement('div');
-        card.className = 'card shadow-sm border-0 mb-2';
-        const badgeClass = t.type==="Income"?"bg-success":t.type==="Expense"?"bg-danger":"bg-primary";
-        const amountClass = t.type==="Income"?"text-success":t.type==="Expense"?"text-danger":"text-primary";
-        card.innerHTML = `
-          <div class="card-body py-2 px-3">
-            <div class="d-flex justify-content-between align-items-start">
-              <div>
-                <h6 class="mb-0 fw-semibold" style="font-size:0.95rem;">${t.description}</h6>
-                <small class="text-muted" style="font-size:0.75rem;">${t.category||"General"}</small>
-              </div>
-              <span class="badge ${badgeClass} py-1 px-2" style="font-size:0.75rem;">${t.type}</span>
+        <div id="balanceSummary">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                    <div class="compact-stat">Available Balance</div>
+                    <div class="h4 fw-bold mb-0" id="sumNetBalance">₹0.00</div>
+                </div>
+                <div class="text-end">
+                    <div class="d-flex gap-3">
+                        <div>
+                            <div class="compact-stat text-success">Income</div>
+                            <div class="text-success fw-bold" id="sumIncome">₹0</div>
+                        </div>
+                        <div>
+                            <div class="compact-stat text-danger">Expense</div>
+                            <div class="text-danger fw-bold" id="sumExpense">₹0</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="text-end mt-1">
-              <h6 class="mb-0 fw-bold ${amountClass}" style="font-size:0.95rem;">₹${t.amount}</h6>
-            </div>
-          </div>
-        `;
-        list.appendChild(card);
-        addLongPress(card, ()=>{ selectedTx = t; actionModal.show(); });
-      });
-    });
+            <div class="row g-0 pt-2 border-top text-center" id="accountBreakdown" style="font-size: 10px;"></div>
+        </div>
 
-  }catch(e){
-    list.innerHTML = `<p class="text-danger text-center mt-4">Data load aagala</p>`;
-  }finally{
-    overlay.style.display = "none";
-  }
-}
+        <div id="transactionList" class="pb-5"></div>
+        <button id="loadMoreBtn" class="btn btn-light btn-sm w-100 py-2 text-primary fw-bold"
+            onclick="loadTransactions(true)" style="display:none; border-radius:0;">LOAD OLDER</button>
+    </div>
 
-// Edit button
-document.getElementById('editBtn').addEventListener('click',()=>{
-  actionModal.hide();
-  const params = new URLSearchParams(selectedTx).toString();
-  window.location.href = `add.html?${params}`;
-});
+    <button onclick="window.location.href='add.html'" class="btn btn-primary" id="addBtn"><i
+            class="bi bi-plus"></i></button>
 
-// Delete button
-document.getElementById('deleteBtn').addEventListener('click', async ()=>{
-  if(!confirm("Are you sure to delete?")) return;
-  actionModal.hide();
-  try{
-    await fetch(`${DELETE_URL}?id=${selectedTx.id}`);
-    loadTransactions();
-  }catch(err){
-    alert("Delete failed");
-  }
-});
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="drawer.js"></script>
 
-loadTransactions();
-</script>
+    <script src="js/firebase-init.js"></script>
 
+    <script>
+        const overlay = document.getElementById("overlayLoader");
+        const list = document.getElementById("transactionList");
+        const loadMoreBtn = document.getElementById("loadMoreBtn");
+        const clearBtn = document.getElementById("clearSearchBtn");
+        let lastVisible = null;
+        let allData = [];
+
+        async function fetchAllData() {
+            const snap = await db.collection("transactions").orderBy("date", "desc").get();
+            allData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+
+        // Search handle with Clear Button Toggle
+        function handleSearch() {
+            const term = document.getElementById("searchInput").value.toUpperCase();
+
+            // Clear button toggle logic
+            clearBtn.style.display = term.length > 0 ? "block" : "none";
+
+            if (term.length === 0) {
+                loadTransactions();
+                return;
+            }
+            const filtered = allData.filter(t => {
+                const cat = (t.category || "").toUpperCase();
+                const desc = (t.description || "").toUpperCase();
+                const amt = (t.amount || "").toString();
+                return cat.includes(term) || desc.includes(term) || amt.includes(term);
+            });
+            renderListFromData(filtered);
+            loadMoreBtn.style.display = "none";
+        }
+
+        // Clear Function
+        function clearSearch() {
+            document.getElementById("searchInput").value = "";
+            clearBtn.style.display = "none";
+            loadTransactions();
+        }
+
+        function renderListFromData(dataArray) {
+            list.innerHTML = "";
+            if (dataArray.length === 0) {
+                list.innerHTML = "<div class='text-center p-5 text-muted'>No results found.</div>";
+                return;
+            }
+
+            const grouped = {};
+            dataArray.forEach(t => {
+                const key = new Date(t.date).toDateString();
+                if (!grouped[key]) {
+                    grouped[key] = { items: [], income: 0, expense: 0 };
+                }
+                grouped[key].items.push(t);
+                const amt = parseFloat(t.amount) || 0;
+                if (t.type === "Income") grouped[key].income += amt;
+                else if (t.type === "Expense") grouped[key].expense += amt;
+            });
+
+            Object.keys(grouped).forEach(dateStr => {
+                const group = grouped[dateStr];
+                const dayWrap = document.createElement("div");
+                dayWrap.innerHTML = `
+                <div class="date-header d-flex justify-content-between align-items-center">
+                    <span>${new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                    <div style="font-size: 9px; font-weight: 800;">
+                        <span class="day-total-in">IN: ₹${group.income.toFixed(0)}</span>
+                        <span class="day-total-out">OUT: ₹${group.expense.toFixed(0)}</span>
+                    </div>
+                </div>`;
+                list.appendChild(dayWrap);
+
+                group.items.forEach(t => {
+                    const row = document.createElement("div");
+                    row.className = "swipe-container";
+                    const isInc = t.type === "Income";
+                    const isTrf = t.type === "Transfer";
+                    row.innerHTML = `
+                    <div class="swipe-actions">
+                        <button class="btn-edit" onclick="window.location.href='add.html?id=${t.id}'">Edit</button>
+                        <button class="btn-delete" onclick="deleteTx('${t.id}')">Del</button>
+                    </div>
+                    <div class="swipe-content d-flex justify-content-between align-items-center px-3 py-2">
+                        <div style="max-width: 70%;">
+                            <div class="fw-bold" style="font-size: 13px;">${t.category}</div>
+                            <div class="text-muted" style="font-size: 10px;">${t.account}${isTrf ? ' → ' + t.toAccount : ''} • ${t.description || ''}</div>
+                        </div>
+                        <div class="${isInc ? 'text-success' : (isTrf ? 'text-primary' : 'text-danger')} fw-bold" style="font-size: 14px;">
+                            ${isInc ? '+' : (isTrf ? '⇆' : '-')}₹${parseFloat(t.amount).toFixed(2)}
+                        </div>
+                    </div>`;
+                    dayWrap.appendChild(row);
+                    enableSwipe(row);
+                });
+            });
+        }
+
+        async function loadTransactions(isMore = false) {
+            overlay.style.display = "flex";
+            try {
+                if (!isMore) { await fetchAllData(); await updateGlobalSummary(); }
+                let query = db.collection("transactions").orderBy("date", "desc").limit(50);
+                if (isMore && lastVisible) query = query.startAfter(lastVisible);
+                else list.innerHTML = "";
+                const snap = await query.get();
+                if (snap.empty) { loadMoreBtn.style.display = "none"; overlay.style.display = "none"; return; }
+                lastVisible = snap.docs[snap.docs.length - 1];
+                const currentData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderListFromData(currentData);
+                loadMoreBtn.style.display = snap.docs.length === 50 ? "block" : "none";
+            } catch (e) { console.error(e); }
+            overlay.style.display = "none";
+        }
+
+        async function updateGlobalSummary() {
+            let bank = 0, cash = 0, others = 0, inc = 0, exp = 0;
+            allData.forEach(t => {
+                const amt = parseFloat(t.amount) || 0;
+                const acc = (t.account || "OTHERS").toUpperCase();
+                if (t.type === "Income") { inc += amt; if (acc === "BANK") bank += amt; else if (acc === "CASH") cash += amt; else others += amt; }
+                else if (t.type === "Expense") { exp += amt; if (acc === "BANK") bank -= amt; else if (acc === "CASH") cash -= amt; else others -= amt; }
+                else if (t.type === "Transfer") {
+                    const toAcc = (t.toAccount || "").toUpperCase();
+                    if (acc === "BANK") bank -= amt; else if (acc === "CASH") cash -= amt; else others -= amt;
+                    if (toAcc === "BANK") bank += amt; else if (toAcc === "CASH") cash += amt; else others += amt;
+                }
+            });
+            document.getElementById("sumIncome").innerText = `₹${inc.toFixed(0)}`;
+            document.getElementById("sumExpense").innerText = `₹${exp.toFixed(0)}`;
+            document.getElementById("sumNetBalance").innerText = `₹${(bank + cash + others).toLocaleString('en-IN')}`;
+            document.getElementById("accountBreakdown").innerHTML = `<div class="col-4 border-end">BANK: <b>₹${bank.toFixed(0)}</b></div><div class="col-4 border-end">CASH: <b>₹${cash.toFixed(0)}</b></div><div class="col-4">OTHERS: <b>₹${others.toFixed(0)}</b></div>`;
+        }
+
+        function enableSwipe(row) {
+            const content = row.querySelector(".swipe-content");
+            const actions = row.querySelector(".swipe-actions");
+            let startX = 0, moveX = 0;
+            content.addEventListener("touchstart", e => { startX = e.touches[0].clientX; actions.style.visibility = "visible"; }, { passive: true });
+            content.addEventListener("touchmove", e => {
+                moveX = e.touches[0].clientX - startX;
+                if (moveX < 0) content.style.transform = `translateX(${Math.max(moveX, -130)}px)`;
+            });
+            content.addEventListener("touchend", () => {
+                if (moveX < -60) content.style.transform = "translateX(-130px)";
+                else { content.style.transform = "translateX(0)"; actions.style.visibility = "hidden"; }
+                moveX = 0;
+            });
+        }
+
+        async function deleteTx(id) {
+            if (confirm("Delete?")) { await db.collection("transactions").doc(id).delete(); location.reload(); }
+        }
+
+        loadTransactions();
+    </script>
 </body>
+
 </html>

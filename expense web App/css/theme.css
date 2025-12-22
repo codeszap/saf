@@ -1,0 +1,61 @@
+:root {
+    /* Default Light Mode */
+    --bg-main: #f4f7f6;
+    --bg-card: #ffffff;
+    --bg-input: #f1f3f4;
+    --bg-drawer: #ffffff;
+    --text-main: #000000;
+    --text-muted: #6c757d;
+    --border-color: #eeeeee;
+    --primary-color: #0d6efd;
+    --accent-color: #3b82f6;
+    --shadow-color: rgba(0,0,0,0.05);
+    
+    --card-border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] {
+    /* Dark Mode Overrides */
+    --bg-main: #000000;
+    --bg-card: #0d0d0d;
+    --bg-input: #1a1a1a;
+    --bg-drawer: #0a0a0a;
+    --text-main: #ffffff;
+    --text-muted: #888888;
+    --border-color: #222222;
+    --primary-color: #3b82f6;
+    --accent-color: #3b82f6;
+    --shadow-color: rgba(255,255,255,0.05);
+
+    --card-border: 1px solid var(--border-color);
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.card, .person-card, .todo-card-content, .modal-content, #topBar, #balanceSummary, #sideDrawer {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    border: var(--card-border);
+}
+
+#topBar, #balanceSummary {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.form-control, .form-select, .modal-input, .sub-entry, #searchInput {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+}
+
+.form-control:focus, .form-select:focus, #searchInput:focus {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--primary-color);
+}
+
+.text-muted { color: var(--text-muted) !important; }

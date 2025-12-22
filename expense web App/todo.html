@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Checklist Pro - Subtask Counter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding-bottom: 90px;
+            overflow-x: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Top Bar */
+        #topBar {
+            padding: 15px 20px;
+            background: var(--bg-card);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        #topBar h6 {
+            font-size: 16px;
+            margin-bottom: 0;
+        }
+
+        .view-controls {
+            background: var(--bg-input);
+            padding: 4px;
+            border-radius: 10px;
+            display: flex;
+            gap: 2px;
+        }
+
+        .v-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        .v-btn.active {
+            background: var(--bg-card);
+            color: var(--primary-color);
+            box-shadow: 0 2px 5px var(--shadow-color);
+        }
+
+        /* Tabs Navigation */
+        #tabBar {
+            display: none;
+            background: var(--bg-card);
+            padding: 5px 15px;
+            gap: 15px;
+            overflow-x: auto;
+            justify-content: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-item {
+            padding: 8px 5px;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .tab-item.active {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .tab-count {
+            display: block;
+            font-size: 10px;
+            opacity: 0.6;
+        }
+
+        /* Grouping */
+        .date-group {
+            margin: 10px 15px 15px 15px;
+        }
+
+        .group-header {
+            padding: 8px 5px;
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .header-stats {
+            font-size: 10px;
+            background: var(--bg-input);
+            padding: 2px 8px;
+            border-radius: 20px;
+            color: var(--text-muted);
+        }
+
+        .group-content {
+            display: none;
+        }
+
+        .group-content.show {
+            display: block;
+        }
+
+        /* Card Style */
+        .todo-item-row {
+            position: relative;
+            background: #ff3b30;
+            overflow: hidden;
+            border-radius: 14px;
+            margin-bottom: 8px;
+        }
+
+        .todo-card-content {
+            background: var(--bg-card);
+            position: relative;
+            z-index: 10;
+            transition: transform 0.3s;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .todo-card-content.swiped {
+            transform: translateX(-60px);
+        }
+
+        .delete-reveal {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 1;
+            font-size: 18px;
+        }
+
+        .todo-text {
+            font-size: 14px;
+            font-weight: 600;
+            flex: 1;
+            color: var(--text-main);
+            line-height: 1.4;
+        }
+
+        .todo-text.done {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .sub-badge {
+            font-size: 10px;
+            background: var(--bg-input);
+            color: var(--primary-color);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 800;
+            margin-left: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .check-box {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .check-box.done {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Subtasks */
+        .sub-task-container {
+            background: var(--bg-input);
+            display: none;
+            position: relative;
+            z-index: 11;
+        }
+
+        .sub-item {
+            padding: 10px 15px 10px 49px;
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sub-dot {
+            width: 10px;
+            height: 10px;
+            border: 1.5px solid var(--text-muted);
+            border-radius: 3px;
+            margin-right: 12px;
+        }
+
+        .sub-dot.done {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            padding: 15px 20px;
+            z-index: 1000;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .add-trigger {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: 12px;
+            padding: 12px 15px;
+            width: 100%;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Modal Styles */
+        .task-modal {
+            position: fixed;
+            bottom: -100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-radius: 24px 24px 0 0;
+            z-index: 2100;
+            padding: 25px 20px;
+            transition: 0.4s;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .task-modal.open {
+            bottom: 0;
+        }
+
+        .modal-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 100%;
+            padding: 12px 0;
+            margin-bottom: 20px;
+            outline: none;
+            font-size: 16px;
+        }
+
+        .modal-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .sub-entry {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-main);
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="date"] {
+            color: var(--text-main);
+            background: transparent;
+        }
+
+        /* Invert calendar icon for dark mode only via filter if needed, but usually simpler to leave default or style custom */
+        [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="topBar">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-grid-fill text-primary" style="cursor: pointer; font-size: 22px;"
+                onclick="toggleDrawer(true)"></i>
+            <h6 class="mb-0 fw-bold ms-3" id="viewTitle">Timeline</h6>
+        </div>
+        <div class="view-controls">
+            <button class="v-btn" id="btnTimeline" onclick="switchMainView('timeline')"><i
+                    class="bi bi-view-stacked"></i></button>
+            <button class="v-btn" id="btnTabs" onclick="switchMainView('tabs')"><i class="bi bi-calendar3"></i></button>
+        </div>
+    </div>
+
+    <div id="tabBar">
+        <div class="tab-item" id="tab-yesterday" onclick="setTabFilter('Yesterday')">
+            <span>Yesterday</span><span class="tab-count" id="count-Yesterday">0/0</span>
+        </div>
+        <div class="tab-item active" id="tab-today" onclick="setTabFilter('Today')">
+            <span>Today</span><span class="tab-count" id="count-Today">0/0</span>
+        </div>
+        <div class="tab-item" id="tab-tomorrow" onclick="setTabFilter('Tomorrow')">
+            <span>Tomorrow</span><span class="tab-count" id="count-Tomorrow">0/0</span>
+        </div>
+    </div>
+
+    <div id="todoList" class="pb-4"></div>
+
+    <div class="bottom-bar">
+        <button class="add-trigger" onclick="toggleModal(true)">+ Add task...</button>
+    </div>
+
+    <div id="taskModal" class="task-modal">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0 fw-bold fs-5">New Task</h5>
+            <i class="bi bi-x-circle-fill text-muted fs-4" onclick="toggleModal(false)"></i>
+        </div>
+        <input type="date" id="taskDateInput" class="modal-input">
+        <input type="text" id="mainTaskInput" class="modal-input" placeholder="Task name">
+        <div id="subTaskFields"><input type="text" class="sub-entry" placeholder="Add step"></div>
+        <button class="btn btn-link text-primary p-0 mb-4 text-decoration-none fw-bold small"
+            onclick="appendSubField()">+ Add Step</button>
+        <button class="btn btn-primary w-100 py-3 fw-bold rounded-4" onclick="saveTask()">SAVE TASK</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="drawer.js"></script>
+
+    <script src="js/firebase-init.js"></script>
+    <script>
+
+        let currentMode = localStorage.getItem('activeView') || 'timeline';
+        let activeTab = 'Today';
+        let collapsedGroups = new Set(JSON.parse(localStorage.getItem('collapsedGroups') || '["Yesterday", "Tomorrow"]'));
+        let openSubtasks = new Set();
+
+        window.toggleModal = (s) => {
+            document.getElementById('taskModal').classList.toggle('open', s);
+            if (s) document.getElementById('taskDateInput').valueAsDate = new Date();
+        };
+
+        window.appendSubField = () => {
+            const input = document.createElement('input');
+            input.className = 'sub-entry'; input.placeholder = "Next...";
+            document.getElementById('subTaskFields').appendChild(input);
+        };
+
+        window.switchMainView = function (mode) {
+            currentMode = mode;
+            localStorage.setItem('activeView', mode);
+            document.getElementById('btnTimeline').classList.toggle('active', mode === 'timeline');
+            document.getElementById('btnTabs').classList.toggle('active', mode === 'tabs');
+            document.getElementById('tabBar').style.display = (mode === 'tabs') ? 'flex' : 'none';
+            document.getElementById('viewTitle').innerText = (mode === 'timeline') ? 'Timeline' : 'Calendar';
+            loadTodos();
+        };
+
+        window.setTabFilter = function (tab) {
+            activeTab = tab;
+            document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tab.toLowerCase()).classList.add('active');
+            loadTodos();
+        };
+
+        window.loadTodos = async function () {
+            try {
+                const snap = await db.collection("todos").orderBy("createdAt", "asc").get();
+                const list = document.getElementById('todoList');
+                list.innerHTML = "";
+                let groups = {};
+                let tabStats = { Yesterday: { d: 0, t: 0 }, Today: { d: 0, t: 0 }, Tomorrow: { d: 0, t: 0 } };
+
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const label = getDayLabel(data.createdAt);
+                    const subs = data.subTasks || [];
+                    const doneSubs = subs.filter(s => s.done).length;
+                    const totalSubs = subs.length;
+                    const isDone = data.completed || (totalSubs > 0 && totalSubs === doneSubs);
+
+                    if (tabStats[label]) { tabStats[label].t++; if (isDone) tabStats[label].d++; }
+                    if (currentMode === 'tabs' && label !== activeTab) return;
+
+                    if (!groups[label]) groups[label] = [];
+                    groups[label].push({ id: doc.id, ...data, isDone, doneSubs, totalSubs });
+                });
+
+                for (let key in tabStats) {
+                    const el = document.getElementById(`count-${key}`);
+                    if (el) el.innerText = `${tabStats[key].d}/${tabStats[key].t}`;
+                }
+
+                for (let label in groups) {
+                    const isCollapsed = collapsedGroups.has(label) && currentMode === 'timeline';
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'date-group';
+                    groupDiv.innerHTML = (currentMode === 'timeline' ? `
+                    <div class="group-header" onclick="toggleDateGroup('${label}')">
+                        <span>${label}</span>
+                        <div class="d-flex align-items-center">
+                            <span class="header-stats me-2">${groups[label].filter(t => t.isDone).length}/${groups[label].length}</span>
+                            <i class="bi bi-chevron-${isCollapsed ? 'expand' : 'collapse'}"></i>
+                        </div>
+                    </div>` : '') +
+                        `<div class="group-content ${!isCollapsed ? 'show' : ''}">` +
+                        groups[label].map(todo => `
+                        <div class="todo-item-row">
+                            <div class="delete-reveal" onclick="deleteTodo('${todo.id}')"><i class="bi bi-trash3"></i></div>
+                            <div class="todo-card-content" id="card-${todo.id}" onclick="toggleSubView('${todo.id}')">
+                                <div class="check-box ${todo.isDone ? 'done' : ''}" onclick="event.stopPropagation(); toggleMainTodo('${todo.id}', ${todo.isDone})">
+                                    ${todo.isDone ? '<i class="bi bi-check text-white" style="font-size:14px"></i>' : ''}
+                                </div>
+                                <div class="todo-text ${todo.isDone ? 'done' : ''}">${todo.title}</div>
+                                ${todo.totalSubs > 0 ? `<div class="sub-badge">${todo.doneSubs}/${todo.totalSubs}</div>` : ''}
+                            </div>
+                            <div class="sub-task-container" id="list-${todo.id}" style="display: ${openSubtasks.has(todo.id) ? 'block' : 'none'}">
+                                ${(todo.subTasks || []).map((st, idx) => `<div class="sub-item" onclick="toggleSubItem('${todo.id}', ${idx})"><div class="sub-dot ${st.done ? 'done' : ''}"></div><div>${st.text}</div></div>`).join('')}
+                            </div>
+                        </div>`).join('') + `</div>`;
+                    list.appendChild(groupDiv);
+                    groups[label].forEach(t => setupSwipe(t.id));
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        // Logic Functions
+        window.toggleDateGroup = (l) => { if (collapsedGroups.has(l)) collapsedGroups.delete(l); else collapsedGroups.add(l); localStorage.setItem('collapsedGroups', JSON.stringify(Array.from(collapsedGroups))); loadTodos(); };
+        window.toggleSubView = (id) => { const c = document.getElementById(`list-${id}`); if (!c) return; if (c.style.display === 'none') { c.style.display = 'block'; openSubtasks.add(id); } else { c.style.display = 'none'; openSubtasks.delete(id); } };
+        window.toggleMainTodo = async (id, s) => { await db.collection("todos").doc(id).update({ completed: !s }); loadTodos(); };
+        window.toggleSubItem = async (tId, sIdx) => { const d = await db.collection("todos").doc(tId).get(); const data = d.data(); data.subTasks[sIdx].done = !data.subTasks[sIdx].done; await db.collection("todos").doc(tId).update({ subTasks: data.subTasks }); loadTodos(); };
+        window.deleteTodo = async (id) => { if (confirm("Delete?")) { await db.collection("todos").doc(id).delete(); loadTodos(); } };
+
+        // FIXED: saveTask function added
+        window.saveTask = async () => {
+            const title = document.getElementById('mainTaskInput').value;
+            const dateStr = document.getElementById('taskDateInput').value;
+            const subInputs = document.querySelectorAll('.sub-entry');
+
+            if (!title) { alert("Task name kudu bro!"); return; }
+
+            const subTasks = [];
+            subInputs.forEach(i => { if (i.value.trim()) subTasks.push({ text: i.value, done: false }); });
+
+            try {
+                const selectedDate = new Date(dateStr);
+                selectedDate.setHours(0, 0, 0, 0);
+                await db.collection("todos").add({
+                    title: title,
+                    completed: false,
+                    subTasks: subTasks,
+                    createdAt: firebase.firestore.Timestamp.fromDate(selectedDate)
+                });
+                document.getElementById('mainTaskInput').value = "";
+                document.getElementById('subTaskFields').innerHTML = '<input type="text" class="sub-entry" placeholder="Add step">';
+                toggleModal(false);
+                loadTodos();
+            } catch (e) { console.error(e); }
+        };
+
+        function getDayLabel(ts) {
+            if (!ts) return "Today";
+            const d = ts.toDate(); const t = new Date(); t.setHours(0, 0, 0, 0);
+            const y = new Date(t); y.setDate(t.getDate() - 1);
+            const tm = new Date(t); tm.setDate(t.getDate() + 1);
+            const dStr = d.toDateString();
+            if (dStr === t.toDateString()) return "Today";
+            if (dStr === y.toDateString()) return "Yesterday";
+            if (dStr === tm.toDateString()) return "Tomorrow";
+            return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        }
+
+        // FIXED: setupSwipe added
+        function setupSwipe(id) {
+            const card = document.getElementById(`card-${id}`);
+            if (!card) return;
+            let startX = 0;
+            card.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+            card.addEventListener('touchmove', e => {
+                let moveX = e.touches[0].clientX - startX;
+                if (moveX < -40) card.classList.add('swiped');
+                if (moveX > 40) card.classList.remove('swiped');
+            }, { passive: true });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { switchMainView(currentMode); });
+    </script>
+</body>
+
+</html>

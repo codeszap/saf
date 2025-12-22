@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Loans - ProCheck</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding-bottom: 120px;
+        }
+
+        #topBar {
+            padding: 15px 20px;
+            background: var(--bg-card);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .menu-icon {
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--primary-color);
+        }
+
+        .dashboard {
+            margin: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .dash-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            padding: 18px;
+            border-radius: 16px;
+        }
+
+        .dash-label {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .dash-val {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .items-grid {
+            padding: 0 12px;
+        }
+
+        .loan-row {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .pending-btn {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary-color);
+        }
+
+        .settled-btn {
+            background: #2ecc71;
+            color: #fff;
+        }
+
+        .loan-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .loan-name {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .loan-amount {
+            font-size: 16px;
+            color: var(--primary-color);
+        }
+
+        .loan-date {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 700;
+            background: var(--bg-input);
+            padding: 2px 6px;
+            border-radius: 5px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+
+        .days-badge {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-left: 8px;
+            display: inline-block;
+        }
+
+        .days-past {
+            background: rgba(142, 68, 173, 0.1);
+            color: #8e44ad;
+        }
+
+        .days-future {
+            background: rgba(243, 156, 18, 0.1);
+            color: #f39c12;
+        }
+
+        .reminder-badge {
+            background: #ff4757;
+            color: white;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+            animation: pulseRed 2s infinite;
+        }
+
+        @keyframes pulseRed {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .emi-badge {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--primary-color);
+            background: var(--bg-input);
+            padding: 2px 8px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .loan-type-tag {
+            font-size: 8px;
+            font-weight: 800;
+            padding: 1px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            margin-left: 6px;
+        }
+
+        .type-given {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+
+        .type-taken {
+            background: rgba(46, 204, 113, 0.1);
+            color: #2ecc71;
+        }
+
+        .settled-row {
+            opacity: 0.5;
+            filter: grayscale(0.8);
+        }
+
+        .action-icon {
+            font-size: 14px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .action-icon:hover {
+            color: var(--primary-color);
+        }
+
+        .settled-badge {
+            background: #2ecc71;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 9px;
+            font-weight: 800;
+        }
+
+        .add-fab {
+            position: fixed;
+            bottom: 25px;
+            right: 20px;
+            width: 58px;
+            height: 58px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: none;
+            color: white;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 24px;
+        }
+
+        .form-control,
+        .form-select {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background: var(--bg-input);
+            color: var(--text-main);
+            border-color: var(--primary-color);
+            box-shadow: none;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+
+        [data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: none;
+        }
+
+        /* Voice FAB Styles */
+        .voice-fab {
+            position: fixed;
+            bottom: 95px;
+            right: 20px;
+            width: 58px;
+            height: 58px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+            z-index: 2000;
+            border: none;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .voice-fab.listening {
+            transform: scale(1.1);
+            animation: voicePulse 1.5s infinite;
+        }
+
+        @keyframes voicePulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 20px rgba(59, 130, 246, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
+
+        #voiceStatusOverlay {
+            position: fixed;
+            bottom: 175px;
+            right: 20px;
+            background: var(--bg-card);
+            padding: 10px 18px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            display: none;
+            z-index: 2000;
+            max-width: 250px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="topBar">
+        <i class="bi bi-grid-fill menu-icon" onclick="toggleDrawer(true)"></i>
+        <h6 class="mb-0 fw-bold">Loans Tracking</h6>
+        <div></div>
+    </div>
+    <div class="dashboard">
+        <div class="dash-card">
+            <div class="dash-label">Total Balance</div>
+            <div class="dash-val text-primary" id="totalBalance">₹0</div>
+        </div>
+        <div class="dash-card">
+            <div class="dash-label">Total Entries</div>
+            <div class="dash-val text-primary" id="totalEntries">0</div>
+        </div>
+    </div>
+    <div class="px-3 mb-3">
+        <ul class="nav nav-pills nav-fill bg-dark-subtle p-1 rounded-4" style="background: var(--bg-input) !important;">
+            <li class="nav-item">
+                <button class="nav-link active rounded-4 fw-bold py-2 loan-tab-btn" id="tab-pending"
+                    onclick="switchTab('pending')">Pending</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link rounded-4 fw-bold py-2 loan-tab-btn" id="tab-settled"
+                    onclick="switchTab('settled')">Settled</button>
+            </li>
+        </ul>
+    </div>
+    <div class="items-grid" id="loansList"></div>
+    <button class="add-fab" onclick="openModal()"><i class="bi bi-plus-lg"></i></button>
+
+    <!-- Voice Elements -->
+    <div id="voiceStatusOverlay">Listening...</div>
+    <button id="voiceFab" class="voice-fab">
+        <i class="bi bi-mic-fill"></i>
+    </button>
+
+    <div class="modal fade" id="loanModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content p-2">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-bold" id="modalTitle">Add Loan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        style="filter: var(--close-btn-filter);"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="loanId">
+                    <input type="hidden" id="loanType" value="Loan">
+                    <div class="mb-3">
+                        <label class="small text-muted mb-2">Ref Name / Person</label>
+                        <input type="text" id="personName" class="form-control"
+                            placeholder="E.g., Bajaj, Personal Loan">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-muted mb-2">Amount (₹)</label>
+                        <input type="number" id="loanAmount" class="form-control" placeholder="0.00">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-muted mb-2">Loan Date (Target/EMI Date)</label>
+                        <input type="date" id="loanDate" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-3 pt-0 flex-column gap-2">
+                    <div class="d-flex gap-2 w-100" id="editActions" style="display:none !important;">
+                        <button class="btn btn-outline-danger flex-fill py-2 fw-bold rounded-3"
+                            onclick="deleteLoanFromModal()">DELETE</button>
+                        <button class="btn btn-outline-success flex-fill py-2 fw-bold rounded-3" id="settleBtn"
+                            onclick="settleLoanFromModal()">SETTLE</button>
+                        <button class="btn btn-outline-warning flex-fill py-2 fw-bold rounded-3" id="unsettleBtn"
+                            onclick="unsettleLoanFromModal()" style="display:none;">RESTORE</button>
+                    </div>
+                    <button class="btn btn-primary w-100 py-3 fw-bold rounded-4 shadow" onclick="saveLoan()">SAVE
+                        LOAN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="drawer.js"></script>
+    <script src="js/firebase-init.js"></script>
+    <script>
+        const myModal = new bootstrap.Modal(document.getElementById('loanModal'));
+        let loansData = [];
+        let currentTab = 'pending';
+
+        async function loadLoans() {
+            try {
+                const snap = await db.collection("loans").orderBy("date", "desc").get();
+                loansData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderLoans();
+            } catch (e) {
+                console.error("Error loading loans:", e);
+                document.getElementById('loansList').innerHTML = '<div class="text-center p-5 text-danger">Error loading data</div>';
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.loan-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            renderLoans();
+        }
+
+        function renderLoans() {
+            let html = "";
+            let totalB = 0;
+
+            let filtered = loansData.filter(l => currentTab === 'pending' ? !l.settled : l.settled);
+
+            // --- SMART SORTING ---
+            if (currentTab === 'pending') {
+                filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+            } else {
+                filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+            }
+
+            loansData.forEach(l => {
+                if (!l.settled) {
+                    totalB += Number(l.amount);
+                }
+            });
+
+            document.getElementById('totalBalance').innerText = `₹${totalB}`;
+            document.getElementById('totalEntries').innerText = filtered.length;
+
+            filtered.forEach(l => {
+                const dateObj = new Date(l.date);
+                const dateStr = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+
+                // --- DAYS CALCULATION ---
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const targetDate = new Date(l.date);
+                targetDate.setHours(0, 0, 0, 0);
+
+                const diffTime = targetDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                let daysHtml = "";
+                let reminderHtml = "";
+
+                if (!l.settled) {
+                    if (diffDays === 0) {
+                        daysHtml = `<span class="days-badge days-future">Today</span>`;
+                        reminderHtml = `<span class="reminder-badge">🚨 DUE TODAY</span>`;
+                    } else if (diffDays === 1) {
+                        daysHtml = `<span class="days-badge days-future">Tomorrow</span>`;
+                        reminderHtml = `<span class="reminder-badge">🔔 REMINDER</span>`;
+                    } else if (diffDays > 0) {
+                        daysHtml = `<span class="days-badge days-future">${diffDays} Days Left</span>`;
+                    } else {
+                        daysHtml = `<span class="days-badge days-past">${Math.abs(diffDays)} Days Ago</span>`;
+                        reminderHtml = `<span class="reminder-badge">⚠️ OVERDUE</span>`;
+                    }
+                }
+
+                html += `
+                <div class="loan-row ${l.settled ? 'settled-row' : ''}" onclick="openModal('${l.id}', '${l.name}', ${l.amount}, '${l.date}', 'Loan', ${l.settled})">
+                    <!-- Status Icon -->
+                    <div class="status-btn ${l.settled ? 'settled-btn' : 'pending-btn'}">
+                        <i class="bi ${l.settled ? 'bi-check-all' : 'bi-clock-history'}"></i>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="loan-info">
+                        <div class="d-flex align-items-center flex-wrap">
+                            <span class="loan-name">${l.name}</span>
+                            ${daysHtml}
+                            ${reminderHtml}
+                        </div>
+                        <div class="loan-date">${dateStr}</div>
+                    </div>
+
+                    <!-- Right Side: Amount -->
+                    <div class="text-end">
+                        <div class="loan-amount">₹${l.amount}</div>
+                    </div>
+                </div>
+                `;
+            });
+
+            document.getElementById('loansList').innerHTML = html || `<div class="text-center p-5 text-muted">No ${currentTab} entries found</div>`;
+        }
+
+        function openModal(id = '', name = '', amount = '', date = '', type = 'Loan', settled = false) {
+            document.getElementById('modalTitle').innerText = id ? 'Edit Loan' : 'Add Loan';
+            document.getElementById('loanId').value = id;
+            document.getElementById('personName').value = name;
+            document.getElementById('loanAmount').value = amount;
+            document.getElementById('loanDate').value = date ? date.split('T')[0] : new Date().toISOString().split('T')[0];
+            document.getElementById('loanType').value = type;
+
+            const editActions = document.getElementById('editActions');
+            const settleBtn = document.getElementById('settleBtn');
+            const unsettleBtn = document.getElementById('unsettleBtn');
+
+            if (id) {
+                editActions.style.setProperty('display', 'flex', 'important');
+                if (settled) {
+                    settleBtn.style.display = 'none';
+                    unsettleBtn.style.display = 'block';
+                } else {
+                    settleBtn.style.display = 'block';
+                    unsettleBtn.style.display = 'none';
+                }
+            } else {
+                editActions.style.setProperty('display', 'none', 'important');
+            }
+
+            myModal.show();
+        }
+
+        async function settleLoanFromModal() {
+            const id = document.getElementById('loanId').value;
+            if (id) {
+                await settleLoan(id);
+                myModal.hide();
+            }
+        }
+
+        async function unsettleLoanFromModal() {
+            const id = document.getElementById('loanId').value;
+            if (id) {
+                if (confirm("Move this loan back to Pending?")) {
+                    await db.collection("loans").doc(id).update({ settled: false });
+                    loadLoans();
+                    myModal.hide();
+                }
+            }
+        }
+
+        async function deleteLoanFromModal() {
+            const id = document.getElementById('loanId').value;
+            if (id) {
+                await deleteLoan(id);
+                myModal.hide();
+            }
+        }
+
+        async function saveLoan() {
+            const id = document.getElementById('loanId').value;
+            const name = document.getElementById('personName').value.trim();
+            const amount = document.getElementById('loanAmount').value;
+            const date = document.getElementById('loanDate').value;
+            const type = document.getElementById('loanType').value; // This will always be 'Loan' now
+
+            if (!name || !amount) return alert("Fill all fields");
+
+            const data = {
+                name,
+                amount: Number(amount),
+                date: new Date(date).toISOString(),
+                type,
+                settled: false
+            };
+
+            if (id) {
+                // Keep the settled status if editing
+                const existing = loansData.find(l => l.id === id);
+                data.settled = existing ? existing.settled : false;
+                await db.collection("loans").doc(id).update(data);
+            } else {
+                await db.collection("loans").add(data);
+            }
+
+            myModal.hide(); loadLoans();
+        }
+
+        async function settleLoan(id) {
+            if (confirm("Mark this loan as settled?")) {
+                await db.collection("loans").doc(id).update({ settled: true });
+                loadLoans();
+            }
+        }
+
+        async function deleteLoan(id) {
+            if (confirm("Delete this entry?")) {
+                await db.collection("loans").doc(id).delete();
+                loadLoans();
+            }
+        }
+
+        // --- Advanced Voice Input Logic ---
+        const voiceFab = document.getElementById("voiceFab");
+        const voiceStatusOverlay = document.getElementById("voiceStatusOverlay");
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (!SpeechRecognition) {
+            voiceFab.style.display = "none";
+        } else {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            let isListening = false;
+
+            voiceFab.addEventListener("click", () => {
+                if (isListening) recognition.stop();
+                else {
+                    try { recognition.start(); } catch (e) { recognition.stop(); }
+                }
+            });
+
+            recognition.onstart = () => {
+                isListening = true;
+                voiceFab.classList.add("listening");
+                voiceStatusOverlay.style.display = "block";
+                voiceStatusOverlay.innerText = "Listening...";
+            };
+
+            recognition.onresult = (event) => {
+                isListening = false;
+                const text = event.results[0][0].transcript.toLowerCase();
+                voiceStatusOverlay.innerText = `Heard: "${text}"`;
+
+                // --- SMART LOAN PARSING ---
+                // 1. DATE Detection (Specific Date like 01/02/2026)
+                let dateISO = new Date().toISOString().split('T')[0];
+                const dateMatch = text.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/);
+
+                if (dateMatch) {
+                    let d = parseInt(dateMatch[1]);
+                    let m = parseInt(dateMatch[2]) - 1;
+                    let y = parseInt(dateMatch[3]);
+                    if (y < 100) y += 2000;
+                    const parsedDate = new Date(y, m, d);
+                    if (!isNaN(parsedDate.getTime())) {
+                        dateISO = parsedDate.toISOString().split('T')[0];
+                    }
+                } else {
+                    let detectedDate = new Date();
+                    if (text.includes("yesterday") || text.includes("nethu")) {
+                        detectedDate.setDate(detectedDate.getDate() - 1);
+                    } else if (text.includes("day before yesterday") || text.includes("munnathu")) {
+                        detectedDate.setDate(detectedDate.getDate() - 2);
+                    }
+                    dateISO = detectedDate.toISOString().split('T')[0];
+                }
+
+                // 2. AMOUNT 
+                let textForAmount = text;
+                if (dateMatch) textForAmount = text.replace(dateMatch[0], "");
+                const amountMatch = textForAmount.match(/\d+/);
+                const amount = amountMatch ? amountMatch[0] : "";
+
+                // 3. NAME Cleanup
+                let name = text;
+                if (dateMatch) name = name.replace(dateMatch[0], "");
+                const keywords = ["given", "taken", "lent", "borrowed", "took", "from", "to", "for", "i", "me", "a", "an", "the", "amount", "rupees", "rs", "kuduthen", "vaangunen", "loan", "yesterday", "nethu", "today", "day", "before", "munnathu"];
+                keywords.forEach(kw => {
+                    name = name.replace(new RegExp(`\\b${kw}\\b`, 'g'), "");
+                });
+                name = name.replace(/\d+/g, "").trim();
+
+                if (name || amount) {
+                    openModal('', name.toUpperCase(), amount || '', dateISO, 'Loan');
+                }
+
+                setTimeout(() => { if (!isListening) voiceStatusOverlay.style.display = "none"; }, 3000);
+            };
+
+            recognition.onerror = () => {
+                isListening = false;
+                voiceStatusOverlay.innerText = "Error! Try again.";
+                setTimeout(() => { if (!isListening) voiceStatusOverlay.style.display = "none"; }, 2000);
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                voiceFab.classList.remove("listening");
+            };
+        }
+
+        window.onload = loadLoans;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Detailed Summary</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Removed manual link, will rely on drawer.js injection or explicit if needed -->
+    <!-- Explicit link needed for now as drawer.js loads async -->
+    <link href="css/theme.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600&display=swap');
+
+        body {
+            background: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .filter-btn {
+            border-radius: 20px;
+            font-size: 13px;
+            padding: 5px 15px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-main);
+        }
+
+        .cat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .cat-row:last-child {
+            border-bottom: none;
+        }
+
+        .date-input {
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-main);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            box-shadow: none;
+        }
+
+        /* Fix for date icon in dark mode */
+        [data-theme="dark"] .date-input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .bg-white {
+            background-color: var(--bg-card) !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container py-3" style="max-width:420px">
+        <div class="d-flex align-items-center mb-4">
+            <i class="bi bi-arrow-left fs-4 me-3" onclick="history.back()"
+                style="cursor:pointer; color: var(--text-main);"></i>
+            <h5 class="fw-bold mb-0">Financial Summary</h5>
+        </div>
+
+        <!-- Top Controls: Account Filter & Mode -->
+        <div class="row g-2 mb-3">
+            <div class="col-5">
+                <select id="accountFilter" class="form-select shadow-sm"
+                    style="border-radius:20px; font-size:13px; font-weight:600; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-main);"
+                    onchange="applyFilters()">
+                    <option value="ALL">ALL ACCOUNTS</option>
+                    <option value="CASH">CASH</option>
+                    <option value="BANK">BANK</option>
+                    <option value="OTHER">OTHER</option>
+                </select>
+            </div>
+            <div class="col-7">
+                <div class="d-flex justify-content-between p-1 rounded-pill shadow-sm"
+                    style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                    <button class="filter-btn active" id="btn-day" onclick="switchMode('day')"
+                        style="flex:1; padding:4px 0;">Day</button>
+                    <button class="filter-btn" id="btn-week" onclick="switchMode('week')"
+                        style="flex:1; margin:0 3px; padding:4px 0;">Week</button>
+                    <button class="filter-btn" id="btn-month" onclick="switchMode('month')"
+                        style="flex:1; padding:4px 0;">Mth</button>
+                    <button class="filter-btn" id="btn-custom" onclick="switchMode('custom')"
+                        style="flex:1; padding:4px 0;">Cus</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Navigator -->
+        <div id="dateNavigator"
+            class="d-flex align-items-center justify-content-between mb-3 px-3 py-2 card shadow-sm flex-row"
+            style="min-height:60px;">
+            <button class="btn btn-light rounded-circle shadow-sm border p-0" onclick="changeDate(-1)"
+                style="width:36px; height:36px; display:flex; align-items:center; justify-content:center;">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <span id="dateLabel" class="fw-bold text-primary mx-2 user-select-none text-center"
+                style="font-size: 14px; line-height:1.2;">Loading...</span>
+            <button class="btn btn-light rounded-circle shadow-sm border p-0" onclick="changeDate(1)"
+                style="width:36px; height:36px; display:flex; align-items:center; justify-content:center;">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Custom Date Range Inputs (Hidden by default) -->
+        <div id="customDateInputs" class="d-none mb-3 card shadow-sm p-2 flex-row align-items-center gap-2">
+            <input type="date" id="startDate" class="form-control form-control-sm fw-bold footer-input">
+            <span class="fw-bold text-muted">-</span>
+            <input type="date" id="endDate" class="form-control form-control-sm fw-bold footer-input">
+            <button class="btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center"
+                style="width:32px;height:32px;" onclick="applyCustomDate()">
+                <i class="bi bi-check-lg"></i>
+            </button>
+        </div>
+
+        <!-- Comparison Card -->
+        <div id="comparisonCard" class="card shadow-sm mb-3 p-2 bg-light border-0" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted small fw-bold"><i class="bi bi-arrow-left-right me-1"></i>Vs Previous
+                    Period</span>
+                <span id="compLabel" class="badge bg-secondary">Loading...</span>
+            </div>
+        </div>
+
+        <!-- View Tabs -->
+        <ul class="nav nav-pills nav-fill mb-4 gap-2" role="tablist" style="font-size:14px; font-weight:600;">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active shadow-sm border" id="tab-summary" data-bs-toggle="pill"
+                    data-bs-target="#view-summary" type="button" role="tab"
+                    style="border-radius:12px;">Overview</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link shadow-sm border" id="tab-trends" data-bs-toggle="pill"
+                    data-bs-target="#view-trends" type="button" role="tab" style="border-radius:12px;">Trends</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- VIEW 1: SUMMARY (Donuts + Lists) -->
+            <div class="tab-pane fade show active" id="view-summary" role="tabpanel">
+
+
+
+                <h6 class="section-title mb-2 px-1">Accounts Balance</h6>
+                <div class="card shadow-sm p-3 mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small fw-bold text-muted">CASH</span>
+                        <span class="fw-bold" id="accCash">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small fw-bold text-muted">BANK</span>
+                        <span class="fw-bold" id="accBank">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="small fw-bold text-muted">OTHER</span>
+                        <span class="fw-bold" id="accOther">₹0.00</span>
+                    </div>
+                </div>
+
+                <h6 class="section-title mb-2 px-1">Income Categories</h6>
+                <div id="incomeCategoryList" class="card shadow-sm mb-4">
+                    <div class="text-center text-muted small py-3">No income recorded</div>
+                </div>
+
+                <h6 class="section-title mb-2 px-1">Expense Categories</h6>
+                <div id="expenseCategoryList" class="card shadow-sm mb-5">
+                    <div class="text-center text-muted small py-3">No expenses recorded</div>
+                </div>
+            </div> <!-- End Summary View -->
+
+            <!-- VIEW 2: TRENDS (Bar Chart) -->
+            <div class="tab-pane fade" id="view-trends" role="tabpanel">
+                <div class="card shadow-sm p-3 mb-4">
+                    <h6 class="fw-bold text-muted small mb-3 text-uppercase">Income vs Expense Trend</h6>
+                    <div style="position: relative; height: 300px; width:100%;">
+                        <canvas id="trendChartCanvas"></canvas>
+                    </div>
+                </div>
+                <div class="text-center text-muted small">
+                    <i class="bi bi-info-circle me-1"></i>Shows daily breakdown for the selected period.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drill-down Modal -->
+    <div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(5px);">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg" style="background: var(--bg-card); color: var(--text-main);">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold" id="catModalTitle">Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                        style="filter: invert(var(--invert-icon));"></button>
+                </div>
+                <div class="modal-body p-0" id="catModalBody">
+                    <!-- Transactions go here -->
+                </div>
+                <div class="modal-footer border-top-0 justify-content-center p-2">
+                    <button type="button" class="btn btn-sm btn-light rounded-pill px-4"
+                        data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase & Logic -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <!-- Restore centralized init and drawer -->
+    <script src="js/firebase-init.js"></script>
+    <script src="drawer.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Required for Tabs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Use centralized db object from firebase-init.js
+
+        let allTransactions = [];
+        let currentFiltered = []; // Store current filtered list for drill-down
+        let currentMode = 'day';
+        let currentDate = new Date();
+        let incomeChart = null;
+        let expenseChart = null;
+        let trendChart = null;
+
+        async function initPage() {
+            try {
+                // Fetch ALL data once
+                const snap = await db.collection("transactions").get();
+                allTransactions = snap.docs.map(doc => doc.data());
+
+                // Calculate Global Stats
+                calculateAccountSums();
+
+                // Initial Render
+                updateDateLabel();
+                applyFilters(); // Calls filterAndRender internally
+
+            } catch (e) { console.error("Error loading data:", e); }
+        }
+
+        // Triggered by Account Filter Dropdown or Mode Switch
+        function applyFilters() {
+            filterAndRender();
+        }
+
+        function calculateAccountSums() {
+            let accs = { CASH: 0, BANK: 0, OTHER: 0 };
+            allTransactions.forEach(t => {
+                const amt = Number(t.amount);
+                const type = t.type;
+                const accName = t.account ? t.account.toUpperCase() : "OTHER";
+
+                if (accs.hasOwnProperty(accName)) {
+                    if (type === "Income") accs[accName] += amt;
+                    else if (type === "Expense") accs[accName] -= amt;
+                    if (type === "Transfer") {
+                        accs[accName] -= amt;
+                        const toAcc = t.toAccount ? t.toAccount.toUpperCase() : "OTHER";
+                        if (accs.hasOwnProperty(toAcc)) accs[toAcc] += amt;
+                    }
+                } else {
+                    accs.OTHER += (type === "Income" ? amt : -amt);
+                }
+            });
+
+            document.getElementById('accCash').innerText = `₹${accs.CASH.toFixed(2)}`;
+            document.getElementById('accBank').innerText = `₹${accs.BANK.toFixed(2)}`;
+            document.getElementById('accOther').innerText = `₹${accs.OTHER.toFixed(2)}`;
+
+            const totalBal = accs.CASH + accs.BANK + accs.OTHER;
+            const existingTotal = document.getElementById("accTotalRow");
+            if (existingTotal) existingTotal.remove();
+
+            const accContainer = document.querySelector("#accOther").parentNode.parentNode;
+            const totalRow = document.createElement("div");
+            totalRow.id = "accTotalRow";
+            totalRow.className = "d-flex justify-content-between mt-3 pt-2 border-top";
+            totalRow.innerHTML = `<span class="small fw-bold text-primary">TOTAL BALANCE</span><span class="fw-bold text-primary">₹${totalBal.toFixed(2)}</span>`;
+            accContainer.appendChild(totalRow);
+        }
+
+        // --- Navigation Logic ---
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + mode).classList.add('active');
+
+            const nav = document.getElementById('dateNavigator');
+            const cus = document.getElementById('customDateInputs');
+            const comp = document.getElementById('comparisonCard');
+
+            if (mode === 'custom') {
+                nav.classList.add('d-none');
+                cus.classList.remove('d-none');
+                cus.classList.add('d-flex');
+                comp.style.display = 'none'; // No comparison for custom yet
+            } else {
+                nav.classList.remove('d-none');
+                cus.classList.add('d-none');
+                cus.classList.remove('d-flex');
+                comp.style.display = 'block';
+                updateDateLabel();
+                applyFilters();
+            }
+        }
+
+        function applyCustomDate() {
+            const s = document.getElementById('startDate').value;
+            const e = document.getElementById('endDate').value;
+            if (!s || !e) return alert("Select both dates");
+            applyFilters();
+        }
+
+        function changeDate(delta) {
+            if (currentMode === 'day') {
+                currentDate.setDate(currentDate.getDate() + delta);
+            } else if (currentMode === 'week') {
+                currentDate.setDate(currentDate.getDate() + (delta * 7));
+            } else if (currentMode === 'month') {
+                currentDate.setMonth(currentDate.getMonth() + delta);
+            }
+            updateDateLabel();
+            applyFilters();
+        }
+
+        function updateDateLabel() {
+            const labelEl = document.getElementById('dateLabel');
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+
+            if (currentMode === 'day') {
+                labelEl.innerText = currentDate.toLocaleDateString('en-GB', options);
+            } else if (currentMode === 'week') {
+                const d = new Date(currentDate);
+                const day = d.getDay() || 7;
+                if (day !== 1) d.setHours(-24 * (day - 1)); // Go to Monday
+
+                const start = new Date(d);
+                const end = new Date(d);
+                end.setDate(end.getDate() + 6);
+
+                const sStr = start.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+                const eStr = end.toLocaleDateString('en-GB', { month: 'short', day: 'numeric', year: 'numeric' });
+                labelEl.innerText = `${sStr} - ${eStr}`;
+            } else if (currentMode === 'month') {
+                labelEl.innerText = currentDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            }
+        }
+
+        function filterAndRender() {
+            const accountFilter = document.getElementById('accountFilter').value;
+            let filtered = [];
+            let start, end;
+
+            // For comparison
+            let prevStart, prevEnd;
+
+            if (currentMode === 'custom') {
+                start = new Date(document.getElementById('startDate').value);
+                end = new Date(document.getElementById('endDate').value);
+                // Safety
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
+
+                filtered = allTransactions.filter(t => {
+                    const tDate = new Date(t.date);
+                    tDate.setHours(12, 0, 0, 0);
+                    return tDate >= start && tDate <= end;
+                });
+
+            } else {
+                const d = new Date(currentDate);
+                d.setHours(0, 0, 0, 0);
+
+                if (currentMode === 'day') {
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const targetIso = `${year}-${month}-${day}`;
+
+                    start = new Date(d);
+                    end = new Date(d);
+                    end.setHours(23, 59, 59, 999);
+
+                    // Prev
+                    prevStart = new Date(start); prevStart.setDate(prevStart.getDate() - 1);
+                    prevEnd = new Date(end); prevEnd.setDate(prevEnd.getDate() - 1);
+
+                    filtered = allTransactions.filter(t => t.date === targetIso);
+
+                } else if (currentMode === 'week') {
+                    const day = d.getDay() || 7;
+                    d.setDate(d.getDate() - (day - 1));
+                    start = new Date(d);
+                    end = new Date(d);
+                    end.setDate(end.getDate() + 6);
+                    end.setHours(23, 59, 59, 999);
+
+                    // Prev
+                    prevStart = new Date(start); prevStart.setDate(prevStart.getDate() - 7);
+                    prevEnd = new Date(end); prevEnd.setDate(prevEnd.getDate() - 7);
+
+                    filtered = allTransactions.filter(t => {
+                        const tDate = new Date(t.date);
+                        tDate.setHours(12, 0, 0, 0);
+                        return tDate >= start && tDate <= end;
+                    });
+
+                } else if (currentMode === 'month') {
+                    start = new Date(d.getFullYear(), d.getMonth(), 1);
+                    end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+                    end.setHours(23, 59, 59, 999);
+
+                    // Prev
+                    prevStart = new Date(start); prevStart.setMonth(prevStart.getMonth() - 1);
+                    prevEnd = new Date(prevStart.getFullYear(), prevStart.getMonth() + 1, 0);
+                    prevEnd.setHours(23, 59, 59, 999);
+
+                    filtered = allTransactions.filter(t => {
+                        const tDate = new Date(t.date);
+                        tDate.setHours(12, 0, 0, 0);
+                        return tDate >= start && tDate <= end;
+                    });
+                }
+            }
+
+            // 2. Logic to filter by ACCOUNT
+            const filterTx = (list) => {
+                if (accountFilter !== 'ALL') {
+                    return list.filter(t => {
+                        const acc = t.account ? t.account.toUpperCase() : "OTHER";
+                        if (t.type === "Transfer") {
+                            const toAcc = t.toAccount ? t.toAccount.toUpperCase() : "OTHER";
+                            return acc === accountFilter || toAcc === accountFilter;
+                        }
+                        return acc === accountFilter;
+                    });
+                }
+                return list;
+            }
+
+            filtered = filterTx(filtered);
+
+            // 3. Comparison Logic (Only if not custom)
+            if (currentMode !== 'custom') {
+                // Get prev data
+                let prevFiltered = allTransactions.filter(t => {
+                    const tDate = new Date(t.date);
+                    tDate.setHours(12, 0, 0, 0);
+                    return tDate >= prevStart && tDate <= prevEnd;
+                });
+                prevFiltered = filterTx(prevFiltered);
+
+                // Calc Totals
+                const curExp = filtered.filter(t => t.type === 'Expense').reduce((s, t) => s + Number(t.amount), 0);
+                const prevExp = prevFiltered.filter(t => t.type === 'Expense').reduce((s, t) => s + Number(t.amount), 0);
+
+                const compLabel = document.getElementById('compLabel');
+                const compCard = document.getElementById('comparisonCard');
+
+                if (prevExp === 0) {
+                    compLabel.innerText = "No prev data";
+                    compLabel.className = "badge bg-secondary";
+                } else {
+                    const diff = curExp - prevExp;
+                    const pct = ((diff / prevExp) * 100).toFixed(0);
+                    if (diff > 0) {
+                        compLabel.innerHTML = `<i class="bi bi-arrow-up"></i> ${pct}% more than prev`;
+                        compLabel.className = "badge bg-danger text-wrap";
+                    } else if (diff < 0) {
+                        compLabel.innerHTML = `<i class="bi bi-arrow-down"></i> ${Math.abs(pct)}% less than prev`;
+                        compLabel.className = "badge bg-success text-wrap";
+                    } else {
+                        compLabel.innerText = "Same as prev";
+                        compLabel.className = "badge bg-warning text-dark";
+                    }
+                }
+                compCard.style.display = 'block';
+            }
+
+            // Save for drill-down
+            currentFiltered = filtered;
+
+            // 3. Render Views
+            renderOverview(filtered);
+            renderTrends(filtered, start, end);
+        }
+
+        function renderOverview(data) {
+            let catsInc = {}, catsExp = {};
+            data.forEach(t => {
+                const amt = Number(t.amount);
+                const type = t.type;
+                const cat = t.category || "General";
+                if (type === "Income") catsInc[cat] = (catsInc[cat] || 0) + amt;
+                else if (type === "Expense") catsExp[cat] = (catsExp[cat] || 0) + amt;
+            });
+            renderSection('incomeCategoryList', catsInc, 'text-success', '+', 'incomeChartCanvas', 'Income');
+            renderSection('expenseCategoryList', catsExp, 'text-danger', '-', 'expenseChartCanvas', 'Expense');
+        }
+
+        function renderTrends(data, startDate, endDate) {
+            // Group data by Date (ISO string)
+            // If mode is Day: Show hourly? No, keeping it simple: just show that day (1 bar usually, or maybe categorized?)
+            // If mode is Day, Trend chart is less useful unless we show "Yesterday vs Today" or hourly.
+            // Let's stick to Daily bars for Week/Month. For Day, maybe just show that one day bar.
+
+            // Map dates in range to 0
+            const dailyData = {};
+            const loopDate = new Date(startDate);
+            while (loopDate <= endDate) {
+                const iso = loopDate.toISOString().split('T')[0];
+                dailyData[iso] = { income: 0, expense: 0 };
+                loopDate.setDate(loopDate.getDate() + 1);
+            }
+
+            data.forEach(t => {
+                const dateKey = t.date; // YYYY-MM-DD
+                if (dailyData[dateKey]) { // Only if in range (should be guaranteed by filter)
+                    if (t.type === "Income") dailyData[dateKey].income += Number(t.amount);
+                    else if (t.type === "Expense") dailyData[dateKey].expense += Number(t.amount);
+                }
+            });
+
+            const labels = Object.keys(dailyData).sort(); // Sort chronological
+            const incData = labels.map(d => dailyData[d].income);
+            const expData = labels.map(d => dailyData[d].expense);
+
+            // Format labels for chart (e.g., "22 Dec")
+            const displayLabels = labels.map(iso => {
+                const d = new Date(iso);
+                return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+            });
+
+            const ctx = document.getElementById('trendChartCanvas').getContext('2d');
+            if (trendChart) trendChart.destroy();
+
+            trendChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: displayLabels,
+                    datasets: [
+                        {
+                            label: 'Income',
+                            data: incData,
+                            backgroundColor: '#198754', // Success Green
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Expense',
+                            data: expData,
+                            backgroundColor: '#dc3545', // Danger Red
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 10 } } }
+                    },
+                    plugins: {
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+        }
+
+        // --- Drill Down Logic ---
+
+        function showCategoryDetails(category, type) {
+            const modalBody = document.getElementById('catModalBody');
+            document.getElementById('catModalTitle').innerText = `${category} (${type})`;
+            modalBody.innerHTML = '';
+
+            // Filter from currently displayed transactions
+            const txs = currentFiltered.filter(t =>
+                t.type === type && (t.category || "General") === category
+            );
+
+            // Sort logic? Date is string YYYY-MM-DD. Simple sort:
+            txs.sort((a, b) => b.amount - a.amount); // Show highest first? Or date? Using date implies sorting strings.
+
+            if (txs.length === 0) {
+                modalBody.innerHTML = '<div class="p-4 text-center text-muted">No transactions found.</div>';
+            } else {
+                let html = '<ul class="list-group list-group-flush">';
+                txs.forEach(t => {
+                    // Parse date
+                    const d = new Date(t.date);
+                    const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                    const acc = t.account ? ` <span class="badge bg-secondary kv-badge" style="font-size:9px;">${t.account}</span>` : '';
+
+                    html += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center" style="background:var(--bg-card); color:var(--text-main); border-color:var(--border-color);">
+                            <div>
+                                <div class="fw-bold small">${t.description || "No Description"}</div>
+                                <div class="text-muted" style="font-size:11px;">${dateStr}${acc}</div>
+                            </div>
+                            <span class="fw-bold ${type === 'Income' ? 'text-success' : 'text-danger'}">
+                                ${type === 'Income' ? '+' : '-'}₹${Number(t.amount).toFixed(2)}
+                            </span>
+                        </li>`;
+                });
+                html += '</ul>';
+                modalBody.innerHTML = html;
+            }
+
+            const myModal = new bootstrap.Modal(document.getElementById('categoryModal'));
+            myModal.show();
+        }
+
+
+        function renderSection(listId, data, cls, sign, canvasId, typeLabel) {
+            const listDiv = document.getElementById(listId);
+            listDiv.innerHTML = "";
+            const keys = Object.keys(data);
+
+            // 1. Setup Canvas Container inside the card
+            // If canvas doesn't exist in the listDiv's prev sibling or top, we add it.
+            // Actually, let's restructure: The card body should contain the canvas AND the list.
+            // But listDiv is the card itself in current HTML? No, listDiv is a div inside card or the card itself?
+            // Checking HTML: <div id="incomeCategoryList" class="card shadow-sm mb-4">...</div>
+            // So listDiv IS the card. We should clear it and append Canvas + List.
+
+            if (keys.length === 0) {
+                listDiv.innerHTML = `<div class="text-center text-muted small py-3">No ${typeLabel.toLowerCase()} recorded</div>`;
+                return;
+            }
+
+            // Create Canvas Container
+            const chartContainer = document.createElement('div');
+            chartContainer.style.position = 'relative';
+            chartContainer.style.height = '200px';
+            chartContainer.style.width = '100%';
+            chartContainer.style.marginBottom = '20px';
+            const canvas = document.createElement('canvas');
+            canvas.id = canvasId;
+            chartContainer.appendChild(canvas);
+            listDiv.appendChild(chartContainer);
+
+            // Calculate Total for %
+            let total = 0;
+            keys.forEach(k => total += data[k]);
+
+            // Render List Items
+            keys.forEach(k => {
+                const val = data[k];
+                const percent = ((val / total) * 100).toFixed(1);
+
+                // Add onClick to open details
+                const row = document.createElement('div');
+                row.className = 'cat-row cursor-pointer'; // Add cursor pointer CSS if needed
+                row.style.cursor = 'pointer';
+                row.onclick = () => showCategoryDetails(k, typeLabel); // Pass Category & Type
+
+                row.innerHTML = `
+                        <div>
+                            <span class="fw-semibold small">${k}</span>
+                            <span class="text-muted ms-2" style="font-size:10px;">(${percent}%)</span>
+                        </div>
+                        <span class="${cls} fw-bold small">${sign}₹${val.toFixed(2)} <i class="bi bi-chevron-right text-muted ms-1" style="font-size:10px;"></i></span>
+                `;
+                listDiv.appendChild(row);
+            });
+
+            const totalRow = document.createElement('div');
+            totalRow.className = "d-flex justify-content-between px-3 py-2 mt-2 bg-light rounded";
+            totalRow.style.background = "var(--bg-input)";
+            totalRow.style.border = "1px solid var(--border-color)";
+
+            totalRow.innerHTML = `
+                    <span class="small fw-bold">TOTAL</span>
+                    <span class="${cls} fw-bold small">${sign}₹${total.toFixed(2)}</span>
+            `;
+            listDiv.appendChild(totalRow);
+
+            // Render Chart
+            renderChart(canvasId, keys, data, typeLabel);
+        }
+
+        function renderChart(canvasId, labels, dataObj, label) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const dataValues = labels.map(k => dataObj[k]);
+
+            // Dynamic Colors
+            const colors = [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
+                '#E7E9ED', '#76A346', '#CD5C5C', '#F08080'
+            ];
+
+            // Destroy prev chart instance if exists
+            if (canvasId === 'incomeChartCanvas') {
+                if (incomeChart) incomeChart.destroy();
+                incomeChart = new Chart(ctx, configChart(labels, dataValues, colors, label));
+            } else {
+                if (expenseChart) expenseChart.destroy();
+                expenseChart = new Chart(ctx, configChart(labels, dataValues, colors, label));
+            }
+        }
+
+        function configChart(labels, data, colors, label) {
+            return {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { boxWidth: 10, font: { size: 10 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    let val = context.parsed;
+                                    let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    let pct = ((val / total) * 100).toFixed(1) + '%';
+                                    return ` ₹${val} (${pct})`;
+                                }
+                            }
+                        }
+                    },
+                    layout: { padding: 10 },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const category = labels[index];
+                            showCategoryDetails(category, label); // label is 'Income' or 'Expense'
+                        }
+                    }
+                }
+            };
+        }
+
+        window.onload = initPage;
+    </script>
+</body>
+
+</html>

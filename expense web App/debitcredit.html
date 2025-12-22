@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>My Khata - Main</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding-bottom: 90px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Top Bar Style */
+        #topBar {
+            padding: 15px 20px;
+            background: var(--bg-card);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        #topBar i {
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--primary-color);
+        }
+
+        /* Khata UI Components */
+        .khata-container {
+            padding: 10px 15px;
+        }
+
+        .person-card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .person-name {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--text-main);
+            flex: 1;
+        }
+
+        .amount-group {
+            display: flex;
+            gap: 20px;
+            text-align: right;
+        }
+
+        .amt-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .label {
+            font-size: 8px;
+            font-weight: 800;
+            color: var(--text-muted);
+            letter-spacing: 0.8px;
+            margin-bottom: -2px;
+        }
+
+        .val {
+            font-weight: 800;
+            font-size: 15px;
+        }
+
+        .get-text {
+            color: #2ecc71;
+        }
+
+        .give-text {
+            color: #e74c3c;
+        }
+
+        #addBtn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 60px;
+            height: 60px;
+            background: var(--primary-color);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+            z-index: 1000;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="topBar">
+        <i class="bi bi-grid-fill" onclick="toggleDrawer(true)"></i>
+        <h6 class="mb-0 fw-bold ms-3">My Khata</h6>
+    </div>
+
+    <div class="khata-container" id="peopleList"></div>
+
+    <div id="addBtn" onclick="addPerson()"><i class="bi bi-person-plus"></i></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <script src="drawer.js"></script>
+
+    <script src="js/firebase-init.js"></script>
+    <script>
+
+        // toggleDrawer function ippo drawer.js-la irukku, so inga thevai illai
+
+        async function loadKhata() {
+            const list = document.getElementById('peopleList');
+            const snap = await db.collection("khata").get();
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const data = doc.data();
+                list.innerHTML += `
+            <a href="person-details.html?id=${doc.id}&name=${data.name}" class="person-card">
+                <div class="person-name">${data.name}</div>
+                <div class="amount-group">
+                    <div class="amt-box"><span class="label">GET</span><span class="val get-text">₹${data.totalGet || 0}</span></div>
+                    <div class="amt-box"><span class="label">GIVE</span><span class="val give-text">₹${data.totalGive || 0}</span></div>
+                </div>
+            </a>`;
+            });
+        }
+
+        async function addPerson() {
+            const name = prompt("Enter Person Name:");
+            if (name) {
+                await db.collection("khata").add({ name: name, totalGet: 0, totalGive: 0 });
+                loadKhata();
+            }
+        }
+
+        window.onload = loadKhata;
+    </script>
+</body>
+
+</html>
