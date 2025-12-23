@@ -285,7 +285,9 @@
 
                     <div class="mb-3">
                         <label class="small text-muted mb-2">Item Name</label>
-                        <input type="text" id="itemName" class="form-control" placeholder="E.g., Milk, Battery">
+                        <input type="text" id="itemName" class="form-control" placeholder="E.g., Milk, Battery"
+                            list="itemSuggestions">
+                        <datalist id="itemSuggestions"></datalist>
                     </div>
 
                     <div class="row g-2 mb-3">
@@ -349,6 +351,9 @@
 
         async function loadPurchases() {
             try {
+                // Initialize suggestions
+                loadTransactionSuggestions();
+
                 const snap = await db.collection("purchase").orderBy("date", "desc").get();
                 purchaseData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderItems();
@@ -523,6 +528,57 @@
                 snap.forEach(doc => batch.delete(doc.ref));
                 await batch.commit();
                 loadPurchases();
+            }
+        }
+
+        async function loadTransactionSuggestions() {
+            try {
+                const snap = await db.collection("transactions").get();
+                const descriptions = new Set();
+                const categories = new Set();
+                const accounts = new Set();
+
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    if (data.description) {
+                        // Strip "PURCHASE: " prefix if exists
+                        let desc = data.description.replace(/^PURCHASE: /i, '');
+                        descriptions.add(desc);
+                    }
+                    if (data.category) categories.add(data.category);
+                    if (data.account) accounts.add(data.account);
+                });
+
+                // Populate Name Suggestions
+                const datalist = document.getElementById('itemSuggestions');
+                datalist.innerHTML = Array.from(descriptions).map(d => `<option value="${d}">`).join('');
+
+                // Populate Category Suggestions
+                const categorySelect = document.getElementById('itemCategory');
+                const existingCats = Array.from(categorySelect.options).map(o => o.value);
+                categories.forEach(cat => {
+                    if (!existingCats.includes(cat)) {
+                        const opt = document.createElement('option');
+                        opt.value = cat;
+                        opt.text = cat;
+                        categorySelect.add(opt);
+                    }
+                });
+
+                // Populate Account Suggestions
+                const accountSelect = document.getElementById('itemAccount');
+                const existingAccs = Array.from(accountSelect.options).map(o => o.value);
+                accounts.forEach(acc => {
+                    if (!existingAccs.includes(acc)) {
+                        const opt = document.createElement('option');
+                        opt.value = acc;
+                        opt.text = acc;
+                        accountSelect.add(opt);
+                    }
+                });
+
+            } catch (e) {
+                console.error("Error loading transaction suggestions:", e);
             }
         }
 
