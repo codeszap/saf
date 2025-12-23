@@ -41,38 +41,23 @@
         .dashboard {
             margin: 15px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
         }
 
         .dash-card {
             background: var(--bg-input);
             border: 1px solid var(--border-color);
-            padding: 15px;
-            border-radius: 16px;
+            padding: 12px 8px;
+            border-radius: 14px;
+            text-align: center;
         }
 
-        .dash-card.full-width {
-            grid-column: span 2;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--primary-color);
-            border: none;
-        }
-
-        .dash-card.full-width .dash-label,
-        .dash-card.full-width .dash-val {
-            color: #fff;
-            margin: 0;
-        }
-
-        .dash-label {
-            font-size: 10px;
-            font-weight: 800;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-bottom: 5px;
+        font-size: 10px;
+        font-weight: 800;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-bottom: 5px;
         }
 
         .dash-val {
@@ -292,16 +277,16 @@
     </div>
 
     <div class="dashboard">
-        <div class="dash-card full-width">
-            <div class="dash-label">Available Balance</div>
-            <div class="dash-val" id="availBalance">₹0</div>
+        <div class="dash-card">
+            <div class="dash-label">Balance</div>
+            <div class="dash-val text-primary" id="availBalance">₹0</div>
         </div>
         <div class="dash-card">
-            <div class="dash-label">Selected Total</div>
+            <div class="dash-label">Selected</div>
             <div class="dash-val" id="totalPrice">₹0</div>
         </div>
         <div class="dash-card">
-            <div class="dash-label">Bought Items</div>
+            <div class="dash-label">Bought</div>
             <div class="dash-val text-success" id="boughtCount">0</div>
         </div>
     </div>
