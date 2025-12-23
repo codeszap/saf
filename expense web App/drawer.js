@@ -11,6 +11,14 @@ function injectDrawer() {
         script.src = 'js/theme.js';
         document.head.appendChild(script);
     }
+    // Inject Bootstrap Icons CSS dynamically
+    if (!document.getElementById('bootstrapIconsCSS')) {
+        const link = document.createElement('link');
+        link.id = 'bootstrapIconsCSS';
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css';
+        document.head.appendChild(link);
+    }
     // Inject Theme CSS dynamically
     if (!document.getElementById('themeCSS')) {
         const link = document.createElement('link');
@@ -42,6 +50,9 @@ function injectDrawer() {
         </div>
         <div onclick="navigationHandler('loans.html')" class="drawer-item ${page === 'loans.html' ? 'active' : ''}" id="nav-loans">
             <i class="bi bi-bank"></i> Loans
+        </div>
+        <div onclick="navigationHandler('goal.html')" class="drawer-item ${page === 'goal.html' ? 'active' : ''}" id="nav-goal">
+            <i class="bi bi-trophy-fill"></i> Goals
         </div>
         <div onclick="navigationHandler('index.html')" class="drawer-item ${page === 'index.html' ? 'active' : ''}" id="nav-transaction">
             <i class="bi bi-arrow-left-right"></i> Transactions

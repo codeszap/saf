@@ -75,8 +75,21 @@ function injectBottomNav() {
             }
             .plus-circle i { font-size: 24px; color: white !important; }
             
+            /* FAB adjustments - Push up anything fixed at bottom */
+            #addBtn, .add-fab, .bottom-bar { 
+                bottom: 85px !important; 
+            }
+            #voiceFab { bottom: 155px !important; }
+            #voiceStatusOverlay { bottom: 225px !important; }
+            
+            /* Specific tweaks for Todo bottom bar to integrate better */
+            .bottom-bar {
+                border-top: 1px solid var(--border-color);
+                box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
+            }
+
             /* Ensure body has enough space */
-            body { padding-bottom: 80px !important; }
+            body { padding-bottom: 90px !important; }
         </style>
     `;
     document.body.insertAdjacentHTML('beforeend', navHTML);

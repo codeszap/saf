@@ -18,15 +18,65 @@
             transition: background 0.3s, color 0.3s;
         }
 
-        #overlayLoader {
-            position: fixed;
+        /* Shimmer Loading Effect */
+        .shimmer-card {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .shimmer-item {
+            background: var(--bg-input);
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shimmer-item::after {
+            content: "";
+            position: absolute;
             inset: 0;
-            background: rgba(255, 255, 255, 0.8);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            backdrop-filter: blur(3px);
+            transform: translateX(-100%);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+
+        [data-theme="dark"] .shimmer-item::after {
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+        }
+
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .shimmer-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .shimmer-title {
+            width: 140px;
+            height: 14px;
+            margin-bottom: 8px;
+        }
+
+        .shimmer-desc {
+            width: 100px;
+            height: 10px;
+        }
+
+        .shimmer-amt {
+            width: 60px;
+            height: 16px;
+        }
+
+        #overlayLoader {
+            display: none !important;
         }
 
         #topBar {
@@ -159,20 +209,7 @@
             color: #dc3545;
         }
 
-        #addBtn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 54px;
-            height: 54px;
-            font-size: 24px;
-            border-radius: 50%;
-            z-index: 1002;
-            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4);
-            border: none;
-            background: var(--primary-color);
-            color: #fff;
-        }
+        /* Removed addBtn from screen as it is now in bottom-nav.js */
     </style>
 </head>
 
@@ -221,8 +258,7 @@
             onclick="loadTransactions(true)" style="display:none; border-radius:0;">LOAD OLDER</button>
     </div>
 
-    <button onclick="window.location.href='add.html'" class="btn btn-primary" id="addBtn"><i
-            class="bi bi-plus"></i></button>
+    <!-- Duplicate Btn Removed (in bottom-nav now) -->
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
@@ -328,20 +364,54 @@
             });
         }
 
+        function renderShimmer() {
+            let shimmerHtml = "";
+            for (let i = 0; i < 6; i++) {
+                shimmerHtml += `
+                <div class="shimmer-card d-flex align-items-center">
+                    <div class="shimmer-item shimmer-circle me-3"></div>
+                    <div class="flex-grow-1">
+                        <div class="shimmer-item shimmer-title"></div>
+                        <div class="shimmer-item shimmer-desc"></div>
+                    </div>
+                    <div class="shimmer-item shimmer-amt"></div>
+                </div>`;
+            }
+            list.innerHTML = shimmerHtml;
+        }
+
         async function loadTransactions(isMore = false) {
-            overlay.style.display = "flex";
             try {
-                if (!isMore) { await fetchAllData(); await updateGlobalSummary(); }
+                if (!isMore) {
+                    renderShimmer();
+                    await fetchAllData();
+                    await updateGlobalSummary();
+                    list.innerHTML = "";
+                }
                 let query = db.collection("transactions").orderBy("date", "desc").limit(50);
-                if (isMore && lastVisible) query = query.startAfter(lastVisible);
-                else list.innerHTML = "";
+                if (isMore && lastVisible) {
+                    overlay.style.display = "flex"; // Fallback for loading more
+                    query = query.startAfter(lastVisible);
+                }
+
                 const snap = await query.get();
-                if (snap.empty) { loadMoreBtn.style.display = "none"; overlay.style.display = "none"; return; }
+                if (snap.empty) {
+                    loadMoreBtn.style.display = "none";
+                    overlay.style.display = "none";
+                    if (!isMore) list.innerHTML = "<div class='text-center p-5 text-muted'>No transactions found.</div>";
+                    return;
+                }
+
                 lastVisible = snap.docs[snap.docs.length - 1];
                 const currentData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                if (!isMore) list.innerHTML = ""; // Clear shimmer
                 renderListFromData(currentData);
                 loadMoreBtn.style.display = snap.docs.length === 50 ? "block" : "none";
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error(e);
+                list.innerHTML = "<div class='text-center p-5 text-danger font-bold'>Error loading data.</div>";
+            }
             overlay.style.display = "none";
         }
 

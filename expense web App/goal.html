@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ta">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Goals Blueprint - ProCheck</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/theme.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding-bottom: 120px;
+            transition: 0.3s;
+        }
+
+        #topBar {
+            padding: 15px 20px;
+            background: var(--bg-card);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .menu-icon {
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--primary-color);
+        }
+
+        .goal-card {
+            background: var(--bg-card);
+            border-radius: 18px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .goal-main-row {
+            padding: 14px 16px;
+            cursor: pointer;
+        }
+
+        .goal-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .goal-meta {
+            font-size: 11px;
+            opacity: 0.6;
+            font-weight: 600;
+        }
+
+        .progress-container {
+            flex-grow: 1;
+            margin: 0 15px;
+        }
+
+        .progress {
+            height: 6px;
+            border-radius: 10px;
+            background-color: var(--bg-input);
+        }
+
+        .quick-log {
+            display: flex;
+            gap: 8px;
+        }
+
+        .log-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .log-btn.done {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .log-btn.miss {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .log-btn:active {
+            transform: scale(0.9);
+        }
+
+        .goal-expanded {
+            max-height: 0;
+            padding: 0 16px;
+            background: var(--bg-input);
+            transition: max-height 0.3s ease-out, padding 0.3s ease;
+            font-size: 13px;
+        }
+
+        .goal-card.open .goal-expanded {
+            max-height: 600px;
+            padding: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .goal-card.open {
+            box-shadow: 0 10px 25px var(--shadow-color);
+            border-color: var(--primary-color);
+        }
+
+        .section-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .strategy-box {
+            background: var(--bg-card);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+
+        .history-mini {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .history-mini li {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 12px;
+        }
+
+        .history-mini li:last-child {
+            border-bottom: none;
+        }
+
+        .add-fab {
+            position: fixed;
+            bottom: 85px;
+            right: 20px;
+            width: 54px;
+            height: 54px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            border: none;
+            color: white;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            color: var(--text-main);
+        }
+
+        .form-control {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .form-control-color {
+            width: 35px;
+            height: 35px;
+            padding: 0;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .form-control-color::-webkit-color-swatch {
+            border: none;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="topBar">
+        <i class="bi bi-grid-fill menu-icon" onclick="toggleDrawer(true)"></i>
+        <h6 class="mb-0 fw-bold">Goals Blueprint</h6>
+        <div style="width: 24px;"></div>
+    </div>
+
+    <div class="container py-3" id="goalListContainer">
+        <!-- Cards injected here -->
+    </div>
+
+    <button class="add-fab" data-bs-toggle="modal" data-bs-target="#newGoalModal">
+        <i class="bi bi-plus-lg"></i>
+    </button>
+
+    <!-- Modal: New Goal -->
+    <div class="modal fade" id="newGoalModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-primary m-0">Setup New Blueprint</h6>
+                    <input type="color" id="inColor" class="form-control-color" value="#4f46e5">
+                </div>
+
+                <input type="text" id="inName" class="form-control mb-2" placeholder="Goal Name (e.g., Morning Yoga)">
+                <textarea id="inWhy" class="form-control mb-2" rows="2" placeholder="Why? (Root Purpose)"></textarea>
+                <textarea id="inPlan" class="form-control mb-2" rows="2"
+                    placeholder="Main Execution Plan..."></textarea>
+                <textarea id="inSchedule" class="form-control mb-2" rows="2"
+                    placeholder="Schedules (Comma separated)"></textarea>
+                <textarea id="inObstacles" class="form-control" rows="2"
+                    placeholder="Obstacles (Comma separated)"></textarea>
+
+                <button onclick="createNewGoal()" class="btn btn-primary mt-4 w-100 py-3 fw-bold rounded-4 shadow"
+                    data-bs-dismiss="modal">LAUNCH GOAL</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="drawer.js"></script>
+    <script src="bottom-nav.js"></script>
+    <script>
+        let goals = JSON.parse(localStorage.getItem('v3_goals') || '[]');
+
+        function saveData() { localStorage.setItem('v3_goals', JSON.stringify(goals)); }
+
+        function createNewGoal() {
+            const goal = {
+                id: Date.now(),
+                name: document.getElementById('inName').value || 'Untitled',
+                color: document.getElementById('inColor').value,
+                why: document.getElementById('inWhy').value,
+                plan: document.getElementById('inPlan').value,
+                schedule: document.getElementById('inSchedule').value,
+                obstacles: document.getElementById('inObstacles').value,
+                history: []
+            };
+            goals.push(goal);
+            saveData();
+            renderList();
+            // Reset
+            ['inName', 'inWhy', 'inPlan', 'inSchedule', 'inObstacles'].forEach(id => document.getElementById(id).value = '');
+        }
+
+        function toggleExpand(idx) {
+            const cards = document.querySelectorAll('.goal-card');
+            cards[idx].classList.toggle('open');
+        }
+
+        function calculateProgress(history) {
+            if (history.length === 0) return 0;
+            const successCount = history.filter(h => h.status === 'Done').length;
+            return Math.round((successCount / history.length) * 100);
+        }
+
+        function quickLog(idx, status, event) {
+            event.stopPropagation();
+            const date = new Date().toISOString().split('T')[0];
+            goals[idx].history.unshift({ date, status });
+            saveData();
+            renderList();
+
+            // Re-open if it was open
+            const cards = document.querySelectorAll('.goal-card');
+            if (cards[idx]) cards[idx].classList.add('open');
+        }
+
+        function deleteGoal(idx, event) {
+            event.stopPropagation();
+            if (!confirm("Delete this blueprint?")) return;
+            goals.splice(idx, 1);
+            saveData();
+            renderList();
+        }
+
+        function renderList() {
+            let html = '';
+            goals.forEach((g, idx) => {
+                const prog = calculateProgress(g.history);
+                const last3 = g.history.slice(0, 3);
+
+                html += `
+                <div class="goal-card" id="goal-${idx}">
+                    <div class="goal-main-row d-flex align-items-center" onclick="toggleExpand(${idx})">
+                        <div class="flex-grow-1">
+                            <span class="goal-title" style="color: ${g.color}">${g.name}</span>
+                            <div class="goal-meta">${g.history.length > 0 ? g.history.length + ' logs recorded' : 'New Blueprint'}</div>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress"><div class="progress-bar" style="width: ${prog}%; background-color: ${g.color}"></div></div>
+                            <div class="text-end" style="font-size: 9px; font-weight: 800; margin-top: 2px; color: ${g.color}">${prog}% Success</div>
+                        </div>
+                        <div class="quick-log">
+                            <button class="log-btn done" onclick="quickLog(${idx}, 'Done', event)"><i class="bi bi-check-lg"></i></button>
+                            <button class="log-btn miss" onclick="quickLog(${idx}, 'Missed', event)"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="goal-expanded">
+                        <div class="mb-3">
+                            <span class="section-label">Root Purpose (Why)</span>
+                            <div style="font-style: italic; opacity: 0.8;">"${g.why || 'Not specified'}"</div>
+                        </div>
+
+                        <div class="strategy-box">
+                            <span class="section-label"><i class="bi bi-bullseye"></i> Execution Strategy</span>
+                            <div class="mb-2" style="font-size: 0.85rem;">${g.plan || '-'}</div>
+                            
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <span class="section-label">Schedule</span>
+                                    <div class="small opacity-75">${g.schedule || '-'}</div>
+                                </div>
+                                <div class="col-6">
+                                    <span class="section-label text-danger">Obstacles</span>
+                                    <div class="small opacity-75 text-danger">${g.obstacles || '-'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <span class="section-label">Recent History</span>
+                        <ul class="history-mini mb-3">
+                            ${last3.length > 0 ? last3.map(h => `<li><span>${h.date}</span> <b class="${h.status === 'Done' ? 'text-success' : 'text-danger'}">${h.status}</b></li>`).join('') : '<li class="text-muted">No entries yet</li>'}
+                        </ul>
+
+                        <button class="btn btn-sm btn-outline-danger w-100 rounded-3 border-0 opacity-50" onclick="deleteGoal(${idx}, event)">
+                            <i class="bi bi-trash3"></i> Delete Habit
+                        </button>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('goalListContainer').innerHTML = html || '<div class="text-center mt-5 opacity-50"><i class="bi bi-trophy fs-1 d-block mb-3"></i>Create your first blueprint!</div>';
+        }
+
+        window.onload = renderList;
+    </script>
+</body>
+
+</html>

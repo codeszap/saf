@@ -75,24 +75,24 @@
         .dash-card {
             background: var(--bg-input);
             border: 1px solid var(--border-color);
-            padding: 12px 8px;
-            border-radius: 14px;
+            padding: 8px 4px;
+            border-radius: 12px;
             text-align: center;
         }
 
         .dash-label {
-            font-size: 9px;
+            font-size: 8px;
             font-weight: 800;
             color: var(--text-muted);
             text-transform: uppercase;
-            margin-bottom: 4px;
+            margin-bottom: 0px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .dash-val {
-            font-size: 15px;
+            font-size: 13px;
             font-weight: 800;
             color: var(--text-main);
         }
@@ -384,23 +384,14 @@
         </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="px-3 mb-3">
-
-        <ul class="nav nav-pills nav-fill bg-dark-subtle p-1 rounded-4 mb-3"
-            style="background: var(--bg-input) !important;">
-            <li class="nav-item">
-                <button class="nav-link active rounded-4 fw-bold py-2 tab-btn" id="tab-pending"
-                    onclick="switchTab('pending')">Pending</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link rounded-4 fw-bold py-2 tab-btn" id="tab-history"
-                    onclick="switchTab('history')">History</button>
-            </li>
-        </ul>
-
+    <!-- Consolidated Tabs & Filters -->
+    <div class="px-3">
         <div class="filter-scroll">
-            <div class="filter-chip active" onclick="setFilter('all', this)">All</div>
+            <div class="filter-chip tab-chip active" id="chip-pending" onclick="setTabFilter('pending', this)">Pending
+            </div>
+            <div class="filter-chip tab-chip" id="chip-history" onclick="setTabFilter('history', this)">History</div>
+            <div style="width: 1px; background: var(--border-color); margin: 5px 5px 15px 5px; flex-shrink: 0;"></div>
+            <div class="filter-chip" onclick="setFilter('all', this)">All</div>
             <div class="filter-chip" onclick="setFilter('checked', this)">Checked</div>
             <div class="filter-chip" onclick="setFilter('unchecked', this)">Unchecked</div>
             <div class="filter-chip" onclick="setFilter('priority', this)">Starred</div>
@@ -525,9 +516,16 @@
             renderItems();
         }
 
+        function setTabFilter(tab, el) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            renderItems();
+        }
+
         function setFilter(filter, el) {
             currentFilter = filter;
-            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.filter-chip:not(.tab-chip)').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
             renderItems();
         }
