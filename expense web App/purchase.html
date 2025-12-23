@@ -20,15 +20,35 @@
 
         /* Top Bar Style */
         #topBar {
-            padding: 15px 20px;
+            padding: 10px 15px;
             background: var(--bg-card);
             position: sticky;
             top: 0;
             z-index: 1000;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 10px;
             border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-search {
+            flex: 1;
+            background: var(--bg-input);
+            border-radius: 12px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        #searchInput {
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            width: 100%;
+            outline: none;
+            color: var(--text-main);
         }
 
         .menu-icon {
@@ -39,10 +59,17 @@
 
         /* Dashboard Stats */
         .dashboard {
-            margin: 15px;
+            margin: 0;
+            padding: 15px;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 8px;
+            position: sticky;
+            top: 57px;
+            /* Height of topBar */
+            background: var(--bg-main);
+            z-index: 999;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .dash-card {
@@ -75,14 +102,28 @@
             padding: 0 15px;
         }
 
-        .item-row {
+        .list-container {
             background: var(--bg-card);
-            border-radius: 16px;
+            border-radius: 20px;
             border: 1px solid var(--border-color);
-            padding: 16px;
-            margin-bottom: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .item-row {
+            padding: 14px 16px;
             display: flex;
             align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-row:active {
+            background: var(--bg-input);
         }
 
         .status-btn {
@@ -140,8 +181,13 @@
         }
 
         .bought-row {
-            opacity: 0.5;
-            filter: grayscale(1);
+            background: var(--bg-input);
+            opacity: 0.8;
+        }
+
+        .bought-row .name {
+            text-decoration: line-through;
+            color: var(--text-muted);
         }
 
         /* FAB Button */
@@ -224,6 +270,39 @@
             text-transform: uppercase;
         }
 
+        /* Filter Chips */
+        .filter-scroll {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 5px 0 15px 0;
+            scrollbar-width: none;
+        }
+
+        .filter-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-chip {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-chip.active {
+            background: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
         /* Searchable Dropdown Styles */
         .searchable-dropdown {
             position: relative;
@@ -276,8 +355,14 @@
 
     <div id="topBar">
         <i class="bi bi-grid-fill menu-icon" onclick="toggleDrawer(true)"></i>
-        <h6 class="mb-0 fw-bold">Shopping List</h6>
-        <i class="bi bi-trash3 text-danger" onclick="confirmClear()"></i>
+        <h6 class="mb-0 fw-bold d-none d-sm-block">Shopping List</h6>
+
+        <div class="header-search">
+            <i class="bi bi-search text-muted small"></i>
+            <input type="text" id="searchInput" placeholder="Search items..." oninput="handleSearch()">
+        </div>
+
+        <i class="bi bi-trash3 text-danger fs-5" onclick="confirmClear()"></i>
     </div>
 
     <div class="dashboard">
@@ -290,21 +375,20 @@
             <div class="dash-val" id="totalPrice">₹0</div>
         </div>
         <div class="dash-card">
+            <div class="dash-label">Remaining</div>
+            <div class="dash-val text-warning" id="remainingBalance">₹0</div>
+        </div>
+        <div class="dash-card">
             <div class="dash-label">Bought</div>
             <div class="dash-val text-success" id="boughtCount">0</div>
         </div>
     </div>
 
-    <!-- Search and Tabs -->
+    <!-- Tabs -->
     <div class="px-3 mb-3">
-        <div class="input-group mb-3"
-            style="border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color);">
-            <span class="input-group-text bg-transparent border-0"><i class="bi bi-search text-muted"></i></span>
-            <input type="text" id="searchInput" class="form-control border-0 bg-transparent"
-                placeholder="Search items..." oninput="handleSearch()">
-        </div>
 
-        <ul class="nav nav-pills nav-fill bg-dark-subtle p-1 rounded-4" style="background: var(--bg-input) !important;">
+        <ul class="nav nav-pills nav-fill bg-dark-subtle p-1 rounded-4 mb-3"
+            style="background: var(--bg-input) !important;">
             <li class="nav-item">
                 <button class="nav-link active rounded-4 fw-bold py-2 tab-btn" id="tab-pending"
                     onclick="switchTab('pending')">Pending</button>
@@ -314,6 +398,13 @@
                     onclick="switchTab('history')">History</button>
             </li>
         </ul>
+
+        <div class="filter-scroll">
+            <div class="filter-chip active" onclick="setFilter('all', this)">All</div>
+            <div class="filter-chip" onclick="setFilter('checked', this)">Checked</div>
+            <div class="filter-chip" onclick="setFilter('unchecked', this)">Unchecked</div>
+            <div class="filter-chip" onclick="setFilter('priority', this)">Starred</div>
+        </div>
     </div>
 
     <div class="items-grid" id="purchaseList"></div>
@@ -401,6 +492,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
     <script src="drawer.js"></script>
+    <script src="bottom-nav.js"></script>
 
     <script src="js/firebase-init.js"></script>
     <script>
@@ -408,6 +500,8 @@
         let purchaseData = [];
         let currentTab = 'pending';
         let searchTerm = '';
+        let currentFilter = 'all';
+        let currentAvailableBalance = 0;
 
         async function loadPurchases() {
             try {
@@ -431,6 +525,13 @@
             renderItems();
         }
 
+        function setFilter(filter, el) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            renderItems();
+        }
+
         function handleSearch() {
             searchTerm = document.getElementById('searchInput').value.toLowerCase();
             renderItems();
@@ -439,70 +540,86 @@
         function renderItems() {
             let html = "", count = 0;
 
-            // Filter by Tab and Search
+            // Filter by Tab, Search, and Status
             let filtered = purchaseData.filter(t => {
                 const matchesTab = currentTab === 'pending' ? !t.isBought : t.isBought;
                 const matchesSearch = t.name.toLowerCase().includes(searchTerm) || (t.category && t.category.toLowerCase().includes(searchTerm));
-                return matchesTab && matchesSearch;
-            });
 
-            // Sort logic: Priorities (Starred) first, then Non-priorities
+                let matchesStatus = true;
+                if (currentFilter === 'checked') matchesStatus = (t.isChecked !== false);
+                else if (currentFilter === 'unchecked') matchesStatus = (t.isChecked === false);
+                else if (currentFilter === 'priority') matchesStatus = t.isPriority;
+
+                return matchesTab && matchesSearch && matchesStatus;
+            });
             const sortedData = filtered.sort((a, b) => {
-                if (a.isPriority === b.isPriority) return 0;
-                return a.isPriority ? -1 : 1;
+                // 1. Ticked (isChecked) first
+                if (a.isChecked !== b.isChecked) return a.isChecked ? -1 : 1;
+                // 2. Priority (Starred) second
+                if (a.isPriority !== b.isPriority) return a.isPriority ? -1 : 1;
+                return 0;
             });
 
             // Update Global Bought Count regardless of filters
             const totalBought = purchaseData.filter(i => i.isBought).length;
             document.getElementById('boughtCount').innerText = totalBought;
 
-            sortedData.forEach(t => {
-                const dateStr = new Date(t.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+            if (sortedData.length > 0) {
+                html = '<div class="list-container">';
+                sortedData.forEach(t => {
+                    const dateStr = new Date(t.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 
-                html += `
-                <div class="item-row ${t.isBought ? 'bought-row' : ''}">
-                    <!-- Select checkbox -->
-                    ${!t.isBought ? `
-                    <div class="form-check me-2">
-                        <input class="form-check-input item-selector" type="checkbox" data-price="${t.price}" ${t.isChecked !== false ? 'checked' : ''} onchange="toggleCheck('${t.id}', ${t.isChecked !== false})">
-                    </div>
-                    
-                    <button class="status-btn pending-btn" onclick="toggleStatus('${t.id}', false)" title="Mark as Bought">
-                        <i class="bi bi-cart"></i>
-                    </button>
-                    ` : ''}
-                    
-                    <div class="info" onclick="openModal('${t.id}', '${t.name}', ${t.price}, '${t.date}', ${t.isPriority}, '${t.category || ""}', '${t.account || ""}')">
-                        <div class="d-flex align-items-center gap-2">
-                             <div class="name">${t.name}</div>
-                             ${t.isPriority ? '<i class="bi bi-star-fill text-warning" style="font-size:12px;"></i>' : ''}
+                    html += `
+                    <div class="item-row ${t.isBought ? 'bought-row' : ''}">
+                        <!-- Select checkbox -->
+                        ${!t.isBought ? `
+                        <div class="form-check me-2">
+                            <input class="form-check-input item-selector" type="checkbox" data-price="${t.price}" ${t.isChecked !== false ? 'checked' : ''} onchange="toggleCheck('${t.id}', ${t.isChecked !== false})">
                         </div>
-                        <div class="price-line">
-                            <span class="price">₹${t.price}</span>
-                            <span class="category-badge">${t.category || "OTHER"}</span>
-                            <span class="date-badge">${dateStr}</span>
+                        
+                        <button class="status-btn pending-btn" onclick="toggleStatus('${t.id}', false)" title="Mark as Bought">
+                            <i class="bi bi-cart"></i>
+                        </button>
+                        ` : ''}
+                        
+                        <div class="info" onclick="openModal('${t.id}', '${t.name}', ${t.price}, '${t.date}', ${t.isPriority}, '${t.category || ""}', '${t.account || ""}')">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="name">${t.name}</div>
+                                ${t.isPriority ? '<i class="bi bi-star-fill text-warning" style="font-size:12px;"></i>' : ''}
+                            </div>
+                            <div class="price-line">
+                                <span class="price">₹${t.price}</span>
+                                <span class="category-badge">${t.category || "OTHER"}</span>
+                                <span class="date-badge">${dateStr}</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-3">
+                            ${t.isBought ? `<i class="bi bi-arrow-counterclockwise text-primary fs-5" style="cursor:pointer;" onclick="toggleStatus('${t.id}', true)" title="Restore to Pending"></i>` : ''}
+                            <i class="bi bi-trash text-muted" style="cursor:pointer;" onclick="deleteItem('${t.id}')" title="Delete"></i>
                         </div>
                     </div>
+                `;
+                });
+                html += '</div>';
+            } else {
+                html = '<div class="text-center p-5 text-muted">No items found.</div>';
+            }
 
-                    <div class="d-flex align-items-center gap-3">
-                        ${t.isBought ? `<i class="bi bi-arrow-counterclockwise text-primary fs-5" style="cursor:pointer;" onclick="toggleStatus('${t.id}', true)" title="Restore to Pending"></i>` : ''}
-                        <i class="bi bi-trash text-muted" style="cursor:pointer;" onclick="deleteItem('${t.id}')" title="Delete"></i>
-                    </div>
-                </div>
-            `;
-            });
-
-            document.getElementById('purchaseList').innerHTML = html || `<div class="text-center p-5 text-muted">No ${currentTab} items found</div>`;
+            document.getElementById('purchaseList').innerHTML = html;
             calculateSelectedTotal();
         }
 
         function calculateSelectedTotal() {
             let total = 0;
-            const selectors = document.querySelectorAll('.item-selector');
-            selectors.forEach(s => {
-                if (s.checked) total += Number(s.getAttribute('data-price'));
+            document.querySelectorAll('.item-selector:checked').forEach(cb => {
+                total += parseFloat(cb.getAttribute('data-price')) || 0;
             });
             document.getElementById('totalPrice').innerText = `₹${total}`;
+
+            // Calculate Remaining Balance
+            const remaining = currentAvailableBalance - total;
+            document.getElementById('remainingBalance').innerText = `₹${remaining.toLocaleString('en-IN')}`;
         }
 
         function openModal(id = '', name = '', price = '', date = '', isPriority = false, category = 'OTHER', account = 'BANK') {
@@ -544,7 +661,7 @@
             };
 
             if (id) await db.collection("purchase").doc(id).update(data);
-            else await db.collection("purchase").add({ ...data, isBought: false, isChecked: true });
+            else await db.collection("purchase").add({ ...data, isBought: false, isChecked: false });
 
             myModal.hide(); loadPurchases();
         }
@@ -578,15 +695,10 @@
                     console.error("Auto-add failed:", e);
                 }
             } else {
-                // RESTORING: Delete associated transaction if exists
+                // RESTORING: Disconnect transaction but DO NOT delete it
                 if (item.lastTransactionId) {
-                    try {
-                        await db.collection("transactions").doc(item.lastTransactionId).delete();
-                        updateData.lastTransactionId = firebase.firestore.FieldValue.delete();
-                        console.log("Auto-deleted associated transaction");
-                    } catch (e) {
-                        console.error("Auto-delete transaction failed:", e);
-                    }
+                    updateData.lastTransactionId = firebase.firestore.FieldValue.delete();
+                    console.log("Disconnected transaction (kept record)");
                 }
             }
 
@@ -732,8 +844,9 @@
                         if (toAcc === "BANK") bank += amt; else if (toAcc === "CASH") cash += amt; else others += amt;
                     }
                 });
-                const total = bank + cash + others;
-                document.getElementById('availBalance').innerText = `₹${total.toLocaleString('en-IN')}`;
+                currentAvailableBalance = bank + cash + others;
+                document.getElementById('availBalance').innerText = `₹${currentAvailableBalance.toLocaleString('en-IN')}`;
+                calculateSelectedTotal();
             } catch (e) {
                 console.error("Error loading balance:", e);
             }

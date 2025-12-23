@@ -105,3 +105,9 @@ window.toggleDrawer = function (show) {
 
 // Inject pannumbothu execute aagum
 injectDrawer();
+
+// Sync theme icon if theme.js is already loaded
+if (typeof window.updateToggleIcon === 'function') {
+    const savedTheme = localStorage.getItem('app-theme') || 'light';
+    window.updateToggleIcon(savedTheme);
+}
