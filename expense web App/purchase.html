@@ -42,14 +42,29 @@
             margin: 15px;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 10px;
         }
 
         .dash-card {
             background: var(--bg-input);
             border: 1px solid var(--border-color);
-            padding: 18px;
+            padding: 15px;
             border-radius: 16px;
+        }
+
+        .dash-card.full-width {
+            grid-column: span 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary-color);
+            border: none;
+        }
+
+        .dash-card.full-width .dash-label,
+        .dash-card.full-width .dash-val {
+            color: #fff;
+            margin: 0;
         }
 
         .dash-label {
@@ -277,6 +292,10 @@
     </div>
 
     <div class="dashboard">
+        <div class="dash-card full-width">
+            <div class="dash-label">Available Balance</div>
+            <div class="dash-val" id="availBalance">₹0</div>
+        </div>
         <div class="dash-card">
             <div class="dash-label">Selected Total</div>
             <div class="dash-val" id="totalPrice">₹0</div>
@@ -403,8 +422,9 @@
 
         async function loadPurchases() {
             try {
-                // Initialize suggestions
+                // Initialize suggestions & Balance
                 loadTransactionSuggestions();
+                loadAvailableBalance();
 
                 const snap = await db.collection("purchase").orderBy("date", "desc").get();
                 purchaseData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -453,13 +473,15 @@
                 html += `
                 <div class="item-row ${t.isBought ? 'bought-row' : ''}">
                     <!-- Select checkbox -->
-                    <div class="form-check me-2 ${t.isBought ? 'd-none' : ''}">
+                    ${!t.isBought ? `
+                    <div class="form-check me-2">
                         <input class="form-check-input item-selector" type="checkbox" data-price="${t.price}" ${t.isChecked !== false ? 'checked' : ''} onchange="toggleCheck('${t.id}', ${t.isChecked !== false})">
                     </div>
                     
-                    <button class="status-btn ${t.isBought ? 'bought-btn' : 'pending-btn'}" onclick="toggleStatus('${t.id}', ${t.isBought})">
-                        <i class="bi ${t.isBought ? 'bi-check-all' : 'bi-cart'}"></i>
+                    <button class="status-btn pending-btn" onclick="toggleStatus('${t.id}', false)" title="Mark as Bought">
+                        <i class="bi bi-cart"></i>
                     </button>
+                    ` : ''}
                     
                     <div class="info" onclick="openModal('${t.id}', '${t.name}', ${t.price}, '${t.date}', ${t.isPriority}, '${t.category || ""}', '${t.account || ""}')">
                         <div class="d-flex align-items-center gap-2">
@@ -472,7 +494,11 @@
                             <span class="date-badge">${dateStr}</span>
                         </div>
                     </div>
-                    <i class="bi bi-trash text-muted" style="cursor:pointer;" onclick="deleteItem('${t.id}')"></i>
+
+                    <div class="d-flex align-items-center gap-3">
+                        ${t.isBought ? `<i class="bi bi-arrow-counterclockwise text-primary fs-5" style="cursor:pointer;" onclick="toggleStatus('${t.id}', true)" title="Restore to Pending"></i>` : ''}
+                        <i class="bi bi-trash text-muted" style="cursor:pointer;" onclick="deleteItem('${t.id}')" title="Delete"></i>
+                    </div>
                 </div>
             `;
             });
@@ -539,10 +565,10 @@
             if (!item) return;
 
             const newStatus = !current;
-            await db.collection("purchase").doc(id).update({
+            const updateData = {
                 isBought: newStatus,
                 isChecked: !newStatus // Auto uncheck if bought, check if moved back to pending
-            });
+            };
 
             if (newStatus === true) {
                 const transactionData = {
@@ -556,14 +582,31 @@
                 };
 
                 try {
-                    await db.collection("transactions").add(transactionData);
+                    const txRef = await db.collection("transactions").add(transactionData);
+                    updateData.lastTransactionId = txRef.id;
                     console.log("Auto-added expense to transactions");
                 } catch (e) {
                     console.error("Auto-add failed:", e);
                 }
+            } else {
+                // RESTORING: Delete associated transaction if exists
+                if (item.lastTransactionId) {
+                    try {
+                        await db.collection("transactions").doc(item.lastTransactionId).delete();
+                        updateData.lastTransactionId = firebase.firestore.FieldValue.delete();
+                        console.log("Auto-deleted associated transaction");
+                    } catch (e) {
+                        console.error("Auto-delete transaction failed:", e);
+                    }
+                }
             }
 
-            loadPurchases();
+            await db.collection("purchase").doc(id).update(updateData);
+            if (!newStatus) {
+                location.reload();
+            } else {
+                loadPurchases();
+            }
         }
 
         async function toggleCheck(id, current) {
@@ -681,6 +724,31 @@
                 document.querySelectorAll('.options-list').forEach(l => l.classList.remove('show'));
             }
         });
+
+        async function loadAvailableBalance() {
+            try {
+                const snap = await db.collection("transactions").get();
+                let bank = 0, cash = 0, others = 0;
+                snap.forEach(doc => {
+                    const t = doc.data();
+                    const amt = parseFloat(t.amount) || 0;
+                    const acc = (t.account || "OTHERS").toUpperCase();
+                    if (t.type === "Income") {
+                        if (acc === "BANK") bank += amt; else if (acc === "CASH") cash += amt; else others += amt;
+                    } else if (t.type === "Expense") {
+                        if (acc === "BANK") bank -= amt; else if (acc === "CASH") cash -= amt; else others -= amt;
+                    } else if (t.type === "Transfer") {
+                        const toAcc = (t.toAccount || "").toUpperCase();
+                        if (acc === "BANK") bank -= amt; else if (acc === "CASH") cash -= amt; else others -= amt;
+                        if (toAcc === "BANK") bank += amt; else if (toAcc === "CASH") cash += amt; else others += amt;
+                    }
+                });
+                const total = bank + cash + others;
+                document.getElementById('availBalance').innerText = `₹${total.toLocaleString('en-IN')}`;
+            } catch (e) {
+                console.error("Error loading balance:", e);
+            }
+        }
 
         window.onload = loadPurchases;
     </script>
