@@ -219,6 +219,52 @@
             font-weight: 700;
             text-transform: uppercase;
         }
+
+        /* Searchable Dropdown Styles */
+        .searchable-dropdown {
+            position: relative;
+        }
+
+        .searchable-dropdown .options-list {
+            position: absolute;
+            top: 110%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1100;
+            display: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .searchable-dropdown .options-list.show {
+            display: block;
+        }
+
+        .searchable-dropdown .option-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .searchable-dropdown .option-item:last-child {
+            border-bottom: none;
+        }
+
+        .searchable-dropdown .option-item:hover {
+            background: var(--bg-input);
+            color: var(--primary-color);
+        }
+
+        .searchable-dropdown .option-item.selected {
+            background: var(--primary-color);
+            color: #fff;
+        }
     </style>
 </head>
 
@@ -293,16 +339,19 @@
                     <div class="row g-2 mb-3">
                         <div class="col-7">
                             <label class="small text-muted mb-2">Category</label>
-                            <select id="itemCategory" class="form-select"
-                                style="background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-main); border-radius:12px; padding:12px;">
-                                <option value="GROCERY">GROCERY</option>
-                                <option value="ELECTRONICS">ELECTRONICS</option>
-                                <option value="FOOD">FOOD</option>
-                                <option value="CLOTHES">CLOTHES</option>
-                                <option value="PERSONAL">PERSONAL</option>
-                                <option value="HOME">HOME</option>
-                                <option value="OTHER" selected>OTHER</option>
-                            </select>
+                            <div class="searchable-dropdown" id="categoryDropdown">
+                                <input type="text" class="form-control" id="itemCategoryInput"
+                                    placeholder="Select category..." autocomplete="off">
+                                <div class="options-list" id="categoryOptions">
+                                    <div class="option-item" data-value="GROCERY">GROCERY</div>
+                                    <div class="option-item" data-value="ELECTRONICS">ELECTRONICS</div>
+                                    <div class="option-item" data-value="FOOD">FOOD</div>
+                                    <div class="option-item" data-value="CLOTHES">CLOTHES</div>
+                                    <div class="option-item" data-value="PERSONAL">PERSONAL</div>
+                                    <div class="option-item" data-value="HOME">HOME</div>
+                                    <div class="option-item" data-value="OTHER">OTHER</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-5">
                             <label class="small text-muted mb-2">Price</label>
@@ -313,12 +362,15 @@
                     <div class="row g-2 mb-3">
                         <div class="col">
                             <label class="small text-muted mb-2">Account (When Bought)</label>
-                            <select id="itemAccount" class="form-select"
-                                style="background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-main); border-radius:12px; padding:12px;">
-                                <option value="BANK" selected>BANK</option>
-                                <option value="CASH">CASH</option>
-                                <option value="OTHER">OTHER</option>
-                            </select>
+                            <div class="searchable-dropdown" id="accountDropdown">
+                                <input type="text" class="form-control" id="itemAccountInput"
+                                    placeholder="Select account..." autocomplete="off">
+                                <div class="options-list" id="accountOptions">
+                                    <div class="option-item" data-value="BANK">BANK</div>
+                                    <div class="option-item" data-value="CASH">CASH</div>
+                                    <div class="option-item" data-value="OTHER">OTHER</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -444,8 +496,10 @@
             document.getElementById('itemName').value = name;
             document.getElementById('itemPrice').value = price;
             document.getElementById('itemDate').value = date ? date.split('T')[0] : new Date().toISOString().split('T')[0];
-            document.getElementById('itemCategory').value = category || 'OTHER';
-            document.getElementById('itemAccount').value = account || 'BANK';
+
+            // Set Searchable Dropdown Values
+            document.getElementById('itemCategoryInput').value = category || 'OTHER';
+            document.getElementById('itemAccountInput').value = account || 'BANK';
 
             const star = document.getElementById('itemPriority');
             if (isPriority) star.classList.add('active');
@@ -459,8 +513,8 @@
             const name = document.getElementById('itemName').value;
             const price = document.getElementById('itemPrice').value;
             const date = document.getElementById('itemDate').value;
-            const category = document.getElementById('itemCategory').value;
-            const account = document.getElementById('itemAccount').value;
+            const category = document.getElementById('itemCategoryInput').value;
+            const account = document.getElementById('itemAccountInput').value;
             const isPriority = document.getElementById('itemPriority').classList.contains('active');
 
             if (!name || !price) return;
@@ -554,33 +608,79 @@
                 datalist.innerHTML = Array.from(descriptions).map(d => `<option value="${d}">`).join('');
 
                 // Populate Category Suggestions
-                const categorySelect = document.getElementById('itemCategory');
-                const existingCats = Array.from(categorySelect.options).map(o => o.value);
+                const categoryOptions = document.getElementById('categoryOptions');
+                const existingCats = Array.from(categoryOptions.querySelectorAll('.option-item')).map(o => o.getAttribute('data-value'));
                 categories.forEach(cat => {
-                    if (!existingCats.includes(cat)) {
-                        const opt = document.createElement('option');
-                        opt.value = cat;
-                        opt.text = cat;
-                        categorySelect.add(opt);
+                    if (cat && !existingCats.includes(cat)) {
+                        const div = document.createElement('div');
+                        div.className = 'option-item';
+                        div.setAttribute('data-value', cat);
+                        div.innerText = cat;
+                        categoryOptions.appendChild(div);
                     }
                 });
 
                 // Populate Account Suggestions
-                const accountSelect = document.getElementById('itemAccount');
-                const existingAccs = Array.from(accountSelect.options).map(o => o.value);
+                const accountOptions = document.getElementById('accountOptions');
+                const existingAccs = Array.from(accountOptions.querySelectorAll('.option-item')).map(o => o.getAttribute('data-value'));
                 accounts.forEach(acc => {
-                    if (!existingAccs.includes(acc)) {
-                        const opt = document.createElement('option');
-                        opt.value = acc;
-                        opt.text = acc;
-                        accountSelect.add(opt);
+                    if (acc && !existingAccs.includes(acc)) {
+                        const div = document.createElement('div');
+                        div.className = 'option-item';
+                        div.setAttribute('data-value', acc);
+                        div.innerText = acc;
+                        accountOptions.appendChild(div);
                     }
                 });
+
+                // Re-initialize searchable logic for new items
+                initSearchableDropdowns();
 
             } catch (e) {
                 console.error("Error loading transaction suggestions:", e);
             }
         }
+
+        function initSearchableDropdowns() {
+            const dropdowns = document.querySelectorAll('.searchable-dropdown');
+
+            dropdowns.forEach(dropdown => {
+                const input = dropdown.querySelector('input');
+                const list = dropdown.querySelector('.options-list');
+                const items = list.querySelectorAll('.option-item');
+
+                // Clear previous listeners to avoid duplicates
+                const newInput = input.cloneNode(true);
+                input.parentNode.replaceChild(newInput, input);
+
+                newInput.addEventListener('focus', () => {
+                    list.classList.add('show');
+                });
+
+                newInput.addEventListener('input', () => {
+                    const filter = newInput.value.toLowerCase();
+                    items.forEach(item => {
+                        const text = item.innerText.toLowerCase();
+                        item.style.display = text.includes(filter) ? 'block' : 'none';
+                    });
+                    list.classList.add('show');
+                });
+
+                items.forEach(item => {
+                    item.addEventListener('click', () => {
+                        newInput.value = item.getAttribute('data-value');
+                        list.classList.remove('show');
+                    });
+                });
+            });
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.searchable-dropdown')) {
+                document.querySelectorAll('.options-list').forEach(l => l.classList.remove('show'));
+            }
+        });
 
         window.onload = loadPurchases;
     </script>
