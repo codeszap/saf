@@ -397,7 +397,7 @@
                 <div class="item-row ${t.isBought ? 'bought-row' : ''}">
                     <!-- Select checkbox -->
                     <div class="form-check me-2 ${t.isBought ? 'd-none' : ''}">
-                        <input class="form-check-input item-selector" type="checkbox" data-price="${t.price}" checked onchange="calculateSelectedTotal()">
+                        <input class="form-check-input item-selector" type="checkbox" data-price="${t.price}" ${t.isChecked !== false ? 'checked' : ''} onchange="toggleCheck('${t.id}', ${t.isChecked !== false})">
                     </div>
                     
                     <button class="status-btn ${t.isBought ? 'bought-btn' : 'pending-btn'}" onclick="toggleStatus('${t.id}', ${t.isBought})">
@@ -470,7 +470,7 @@
             };
 
             if (id) await db.collection("purchase").doc(id).update(data);
-            else await db.collection("purchase").add({ ...data, isBought: false });
+            else await db.collection("purchase").add({ ...data, isBought: false, isChecked: true });
 
             myModal.hide(); loadPurchases();
         }
@@ -480,7 +480,10 @@
             if (!item) return;
 
             const newStatus = !current;
-            await db.collection("purchase").doc(id).update({ isBought: newStatus });
+            await db.collection("purchase").doc(id).update({
+                isBought: newStatus,
+                isChecked: !newStatus // Auto uncheck if bought, check if moved back to pending
+            });
 
             if (newStatus === true) {
                 const transactionData = {
@@ -501,6 +504,11 @@
                 }
             }
 
+            loadPurchases();
+        }
+
+        async function toggleCheck(id, current) {
+            await db.collection("purchase").doc(id).update({ isChecked: !current });
             loadPurchases();
         }
 
