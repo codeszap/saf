@@ -304,6 +304,27 @@
                     }
                 }
             });
+        } else {
+            const duplicateId = params.get('duplicate');
+            if (duplicateId) {
+                document.getElementById("formTitle").textContent = "Duplicate Transaction";
+                transactionsCol.doc(duplicateId).get().then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        // Keep today's date for duplicate
+                        form.type.value = data.type;
+                        form.amount.value = data.amount;
+                        form.account.value = data.account;
+                        form.category.value = data.category || "";
+                        form.description.value = data.description || "";
+
+                        if (data.type === "Transfer") {
+                            typeSelect.dispatchEvent(new Event('change'));
+                            form.toAccount.value = data.toAccount;
+                        }
+                    }
+                });
+            }
         }
 
         const amountInput = document.getElementById("amountInput");

@@ -346,6 +346,7 @@
                     const isTrf = t.type === "Transfer";
                     row.innerHTML = `
                     <div class="swipe-actions">
+                        <button class="btn-edit" style="background: #0dcaf0;" onclick="window.location.href='add.html?duplicate=${t.id}'">Copy</button>
                         <button class="btn-edit" onclick="window.location.href='add.html?id=${t.id}'">Edit</button>
                         <button class="btn-delete" onclick="deleteTx('${t.id}')">Del</button>
                     </div>
@@ -441,10 +442,10 @@
             content.addEventListener("touchstart", e => { startX = e.touches[0].clientX; actions.style.visibility = "visible"; }, { passive: true });
             content.addEventListener("touchmove", e => {
                 moveX = e.touches[0].clientX - startX;
-                if (moveX < 0) content.style.transform = `translateX(${Math.max(moveX, -130)}px)`;
+                if (moveX < 0) content.style.transform = `translateX(${Math.max(moveX, -195)}px)`;
             });
             content.addEventListener("touchend", () => {
-                if (moveX < -60) content.style.transform = "translateX(-130px)";
+                if (moveX < -60) content.style.transform = "translateX(-195px)";
                 else { content.style.transform = "translateX(0)"; actions.style.visibility = "hidden"; }
                 moveX = 0;
             });
