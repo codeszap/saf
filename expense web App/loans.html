@@ -456,8 +456,10 @@
                 </div>
                 <div class="modal-footer border-0 p-3 pt-0 flex-column gap-2">
                     <div class="d-flex gap-2 w-100" id="editActions" style="display:none !important;">
+                        <button class="btn btn-outline-danger flex-fill py-2 fw-bold rounded-3"
+                            onclick="deleteLoanFromModal()">DELETE</button>
                         <button class="btn btn-outline-success flex-fill py-2 fw-bold rounded-3" id="settleBtn"
-                            onclick="settleLoanFromModal()">MARK SETTLED</button>
+                            onclick="settleLoanFromModal()">SETTLE</button>
                         <button class="btn btn-outline-warning flex-fill py-2 fw-bold rounded-3" id="unsettleBtn"
                             onclick="unsettleLoanFromModal()" style="display:none;">RESTORE</button>
                     </div>
@@ -661,6 +663,14 @@
                     loadLoans();
                     myModal.hide();
                 }
+            }
+        }
+
+        async function deleteLoanFromModal() {
+            const id = document.getElementById('loanId').value;
+            if (id) {
+                await deleteLoan(id);
+                myModal.hide();
             }
         }
 

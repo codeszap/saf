@@ -284,8 +284,12 @@
                     <div class="mb-3"><label class="small text-muted mb-1">Description</label><input type="text"
                             id="txDesc" class="form-control" placeholder="What is this for?"></div>
                 </div>
-                <div class="modal-footer border-0"><button type="button" class="btn btn-primary w-100 fw-bold py-2"
-                        onclick="saveTransaction()">SAVE ENTRY</button></div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-danger fw-bold py-2" id="deleteBtn"
+                        onclick="deleteFromModal()" style="display:none;">DELETE</button>
+                    <button type="button" class="btn btn-primary flex-fill fw-bold py-2"
+                        onclick="saveTransaction()">SAVE ENTRY</button>
+                </div>
             </div>
         </div>
     </div>
@@ -369,6 +373,14 @@
             document.getElementById('txAmount').value = amt;
             document.getElementById('txDesc').value = desc;
 
+            // Show/hide delete button
+            const deleteBtn = document.getElementById('deleteBtn');
+            if (id) {
+                deleteBtn.style.display = 'block';
+            } else {
+                deleteBtn.style.display = 'none';
+            }
+
             // Date Setup
             if (date) {
                 document.getElementById('txDate').value = date.split('T')[0];
@@ -377,6 +389,14 @@
             }
 
             myModal.show();
+        }
+
+        function deleteFromModal() {
+            const id = document.getElementById('editId').value;
+            if (id) {
+                deleteTx(id);
+                myModal.hide();
+            }
         }
 
         async function saveTransaction() {
