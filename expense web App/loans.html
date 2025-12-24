@@ -229,109 +229,64 @@
             font-weight: 800;
         }
 
-        .add-fab {
-            position: fixed;
-            bottom: 25px;
-            right: 20px;
-            width: 58px;
-            height: 58px;
-            background: var(--primary-color);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            border: none;
-            color: white;
-            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
-            z-index: 1000;
-        }
-
-        .modal-content {
+        /* Swipe Actions CSS */
+        .swipe-container {
+            position: relative;
+            overflow: hidden;
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            border-radius: 24px;
-        }
-
-        .form-control,
-        .form-select {
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            border-radius: 12px;
-            padding: 12px;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            background: var(--bg-input);
-            color: var(--text-main);
-            border-color: var(--primary-color);
-            box-shadow: none;
-        }
-
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-        }
-
-        [data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: none;
-        }
-
-        /* Voice FAB Styles */
-        .voice-fab {
-            position: fixed;
-            bottom: 95px;
-            right: 20px;
-            width: 58px;
-            height: 58px;
-            background: var(--primary-color);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-            z-index: 2000;
-            border: none;
-            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .voice-fab.listening {
-            transform: scale(1.1);
-            animation: voicePulse 1.5s infinite;
-        }
-
-        @keyframes voicePulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-            }
-
-            70% {
-                box-shadow: 0 0 0 20px rgba(59, 130, 246, 0);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-            }
-        }
-
-        #voiceStatusOverlay {
-            position: fixed;
-            bottom: 175px;
-            right: 20px;
-            background: var(--bg-card);
-            padding: 10px 18px;
+            touch-action: pan-y;
+            margin-bottom: 10px;
             border-radius: 16px;
+        }
+
+        .swipe-actions {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100%;
+            display: flex;
+            visibility: hidden;
+            border-radius: 0 16px 16px 0;
+            overflow: hidden;
+        }
+
+        .swipe-actions button {
+            width: 70px;
+            border: none;
+            color: #fff;
             font-size: 13px;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+        }
+
+        .btn-edit {
+            background: var(--primary-color);
+        }
+
+        .btn-delete {
+            background: #dc3545;
+        }
+
+        .swipe-content {
+            width: 100%;
+            background: var(--bg-card);
+            transition: transform .25s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Fixed FAB Position */
+        .add-fab {
+            bottom: 90px !important;
+        }
+
+        /* Adjusted loan row inside swipe content */
+        .loan-row-inner {
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
             border: 1px solid var(--border-color);
-            display: none;
-            z-index: 2000;
-            max-width: 250px;
+            border-radius: 16px;
         }
     </style>
 </head>
@@ -400,10 +355,8 @@
                 </div>
                 <div class="modal-footer border-0 p-3 pt-0 flex-column gap-2">
                     <div class="d-flex gap-2 w-100" id="editActions" style="display:none !important;">
-                        <button class="btn btn-outline-danger flex-fill py-2 fw-bold rounded-3"
-                            onclick="deleteLoanFromModal()">DELETE</button>
                         <button class="btn btn-outline-success flex-fill py-2 fw-bold rounded-3" id="settleBtn"
-                            onclick="settleLoanFromModal()">SETTLE</button>
+                            onclick="settleLoanFromModal()">MARK SETTLED</button>
                         <button class="btn btn-outline-warning flex-fill py-2 fw-bold rounded-3" id="unsettleBtn"
                             onclick="unsettleLoanFromModal()" style="display:none;">RESTORE</button>
                     </div>
@@ -484,7 +437,7 @@
                 if (!l.settled) {
                     if (diffDays === 0) {
                         daysHtml = `<span class="days-badge days-future">Today</span>`;
-                        reminderHtml = `<span class="reminder-badge">🚨 DUE TODAY</span>`;
+                        reminderHtml = `<span class="reminder-badge">🚨 DUE</span>`;
                     } else if (diffDays === 1) {
                         daysHtml = `<span class="days-badge days-future">Tomorrow</span>`;
                         reminderHtml = `<span class="reminder-badge">🔔 REMINDER</span>`;
@@ -497,31 +450,70 @@
                 }
 
                 html += `
-                <div class="loan-row ${l.settled ? 'settled-row' : ''}" onclick="openModal('${l.id}', '${l.name}', ${l.amount}, '${l.date}', 'Loan', ${l.settled})">
-                    <!-- Status Icon -->
-                    <div class="status-btn ${l.settled ? 'settled-btn' : 'pending-btn'}">
-                        <i class="bi ${l.settled ? 'bi-check-all' : 'bi-clock-history'}"></i>
+                <div class="swipe-container ${l.settled ? 'settled-row' : ''}">
+                    <div class="swipe-actions">
+                        <button class="btn-edit" onclick="openModal('${l.id}', '${l.name}', ${l.amount}, '${l.date}', 'Loan', ${l.settled})">Edit</button>
+                        <button class="btn-delete" onclick="deleteLoan('${l.id}')">Del</button>
                     </div>
+                    <div class="swipe-content">
+                        <div class="loan-row-inner">
+                            <!-- Status Icon -->
+                            <div class="status-btn ${l.settled ? 'settled-btn' : 'pending-btn'}">
+                                <i class="bi ${l.settled ? 'bi-check-all' : 'bi-clock-history'}"></i>
+                            </div>
 
-                    <!-- Info -->
-                    <div class="loan-info">
-                        <div class="d-flex align-items-center flex-wrap">
-                            <span class="loan-name">${l.name}</span>
-                            ${daysHtml}
-                            ${reminderHtml}
+                            <!-- Info -->
+                            <div class="loan-info">
+                                <div class="d-flex align-items-center flex-wrap">
+                                    <span class="loan-name">${l.name}</span>
+                                    ${daysHtml}
+                                    ${reminderHtml}
+                                </div>
+                                <div class="loan-date">${dateStr}</div>
+                            </div>
+
+                            <!-- Right Side: Amount -->
+                            <div class="text-end">
+                                <div class="loan-amount">₹${l.amount}</div>
+                            </div>
                         </div>
-                        <div class="loan-date">${dateStr}</div>
-                    </div>
-
-                    <!-- Right Side: Amount -->
-                    <div class="text-end">
-                        <div class="loan-amount">₹${l.amount}</div>
                     </div>
                 </div>
                 `;
             });
 
-            document.getElementById('loansList').innerHTML = html || `<div class="text-center p-5 text-muted">No ${currentTab} entries found</div>`;
+            const listContainer = document.getElementById('loansList');
+            listContainer.innerHTML = html || `<div class="text-center p-5 text-muted">No ${currentTab} entries found</div>`;
+
+            // Re-apply swipe listeners
+            listContainer.querySelectorAll('.swipe-container').forEach(row => enableSwipe(row));
+        }
+
+        function enableSwipe(row) {
+            const content = row.querySelector(".swipe-content");
+            const actions = row.querySelector(".swipe-actions");
+            let startX = 0, moveX = 0;
+
+            content.addEventListener("touchstart", e => {
+                startX = e.touches[0].clientX;
+                actions.style.visibility = "visible";
+            }, { passive: true });
+
+            content.addEventListener("touchmove", e => {
+                moveX = e.touches[0].clientX - startX;
+                // Limit swipe to width of buttons (140px for 2 buttons)
+                if (moveX < 0) content.style.transform = `translateX(${Math.max(moveX, -160)}px)`;
+            });
+
+            content.addEventListener("touchend", () => {
+                if (moveX < -60) content.style.transform = "translateX(-140px)";
+                else {
+                    content.style.transform = "translateX(0)";
+                    // Hide actions after animation to prevent accidental clicks
+                    setTimeout(() => actions.style.visibility = "hidden", 300);
+                }
+                moveX = 0;
+            });
         }
 
         function openModal(id = '', name = '', amount = '', date = '', type = 'Loan', settled = false) {
@@ -571,20 +563,14 @@
             }
         }
 
-        async function deleteLoanFromModal() {
-            const id = document.getElementById('loanId').value;
-            if (id) {
-                await deleteLoan(id);
-                myModal.hide();
-            }
-        }
+        // deleteLoanFromModal Removed as it is now in swipe
 
         async function saveLoan() {
             const id = document.getElementById('loanId').value;
             const name = document.getElementById('personName').value.trim();
             const amount = document.getElementById('loanAmount').value;
             const date = document.getElementById('loanDate').value;
-            const type = document.getElementById('loanType').value; // This will always be 'Loan' now
+            const type = document.getElementById('loanType').value;
 
             if (!name || !amount) return alert("Fill all fields");
 
@@ -597,7 +583,6 @@
             };
 
             if (id) {
-                // Keep the settled status if editing
                 const existing = loansData.find(l => l.id === id);
                 data.settled = existing ? existing.settled : false;
                 await db.collection("loans").doc(id).update(data);
