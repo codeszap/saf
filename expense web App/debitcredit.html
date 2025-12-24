@@ -224,10 +224,18 @@
                         <label class="small text-muted mb-1">Person Name</label>
                         <input type="text" id="editPersonName" class="form-control" placeholder="Enter name">
                     </div>
+                    <div class="mb-3">
+                        <label class="small text-muted mb-1">Total GET Amount (₹)</label>
+                        <input type="number" id="editTotalGet" class="form-control" placeholder="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-muted mb-1">Total GIVE Amount (₹)</label>
+                        <input type="number" id="editTotalGive" class="form-control" placeholder="0">
+                    </div>
                 </div>
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-primary w-100 fw-bold py-2" onclick="savePersonEdit()">UPDATE
-                        NAME</button>
+                    <button type="button" class="btn btn-primary w-100 fw-bold py-2"
+                        onclick="savePersonEdit()">UPDATE</button>
                 </div>
             </div>
         </div>
@@ -254,7 +262,7 @@
                 container.className = 'swipe-container';
                 container.innerHTML = `
                     <div class="swipe-actions">
-                        <button class="btn-edit" onclick="editPerson('${doc.id}', '${data.name}')">Edit</button>
+                        <button class="btn-edit" onclick="editPerson('${doc.id}', '${data.name}', ${data.totalGet || 0}, ${data.totalGive || 0})">Edit</button>
                         <button class="btn-delete" onclick="deletePerson('${doc.id}', '${data.name}')">Del</button>
                     </div>
                     <div class="swipe-content">
@@ -309,19 +317,27 @@
             loadKhata();
         }
 
-        function editPerson(id, currentName) {
+        function editPerson(id, currentName, totalGet, totalGive) {
             document.getElementById('editPersonId').value = id;
             document.getElementById('editPersonName').value = currentName;
+            document.getElementById('editTotalGet').value = totalGet || 0;
+            document.getElementById('editTotalGive').value = totalGive || 0;
             editModal.show();
         }
 
         async function savePersonEdit() {
             const id = document.getElementById('editPersonId').value;
             const newName = document.getElementById('editPersonName').value.trim();
+            const newTotalGet = Number(document.getElementById('editTotalGet').value) || 0;
+            const newTotalGive = Number(document.getElementById('editTotalGive').value) || 0;
 
             if (!newName) return alert("Please enter a name");
 
-            await db.collection("khata").doc(id).update({ name: newName });
+            await db.collection("khata").doc(id).update({
+                name: newName,
+                totalGet: newTotalGet,
+                totalGive: newTotalGive
+            });
             editModal.hide();
             loadKhata();
         }
