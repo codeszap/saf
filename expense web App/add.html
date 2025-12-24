@@ -513,7 +513,7 @@
                     resetForm();
                     loadSuggestions(); // Reload suggestions for autocomplete
                 } else {
-                    window.location.href = "index.html";
+                    window.location.replace("index.html");
                 }
             } catch (err) {
                 alert("Error: " + err);

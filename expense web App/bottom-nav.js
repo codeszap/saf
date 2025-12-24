@@ -4,11 +4,11 @@ function injectBottomNav() {
 
     const navHTML = `
         <div id="bottomNav">
-            <div class="nav-item ${page === 'index.html' ? 'active' : ''}" onclick="window.location.href='index.html'">
+            <div class="nav-item ${page === 'index.html' ? 'active' : ''}" onclick="window.location.replace('index.html')">
                 <i class="bi bi-house-door-fill"></i>
                 <span>Home</span>
             </div>
-            <div class="nav-item ${page === 'purchase.html' ? 'active' : ''}" onclick="window.location.href='purchase.html'">
+            <div class="nav-item ${page === 'purchase.html' ? 'active' : ''}" onclick="window.location.replace('purchase.html')">
                 <i class="bi bi-bag-check-fill"></i>
                 <span>Shop</span>
             </div>
@@ -17,11 +17,11 @@ function injectBottomNav() {
                     <i class="bi bi-plus-lg"></i>
                 </div>
             </div>
-            <div class="nav-item ${page === 'loans.html' ? 'active' : ''}" onclick="window.location.href='loans.html'">
+            <div class="nav-item ${page === 'loans.html' ? 'active' : ''}" onclick="window.location.replace('loans.html')">
                 <i class="bi bi-cash-stack"></i>
                 <span>Loans</span>
             </div>
-            <div class="nav-item ${page === 'todo.html' ? 'active' : ''}" onclick="window.location.href='todo.html'">
+            <div class="nav-item ${page === 'todo.html' ? 'active' : ''}" onclick="window.location.replace('todo.html')">
                 <i class="bi bi-check2-square"></i>
                 <span>Tasks</span>
             </div>
