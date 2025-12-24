@@ -106,6 +106,7 @@
             align-items: center;
             justify-content: space-between;
             z-index: 1;
+            visibility: hidden;
         }
 
         .bg-edit-icon {
@@ -360,11 +361,23 @@
 
         function initSwipe(id, data) {
             const el = document.getElementById(`item-${id}`);
+            const wrapper = el.closest('.swipe-wrapper');
+            const actionBg = wrapper.querySelector('.action-bg');
             const mc = new Hammer(el);
-            mc.on("panmove", (e) => { if (Math.abs(e.deltaX) < 100) el.style.transform = `translateX(${e.deltaX}px)`; });
+
+            mc.on("panstart", () => {
+                actionBg.style.visibility = "visible";
+            });
+
+            mc.on("panmove", (e) => {
+                if (Math.abs(e.deltaX) < 100) el.style.transform = `translateX(${e.deltaX}px)`;
+            });
+
             mc.on("panend", (e) => {
                 el.style.transition = "transform 0.3s ease";
                 el.style.transform = "translateX(0px)";
+                setTimeout(() => actionBg.style.visibility = "hidden", 300);
+
                 if (e.deltaX > 50) openModal(data.type, id, data.amount, data.description, data.date);
                 else if (e.deltaX < -50) deleteTx(id);
             });
