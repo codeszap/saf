@@ -95,6 +95,64 @@
             color: #e74c3c;
         }
 
+        /* Swipe Actions CSS */
+        .swipe-container {
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-card);
+            touch-action: pan-y;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+
+        .swipe-actions {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100%;
+            display: flex;
+            visibility: hidden;
+            border-radius: 0 8px 8px 0;
+            overflow: hidden;
+        }
+
+        .swipe-actions button {
+            width: 70px;
+            border: none;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .btn-edit {
+            background: var(--primary-color);
+        }
+
+        .btn-delete {
+            background: #dc3545;
+        }
+
+        .swipe-content {
+            width: 100%;
+            background: var(--bg-card);
+            transition: transform .25s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .person-card-inner {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            border: 1px solid var(--border-color);
+        }
+
         #addBtn {
             position: fixed;
             bottom: 90px;
@@ -112,6 +170,31 @@
             z-index: 1000;
             cursor: pointer;
         }
+
+        /* Modal Styles */
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 15px;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .form-control {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .form-control:focus {
+            background: var(--bg-input);
+            color: var(--text-main);
+            border-color: var(--primary-color);
+            box-shadow: none;
+        }
     </style>
 </head>
 
@@ -124,8 +207,33 @@
 
     <div class="khata-container" id="peopleList"></div>
 
-    <div id="addBtn" onclick="addPerson()"><i class="bi bi-person-plus"></i></div>
+    <div id="addBtn" onclick="openAddModal()"><i class="bi bi-person-plus"></i></div>
 
+    <!-- Edit Person Modal -->
+    <div class="modal fade" id="editPersonModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Edit Person</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        style="filter: var(--close-btn-filter);"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editPersonId">
+                    <div class="mb-3">
+                        <label class="small text-muted mb-1">Person Name</label>
+                        <input type="text" id="editPersonName" class="form-control" placeholder="Enter name">
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-primary w-100 fw-bold py-2" onclick="savePersonEdit()">UPDATE
+                        NAME</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
@@ -133,30 +241,101 @@
     <script src="bottom-nav.js"></script>
     <script src="js/firebase-init.js"></script>
     <script>
-
-        // toggleDrawer function ippo drawer.js-la irukku, so inga thevai illai
+        const editModal = new bootstrap.Modal(document.getElementById('editPersonModal'));
 
         async function loadKhata() {
             const list = document.getElementById('peopleList');
             const snap = await db.collection("khata").get();
             list.innerHTML = "";
+
             snap.forEach(doc => {
                 const data = doc.data();
-                list.innerHTML += `
-            <a href="person-details.html?id=${doc.id}&name=${data.name}" class="person-card">
-                <div class="person-name">${data.name}</div>
-                <div class="amount-group">
-                    <div class="amt-box"><span class="label">GET</span><span class="val get-text">₹${data.totalGet || 0}</span></div>
-                    <div class="amt-box"><span class="label">GIVE</span><span class="val give-text">₹${data.totalGive || 0}</span></div>
-                </div>
-            </a>`;
+                const container = document.createElement('div');
+                container.className = 'swipe-container';
+                container.innerHTML = `
+                    <div class="swipe-actions">
+                        <button class="btn-edit" onclick="editPerson('${doc.id}', '${data.name}')">Edit</button>
+                        <button class="btn-delete" onclick="deletePerson('${doc.id}', '${data.name}')">Del</button>
+                    </div>
+                    <div class="swipe-content">
+                        <a href="person-details.html?id=${doc.id}&name=${data.name}" class="person-card-inner">
+                            <div class="person-name">${data.name}</div>
+                            <div class="amount-group">
+                                <div class="amt-box"><span class="label">GET</span><span class="val get-text">₹${data.totalGet || 0}</span></div>
+                                <div class="amt-box"><span class="label">GIVE</span><span class="val give-text">₹${data.totalGive || 0}</span></div>
+                            </div>
+                        </a>
+                    </div>
+                `;
+                list.appendChild(container);
+                enableSwipe(container);
             });
         }
 
-        async function addPerson() {
+        function enableSwipe(row) {
+            const content = row.querySelector(".swipe-content");
+            const actions = row.querySelector(".swipe-actions");
+            let startX = 0, moveX = 0;
+
+            content.addEventListener("touchstart", e => {
+                startX = e.touches[0].clientX;
+                actions.style.visibility = "visible";
+            }, { passive: true });
+
+            content.addEventListener("touchmove", e => {
+                moveX = e.touches[0].clientX - startX;
+                if (moveX < 0) content.style.transform = `translateX(${Math.max(moveX, -140)}px)`;
+            });
+
+            content.addEventListener("touchend", () => {
+                if (moveX < -60) content.style.transform = "translateX(-140px)";
+                else {
+                    content.style.transform = "translateX(0)";
+                    setTimeout(() => actions.style.visibility = "hidden", 300);
+                }
+                moveX = 0;
+            });
+        }
+
+        function openAddModal() {
             const name = prompt("Enter Person Name:");
             if (name) {
-                await db.collection("khata").add({ name: name, totalGet: 0, totalGive: 0 });
+                addPerson(name);
+            }
+        }
+
+        async function addPerson(name) {
+            await db.collection("khata").add({ name: name, totalGet: 0, totalGive: 0 });
+            loadKhata();
+        }
+
+        function editPerson(id, currentName) {
+            document.getElementById('editPersonId').value = id;
+            document.getElementById('editPersonName').value = currentName;
+            editModal.show();
+        }
+
+        async function savePersonEdit() {
+            const id = document.getElementById('editPersonId').value;
+            const newName = document.getElementById('editPersonName').value.trim();
+
+            if (!newName) return alert("Please enter a name");
+
+            await db.collection("khata").doc(id).update({ name: newName });
+            editModal.hide();
+            loadKhata();
+        }
+
+        async function deletePerson(id, name) {
+            if (confirm(`Delete "${name}" and all transactions?`)) {
+                // Delete all transactions in subcollection
+                const txSnap = await db.collection("khata").doc(id).collection("transactions").get();
+                const batch = db.batch();
+                txSnap.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+
+                // Delete person document
+                await db.collection("khata").doc(id).delete();
                 loadKhata();
             }
         }
