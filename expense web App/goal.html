@@ -9,7 +9,17 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link href="css/theme.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.4);
+        }
+
+        [data-theme="dark"] :root {
+            --glass-bg: rgba(0, 0, 0, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
 
         body {
             background-color: var(--bg-main);
@@ -18,18 +28,55 @@
             margin: 0;
             padding-bottom: 120px;
             transition: 0.3s;
+            overflow-x: hidden;
         }
 
         #topBar {
-            padding: 15px 20px;
+            padding: 12px 20px;
             background: var(--bg-card);
+            backdrop-filter: blur(10px);
             position: sticky;
             top: 0;
             z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-content {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 12px;
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 15px 10px 38px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 14px;
+            color: var(--text-main);
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
         .menu-icon {
@@ -40,56 +87,86 @@
 
         .goal-card {
             background: var(--bg-card);
-            border-radius: 18px;
-            margin-bottom: 12px;
+            border-radius: 20px;
+            margin-bottom: 16px;
             border: 1px solid var(--border-color);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             overflow: hidden;
+            box-shadow: 0 4px 6px -1px var(--shadow-color);
         }
 
         .goal-main-row {
-            padding: 14px 16px;
+            padding: 16px;
             cursor: pointer;
         }
 
         .goal-title {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 700;
-            color: var(--text-main);
+            margin-bottom: 4px;
+            display: block;
         }
 
         .goal-meta {
-            font-size: 11px;
-            opacity: 0.6;
-            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .streak-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+            font-weight: 700;
+            border: 1px solid rgba(245, 158, 11, 0.2);
         }
 
         .progress-container {
-            flex-grow: 1;
-            margin: 0 15px;
+            margin: 12px 0 0 0;
         }
 
         .progress {
-            height: 6px;
+            height: 8px;
             border-radius: 10px;
             background-color: var(--bg-input);
+            overflow: visible;
+        }
+
+        .progress-bar {
+            border-radius: 10px;
+            position: relative;
+            transition: width 1s ease-in-out;
+        }
+
+        .progress-label {
+            font-size: 10px;
+            font-weight: 800;
+            margin-top: 6px;
+            display: flex;
+            justify-content: space-between;
         }
 
         .quick-log {
             display: flex;
-            gap: 8px;
+            gap: 10px;
+            margin-left: 15px;
         }
 
         .log-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
             border: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
-            transition: 0.2s;
+            font-size: 18px;
+            transition: 0.3s;
         }
 
         .log-btn.done {
@@ -103,44 +180,46 @@
         }
 
         .log-btn:active {
-            transform: scale(0.9);
+            transform: scale(0.9) translateY(2px);
         }
 
         .goal-expanded {
             max-height: 0;
             padding: 0 16px;
             background: var(--bg-input);
-            transition: max-height 0.3s ease-out, padding 0.3s ease;
-            font-size: 13px;
+            transition: all 0.4s ease;
+            opacity: 0;
         }
 
         .goal-card.open .goal-expanded {
-            max-height: 600px;
-            padding: 16px;
+            max-height: 1000px;
+            padding: 20px 16px;
             border-top: 1px solid var(--border-color);
+            opacity: 1;
         }
 
         .goal-card.open {
-            box-shadow: 0 10px 25px var(--shadow-color);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: translateY(-4px);
             border-color: var(--primary-color);
         }
 
         .section-label {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 800;
             text-transform: uppercase;
             color: var(--text-muted);
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .strategy-box {
             background: var(--bg-card);
-            padding: 12px;
-            border-radius: 12px;
+            padding: 15px;
+            border-radius: 16px;
             border: 1px solid var(--border-color);
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         .history-mini {
@@ -152,9 +231,10 @@
         .history-mini li {
             display: flex;
             justify-content: space-between;
-            padding: 4px 0;
+            align-items: center;
+            padding: 8px 0;
             border-bottom: 1px solid var(--border-color);
-            font-size: 12px;
+            font-size: 13px;
         }
 
         .history-mini li:last-child {
@@ -163,43 +243,60 @@
 
         .add-fab {
             position: fixed;
-            bottom: 85px;
+            bottom: 90px;
             right: 20px;
-            width: 54px;
-            height: 54px;
-            background: var(--primary-color);
-            border-radius: 50%;
+            width: 58px;
+            height: 58px;
+            background: linear-gradient(135deg, var(--primary-color), #2563eb);
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 24px;
             border: none;
             color: white;
-            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
             z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .add-fab:active {
+            transform: scale(0.9) rotate(90deg);
         }
 
         .modal-content {
             background: var(--bg-card);
+            border: none;
+            border-radius: 24px;
+            color: var(--text-main);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal-header {
+            border-bottom: none;
+            padding: 24px 24px 10px;
+        }
+
+        .modal-body {
+            padding: 10px 24px 24px;
+        }
+
+        .form-floating>.form-control {
+            background: var(--bg-input);
             border: 1px solid var(--border-color);
-            border-radius: 20px;
+            border-radius: 14px;
             color: var(--text-main);
         }
 
-        .form-control {
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            border-radius: 10px;
-            padding: 10px;
-            font-size: 14px;
+        .form-floating>label {
+            color: var(--text-muted);
         }
 
         .form-control-color {
-            width: 35px;
-            height: 35px;
+            width: 44px;
+            height: 44px;
             padding: 0;
-            border-radius: 50%;
+            border-radius: 12px;
             overflow: hidden;
             border: 2px solid var(--border-color);
             cursor: pointer;
@@ -207,7 +304,7 @@
 
         .form-control-color::-webkit-color-swatch {
             border: none;
-            border-radius: 50%;
+            border-radius: 10px;
         }
     </style>
 </head>
@@ -215,39 +312,114 @@
 <body>
 
     <div id="topBar">
-        <i class="bi bi-grid-fill menu-icon" onclick="toggleDrawer(true)"></i>
-        <h6 class="mb-0 fw-bold">Goals Blueprint</h6>
-        <div style="width: 24px;"></div>
+        <div class="header-content">
+            <i class="bi bi-grid-fill menu-icon" onclick="toggleDrawer(true)"></i>
+            <h6 class="mb-0 fw-800" style="letter-spacing: -0.5px;">Goals Blueprint</h6>
+            <a href="atomic.html" class="menu-icon" style="color: var(--text-main); font-size: 20px;"><i
+                    class="bi bi-lightning-charge-fill"></i></a>
+        </div>
+        <div class="search-container">
+            <i class="bi bi-search"></i>
+            <input type="text" id="goalSearch" class="search-input" placeholder="Search your blueprints..."
+                oninput="handleSearch()">
+        </div>
     </div>
 
     <div class="container py-3" id="goalListContainer">
         <!-- Cards injected here -->
     </div>
 
-    <button class="add-fab" data-bs-toggle="modal" data-bs-target="#newGoalModal">
+    <button class="add-fab" onclick="openNewGoalModal()">
         <i class="bi bi-plus-lg"></i>
     </button>
 
     <!-- Modal: New Goal -->
     <div class="modal fade" id="newGoalModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content p-3">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6 class="fw-bold text-primary m-0">Setup New Blueprint</h6>
-                    <input type="color" id="inColor" class="form-control-color" value="#4f46e5">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="fw-800 mb-0">New Blueprint</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+                <div class="modal-body">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="flex-grow-1 form-floating">
+                            <input type="text" id="inName" class="form-control" placeholder="Goal Name">
+                            <label for="inName">Goal Name (e.g., Morning Yoga)</label>
+                        </div>
+                        <div>
+                            <span class="section-label mb-1">Color</span>
+                            <input type="color" id="inColor" class="form-control-color" value="#4f46e5">
+                        </div>
+                    </div>
 
-                <input type="text" id="inName" class="form-control mb-2" placeholder="Goal Name (e.g., Morning Yoga)">
-                <textarea id="inWhy" class="form-control mb-2" rows="2" placeholder="Why? (Root Purpose)"></textarea>
-                <textarea id="inPlan" class="form-control mb-2" rows="2"
-                    placeholder="Main Execution Plan..."></textarea>
-                <textarea id="inSchedule" class="form-control mb-2" rows="2"
-                    placeholder="Schedules (Comma separated)"></textarea>
-                <textarea id="inObstacles" class="form-control" rows="2"
-                    placeholder="Obstacles (Comma separated)"></textarea>
+                    <div class="form-floating mb-3">
+                        <textarea id="inWhy" class="form-control" style="height: 100px" placeholder="Why?"></textarea>
+                        <label for="inWhy">Root Purpose (The "Why")</label>
+                    </div>
 
-                <button onclick="createNewGoal()" class="btn btn-primary mt-4 w-100 py-3 fw-bold rounded-4 shadow"
-                    data-bs-dismiss="modal">LAUNCH GOAL</button>
+                    <div class="form-floating mb-3">
+                        <textarea id="inPlan" class="form-control" style="height: 100px" placeholder="Plan"></textarea>
+                        <label for="inPlan">Execution Strategy</label>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="form-floating">
+                                <input type="text" id="inSchedule" class="form-control" placeholder="Schedule">
+                                <label for="inSchedule">Schedule</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-floating">
+                                <input type="text" id="inObstacles" class="form-control border-danger-subtle"
+                                    placeholder="Obstacles">
+                                <label for="inObstacles" class="text-danger">Obstacles</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="saveGoal()" id="saveBtn"
+                        class="btn btn-primary mt-4 w-100 py-3 fw-800 rounded-4 shadow-sm border-0">
+                        LAUNCH BLUEPRINT
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="historyModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="fw-800 mb-0">Goal History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <ul class="history-mini list-group list-group-flush" id="fullHistoryList"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Missed Reason -->
+    <div class="modal fade" id="missedReasonModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="fw-800 mb-0 text-danger">Why was it missed?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-floating mb-3">
+                        <textarea id="missedReason" class="form-control" style="height: 100px"
+                            placeholder="Reason"></textarea>
+                        <label for="missedReason">Short reason (e.g., Too tired, Busy at work)</label>
+                    </div>
+                    <button id="saveMissedBtn" class="btn btn-danger w-100 py-3 fw-800 rounded-4 shadow-sm border-0">
+                        SAVE LOG
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -257,30 +429,77 @@
     <script src="bottom-nav.js"></script>
     <script>
         let goals = JSON.parse(localStorage.getItem('v3_goals') || '[]');
+        let currentEditIdx = -1;
+        let searchQuery = '';
 
         function saveData() { localStorage.setItem('v3_goals', JSON.stringify(goals)); }
 
-        function createNewGoal() {
-            const goal = {
-                id: Date.now(),
-                name: document.getElementById('inName').value || 'Untitled',
-                color: document.getElementById('inColor').value,
-                why: document.getElementById('inWhy').value,
-                plan: document.getElementById('inPlan').value,
-                schedule: document.getElementById('inSchedule').value,
-                obstacles: document.getElementById('inObstacles').value,
-                history: []
-            };
-            goals.push(goal);
-            saveData();
-            renderList();
-            // Reset
+        function openNewGoalModal() {
+            currentEditIdx = -1;
+            document.getElementById('newGoalModal').querySelector('.modal-title')?.textContent || (document.querySelector('#newGoalModal h5').textContent = 'New Blueprint');
+            document.getElementById('saveBtn').textContent = 'LAUNCH BLUEPRINT';
+            resetModalFields();
+            new bootstrap.Modal(document.getElementById('newGoalModal')).show();
+        }
+
+        function openEditModal(idx) {
+            currentEditIdx = idx;
+            const g = goals[idx];
+            document.querySelector('#newGoalModal h5').textContent = 'Edit Blueprint';
+            document.getElementById('saveBtn').textContent = 'UPDATE BLUEPRINT';
+
+            document.getElementById('inName').value = g.name;
+            document.getElementById('inColor').value = g.color;
+            document.getElementById('inWhy').value = g.why;
+            document.getElementById('inPlan').value = g.plan;
+            document.getElementById('inSchedule').value = g.schedule;
+            document.getElementById('inObstacles').value = g.obstacles;
+
+            new bootstrap.Modal(document.getElementById('newGoalModal')).show();
+        }
+
+        function resetModalFields() {
             ['inName', 'inWhy', 'inPlan', 'inSchedule', 'inObstacles'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('inColor').value = '#4f46e5';
+        }
+
+        function saveGoal() {
+            const name = document.getElementById('inName').value || 'Untitled';
+            const color = document.getElementById('inColor').value;
+            const why = document.getElementById('inWhy').value;
+            const plan = document.getElementById('inPlan').value;
+            const schedule = document.getElementById('inSchedule').value;
+            const obstacles = document.getElementById('inObstacles').value;
+
+            if (currentEditIdx === -1) {
+                // New Goal
+                goals.push({
+                    id: Date.now(),
+                    name, color, why, plan, schedule, obstacles,
+                    history: []
+                });
+            } else {
+                // Update Existing
+                goals[currentEditIdx] = {
+                    ...goals[currentEditIdx],
+                    name, color, why, plan, schedule, obstacles
+                };
+            }
+
+            saveData();
+            bootstrap.Modal.getInstance(document.getElementById('newGoalModal')).hide();
+            renderList();
+        }
+
+        function handleSearch() {
+            searchQuery = document.getElementById('goalSearch').value.toLowerCase();
+            renderList();
         }
 
         function toggleExpand(idx) {
             const cards = document.querySelectorAll('.goal-card');
-            cards[idx].classList.toggle('open');
+            const card = document.getElementById(`goal-${idx}`);
+            if (card) card.classList.toggle('open');
         }
 
         function calculateProgress(history) {
@@ -289,16 +508,93 @@
             return Math.round((successCount / history.length) * 100);
         }
 
+        function calculateStreak(history) {
+            if (!history || history.length === 0) return { current: 0, best: 0 };
+            const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const today = new Date().toISOString().split('T')[0];
+
+            let current = 0;
+            let best = 0;
+            let running = 0;
+
+            // Best streak
+            [...sorted].reverse().forEach(h => {
+                if (h.status === 'Done') {
+                    running++;
+                    if (running > best) best = running;
+                } else {
+                    running = 0;
+                }
+            });
+
+            // Current streak
+            const lastDate = sorted[0].date;
+            const now = new Date(today);
+            const last = new Date(lastDate);
+            const diffDays = Math.floor((now - last) / (1000 * 60 * 60 * 24));
+
+            if (diffDays <= 1) {
+                for (let h of sorted) {
+                    if (h.status === 'Done') current++;
+                    else break;
+                }
+            }
+            return { current, best };
+        }
+
+        function renderHeatmap(history) {
+            const today = new Date();
+            let html = '<div class="d-flex flex-wrap gap-1 mt-2">';
+            for (let i = 29; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(today.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                const entry = history.find(h => h.date === dateStr);
+                let color = 'var(--bg-input)';
+                if (entry) color = entry.status === 'Done' ? '#10b981' : '#ef4444';
+                html += `<div style="width: 10px; height: 10px; border-radius: 2px; background: ${color};" title="${dateStr}"></div>`;
+            }
+            return html + '</div>';
+        }
+
         function quickLog(idx, status, event) {
             event.stopPropagation();
             const date = new Date().toISOString().split('T')[0];
-            goals[idx].history.unshift({ date, status });
-            saveData();
-            renderList();
 
-            // Re-open if it was open
-            const cards = document.querySelectorAll('.goal-card');
-            if (cards[idx]) cards[idx].classList.add('open');
+            if (status === 'Missed') {
+                const modal = new bootstrap.Modal(document.getElementById('missedReasonModal'));
+                document.getElementById('missedReason').value = '';
+                document.getElementById('saveMissedBtn').onclick = () => {
+                    const reason = document.getElementById('missedReason').value || 'No reason provided';
+                    const existingIdx = goals[idx].history.findIndex(h => h.date === date);
+                    if (existingIdx !== -1) {
+                        goals[idx].history[existingIdx].status = status;
+                        goals[idx].history[existingIdx].reason = reason;
+                    } else {
+                        goals[idx].history.unshift({ date, status, reason });
+                    }
+                    saveData();
+                    modal.hide();
+                    renderList();
+                    openAndKeepCard(idx);
+                };
+                modal.show();
+            } else {
+                const existingIdx = goals[idx].history.findIndex(h => h.date === date);
+                if (existingIdx !== -1) goals[idx].history[existingIdx].status = status;
+                else goals[idx].history.unshift({ date, status });
+
+                saveData();
+                renderList();
+                openAndKeepCard(idx);
+            }
+        }
+
+        function openAndKeepCard(idx) {
+            setTimeout(() => {
+                const card = document.getElementById(`goal-${idx}`);
+                if (card) card.classList.add('open');
+            }, 50);
         }
 
         function deleteGoal(idx, event) {
@@ -311,61 +607,135 @@
 
         function renderList() {
             let html = '';
-            goals.forEach((g, idx) => {
+            const filtered = goals.map((g, originalIdx) => ({ ...g, originalIdx }))
+                .filter(g => g.name.toLowerCase().includes(searchQuery));
+
+            filtered.forEach((g) => {
+                const idx = g.originalIdx;
                 const prog = calculateProgress(g.history);
                 const last3 = g.history.slice(0, 3);
+                const streaks = calculateStreak(g.history);
 
                 html += `
                 <div class="goal-card" id="goal-${idx}">
-                    <div class="goal-main-row d-flex align-items-center" onclick="toggleExpand(${idx})">
-                        <div class="flex-grow-1">
-                            <span class="goal-title" style="color: ${g.color}">${g.name}</span>
-                            <div class="goal-meta">${g.history.length > 0 ? g.history.length + ' logs recorded' : 'New Blueprint'}</div>
+                    <div class="goal-main-row" onclick="toggleExpand(${idx})">
+                        <div class="d-flex align-items-start justify-content-between mb-2">
+                            <div class="flex-grow-1">
+                                <span class="goal-title" style="color: ${g.color}">${g.name}</span>
+                                <div class="goal-meta">
+                                    <i class="bi bi-clock-history"></i> ${g.history.length} logs
+                                    ${streaks.current > 0 ? `<span class="streak-badge"><i class="bi bi-fire"></i> ${streaks.current} day streak</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="quick-log">
+                                <button class="log-btn done" onclick="quickLog(${idx}, 'Done', event)"><i class="bi bi-check-lg"></i></button>
+                                <button class="log-btn miss" onclick="quickLog(${idx}, 'Missed', event)"><i class="bi bi-x-lg"></i></button>
+                            </div>
                         </div>
+                        
                         <div class="progress-container">
                             <div class="progress"><div class="progress-bar" style="width: ${prog}%; background-color: ${g.color}"></div></div>
-                            <div class="text-end" style="font-size: 9px; font-weight: 800; margin-top: 2px; color: ${g.color}">${prog}% Success</div>
-                        </div>
-                        <div class="quick-log">
-                            <button class="log-btn done" onclick="quickLog(${idx}, 'Done', event)"><i class="bi bi-check-lg"></i></button>
-                            <button class="log-btn miss" onclick="quickLog(${idx}, 'Missed', event)"><i class="bi bi-x-lg"></i></button>
+                            <div class="progress-label">
+                                <span style="color: var(--text-muted)">Completion</span>
+                                <span style="color: ${g.color}">${prog}% Success</span>
+                            </div>
                         </div>
                     </div>
                     
                     <div class="goal-expanded">
-                        <div class="mb-3">
-                            <span class="section-label">Root Purpose (Why)</span>
-                            <div style="font-style: italic; opacity: 0.8;">"${g.why || 'Not specified'}"</div>
-                        </div>
-
-                        <div class="strategy-box">
-                            <span class="section-label"><i class="bi bi-bullseye"></i> Execution Strategy</span>
-                            <div class="mb-2" style="font-size: 0.85rem;">${g.plan || '-'}</div>
-                            
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <span class="section-label">Schedule</span>
-                                    <div class="small opacity-75">${g.schedule || '-'}</div>
+                        <div class="row mb-4 g-3 text-center">
+                            <div class="col-4">
+                                <div class="p-3 rounded-4" style="background: rgba(16, 185, 129, 0.08); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.1)">
+                                    <div class="section-label mb-1" style="color: #10b981">Current</div>
+                                    <div class="h4 mb-0 fw-800">${streaks.current}</div>
                                 </div>
-                                <div class="col-6">
-                                    <span class="section-label text-danger">Obstacles</span>
-                                    <div class="small opacity-75 text-danger">${g.obstacles || '-'}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-3 rounded-4" style="background: rgba(99, 102, 241, 0.08); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.1)">
+                                    <div class="section-label mb-1" style="color: #6366f1">Best</div>
+                                    <div class="h4 mb-0 fw-800">${streaks.best}</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-3 rounded-4" style="background: rgba(245, 158, 11, 0.08); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.1)">
+                                    <div class="section-label mb-1" style="color: #f59e0b">Total</div>
+                                    <div class="h4 mb-0 fw-800">${g.history.length}</div>
                                 </div>
                             </div>
                         </div>
 
-                        <span class="section-label">Recent History</span>
-                        <ul class="history-mini mb-3">
-                            ${last3.length > 0 ? last3.map(h => `<li><span>${h.date}</span> <b class="${h.status === 'Done' ? 'text-success' : 'text-danger'}">${h.status}</b></li>`).join('') : '<li class="text-muted">No entries yet</li>'}
+                        <div class="mb-4">
+                            <span class="section-label">Consistency Heatmap</span>
+                            ${renderHeatmap(g.history)}
+                        </div>
+
+                        <div class="mb-4">
+                            <span class="section-label">Root Purpose (The "Why")</span>
+                            <div style="font-weight: 500; opacity: 0.9; line-height: 1.5;">${g.why || 'No purpose defined yet.'}</div>
+                        </div>
+
+                        <div class="strategy-box shadow-sm">
+                            <span class="section-label"><i class="bi bi-journal-text me-1"></i> Strategy & Routine</span>
+                            <div class="mb-3" style="font-size: 14px; line-height: 1.6;">${g.plan || 'No plan specified.'}</div>
+                            
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <span class="section-label">Schedule</span>
+                                    <div class="small fw-600 opacity-75">${g.schedule || 'Flexi'}</div>
+                                </div>
+                                <div class="col-6">
+                                    <span class="section-label text-danger">Obstacles</span>
+                                    <div class="small fw-600 text-danger opacity-75">${g.obstacles || 'None'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                             <span class="section-label m-0">Recent Activity</span>
+                             <button class="btn btn-link p-0 text-primary fw-700" style="font-size: 11px; text-decoration: none;" onclick="showFullHistory(${idx})">View History</button>
+                        </div>
+                        <ul class="history-mini mb-4">
+                            ${last3.length > 0 ? last3.map(h => `<li>
+                                <div class="w-100">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-500">${h.date}</span> 
+                                        <span class="badge rounded-pill ${h.status === 'Done' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}" style="font-size: 10px">${h.status}</span>
+                                    </div>
+                                    ${h.reason ? `<div class="text-danger small mt-1 opacity-75" style="font-size: 11px; font-style: italic;">"${h.reason}"</div>` : ''}
+                                </div>
+                            </li>`).join('') : '<li class="text-muted small">No entries recorded yet</li>'}
                         </ul>
 
-                        <button class="btn btn-sm btn-outline-danger w-100 rounded-3 border-0 opacity-50" onclick="deleteGoal(${idx}, event)">
-                            <i class="bi bi-trash3"></i> Delete Habit
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light flex-grow-1 rounded-3 py-2 fw-700 border" onclick="openEditModal(${idx})">
+                                <i class="bi bi-pencil-square me-1"></i> Edit
+                            </button>
+                            <button class="btn btn-outline-danger flex-grow-1 rounded-3 py-2 fw-700" onclick="deleteGoal(${idx}, event)">
+                                <i class="bi bi-trash3 me-1"></i> Delete
+                            </button>
+                        </div>
                     </div>
                 </div>`;
             });
-            document.getElementById('goalListContainer').innerHTML = html || '<div class="text-center mt-5 opacity-50"><i class="bi bi-trophy fs-1 d-block mb-3"></i>Create your first blueprint!</div>';
+            document.getElementById('goalListContainer').innerHTML = html || `<div class="text-center mt-5 py-5">
+                <div class="opacity-20 mb-3"><i class="bi bi-bullseye" style="font-size: 80px;"></i></div>
+                <h5 class="fw-700 opacity-50">No blueprints found</h5>
+                <p class="text-muted small">Start by creating your first goal blueprint.</p>
+            </div>`;
+        }
+
+        function showFullHistory(idx) {
+            const history = goals[idx].history;
+            let html = history.map(h => `<li class="list-group-item py-3 px-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-600">${h.date}</span>
+                    <span class="badge rounded-pill ${h.status === 'Done' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}" style="font-size: 11px; padding: 6px 12px;">${h.status}</span>
+                </div>
+                ${h.reason ? `<div class="text-danger small opacity-75" style="font-style: italic;">"${h.reason}"</div>` : ''}
+            </li>`).join('');
+
+            document.getElementById('fullHistoryList').innerHTML = html || '<div class="p-5 text-center opacity-50">No history recorded yet.</div>';
+            new bootstrap.Modal(document.getElementById('historyModal')).show();
         }
 
         window.onload = renderList;

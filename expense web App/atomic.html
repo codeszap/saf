@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ta">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Atomic Habits - ProCheck</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/theme.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.4);
+        }
+
+        [data-theme="dark"] :root {
+            --glass-bg: rgba(0, 0, 0, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding-bottom: 120px;
+            transition: 0.3s;
+            overflow-x: hidden;
+        }
+
+        #topBar {
+            padding: 12px 20px;
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .back-btn {
+            font-size: 20px;
+            color: var(--text-main);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            transition: 0.2s;
+        }
+
+        .back-btn:active {
+            background: var(--bg-input);
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            padding-left: 5px;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .law-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px -5px var(--shadow-color);
+        }
+
+        .law-number {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 80px;
+            font-weight: 900;
+            opacity: 0.03;
+            color: var(--text-main);
+            user-select: none;
+        }
+
+        .law-header {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, var(--start-color), var(--end-color));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .law-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .formula-box {
+            background: var(--bg-input);
+            padding: 15px;
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 13px;
+            color: var(--text-main);
+            border: 1px dashed var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .identity-input {
+            border: none;
+            background: transparent;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary-color);
+            width: 100%;
+            outline: none;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 5px;
+            transition: 0.3s;
+        }
+
+        .identity-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .form-floating>.form-control {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+        }
+
+        .form-floating>label {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .save-banner {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 1000;
+            transform: translateY(150%);
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .save-banner.show {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="topBar">
+        <i class="bi bi-grid-fill fs-5 text-primary" onclick="toggleDrawer(true)" style="cursor: pointer;"></i>
+        <h6 class="mb-0 fw-800" style="letter-spacing: -0.5px;">Atomic Habits Builder</h6>
+        <div style="width: 24px;"></div> <!-- Spacer for balance -->
+    </div>
+
+    <div class="container py-4">
+
+        <!-- CORE IDENTITY -->
+        <div class="law-card" style="--start-color: #ec4899; --end-color: #8b5cf6;">
+            <div class="law-number">ID</div>
+            <div class="law-header">Identity Change (Yaaru neenga?)</div>
+            <div class="law-sub">Habit-a maatha vendam, unga Identity-a maathunga.</div>
+
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="fs-4 fw-bold opacity-50">Naan oru</span>
+                <input type="text" class="identity-input" id="inIdentity" placeholder="Runner...">
+            </div>
+            <p class="small text-muted mb-0">Chinna chinna wins moolama prove pannunga.</p>
+        </div>
+
+        <h6 class="section-title">The 4 Laws Framework</h6>
+
+        <!-- LAW 1: CUE -->
+        <div class="law-card" style="--start-color: #3b82f6; --end-color: #06b6d4;">
+            <div class="law-number">1</div>
+            <div class="law-header">Make it Obvious (Cue)</div>
+            <div class="law-sub">Habit Stacking: Ippo panra habit-kku apram pudhu habit-a pannunga.</div>
+
+            <div class="formula-box">
+                <span class="highlight">[Current Habit]</span>-kku apram, naan <span class="highlight">[New
+                    Habit]</span> pannuven.
+            </div>
+
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="inCueExisting" placeholder="Current Habit">
+                <label>Current Habit (e.g., Coffee kudichadhum)</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" class="form-control" id="inCueNew" placeholder="New Habit">
+                <label>New Habit (e.g., 1 min Meditate pannuven)</label>
+            </div>
+        </div>
+
+        <!-- LAW 2: CRAVING -->
+        <div class="law-card" style="--start-color: #f59e0b; --end-color: #ef4444;">
+            <div class="law-number">2</div>
+            <div class="law-header">Make it Attractive (Craving)</div>
+            <div class="law-sub">Temptation Bundling: Ungalkku 'thevaiyana' vishayatha, 'pidicha' vishayathoda serthu
+                pannunga.</div>
+
+            <div class="formula-box">
+                <span class="highlight">[Need]</span> habit pannadhum, <span class="highlight">[Want]</span> habit-a
+                pannuven.
+            </div>
+
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="inCravingNeed" placeholder="Need">
+                <label>Enakku Thevaiyana Habit (Need)</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" class="form-control" id="inCravingWant" placeholder="Want">
+                <label>Enakku Pidicha Habit (Want)</label>
+            </div>
+        </div>
+
+        <!-- LAW 3: RESPONSE -->
+        <div class="law-card" style="--start-color: #10b981; --end-color: #059669;">
+            <div class="law-number">3</div>
+            <div class="law-header">Make it Easy (Response)</div>
+            <div class="law-sub">2-Minute Rule: 2 nimishathula mudikira maari simple-a aakkunga.</div>
+
+            <div class="formula-box">
+                Indha habit panna <span class="highlight">2 Minutes</span>-kku mela aaga koodadhu.
+            </div>
+
+            <div class="form-floating">
+                <input type="text" class="form-control" id="inResponseEasy" placeholder="Easy Version">
+                <label>Romba Easy Version (e.g., Shoe-a maatuven)</label>
+            </div>
+        </div>
+
+        <!-- LAW 4: REWARD -->
+        <div class="law-card" style="--start-color: #8b5cf6; --end-color: #6366f1;">
+            <div class="law-number">4</div>
+            <div class="law-header">Make it Satisfying (Reward)</div>
+            <div class="law-sub">Mudichadhum udane oru chinna reward kudunga.</div>
+
+            <div class="formula-box">
+                Mudichadhum, enakku <span class="highlight">[Small Reward]</span> kidaikkum.
+            </div>
+
+            <div class="form-floating">
+                <input type="text" class="form-control" id="inReward" placeholder="Reward">
+                <label>Chinna Reward (e.g., Oru Chocolate)</label>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Floating Save Button -->
+    <div class="save-banner d-flex gap-2">
+        <button onclick="saveAtomicHabit()"
+            class="btn btn-primary flex-grow-1 py-3 fw-bold rounded-4 shadow-lg border-0">
+            <i class="bi bi-save2-fill me-2"></i>ATOMIC HABIT-A SAVE PANNU
+        </button>
+    </div>
+
+    <!-- Certificate Modal -->
+    <div class="modal fade" id="certificateModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0" style="background: transparent; box-shadow: none;">
+                <div class="modal-body p-0 text-center">
+                    <canvas id="certCanvas"
+                        style="max-width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);"></canvas>
+                    <div class="mt-4 d-flex justify-content-center gap-3">
+                        <button onclick="downloadCertificate()"
+                            class="btn btn-primary fw-bold px-4 py-2 rounded-pill shadow-lg">
+                            <i class="bi bi-download me-2"></i>Download
+                        </button>
+                        <button type="button" class="btn btn-light fw-bold px-4 py-2 rounded-pill shadow-lg"
+                            data-bs-dismiss="modal">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="drawer.js"></script>
+    <!-- Optional: bottom-nav.js if needed later, but drawer is critical now -->
+    <script>
+        // Use a simple ID system or existing Logic. For now, focused on single active build.
+        // We can expand this to a list later.
+
+        const inputs = [
+            'inIdentity', 'inCueExisting', 'inCueNew',
+            'inCravingNeed', 'inCravingWant',
+            'inResponseEasy', 'inReward'
+        ];
+
+        function loadData() {
+            const data = JSON.parse(localStorage.getItem('atomic_draft') || '{}');
+            inputs.forEach(id => {
+                if (data[id]) document.getElementById(id).value = data[id];
+            });
+        }
+
+        function detectChanges() {
+            const banner = document.querySelector('.save-banner');
+            inputs.forEach(id => {
+                document.getElementById(id).addEventListener('input', () => {
+                    banner.classList.add('show');
+                });
+            });
+        }
+
+        function saveAtomicHabit() {
+            const data = {};
+            inputs.forEach(id => data[id] = document.getElementById(id).value);
+            localStorage.setItem('atomic_draft', JSON.stringify(data));
+
+            // Generate and Show Certificate
+            generateCertificate(data.inIdentity);
+        }
+
+        function generateCertificate(identityText) {
+            const canvas = document.getElementById('certCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set high resolution
+            canvas.width = 1200;
+            canvas.height = 800;
+
+            // Background
+            const grd = ctx.createLinearGradient(0, 0, 1200, 800);
+            grd.addColorStop(0, "#ffffff");
+            grd.addColorStop(1, "#f3f4f6");
+            ctx.fillStyle = grd;
+            ctx.fillRect(0, 0, 1200, 800);
+
+            // Border
+            ctx.strokeStyle = "#4f46e5"; // Indigo
+            ctx.lineWidth = 20;
+            ctx.strokeRect(40, 40, 1120, 720);
+
+            // Inner Border (Gold)
+            ctx.strokeStyle = "#fbbf24";
+            ctx.lineWidth = 5;
+            ctx.strokeRect(70, 70, 1060, 660);
+
+            // Title
+            ctx.fillStyle = "#1e293b";
+            ctx.font = "bold 60px 'Plus Jakarta Sans', sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("CERTIFICATE OF COMMITMENT", 600, 180);
+
+            // Subtitle
+            ctx.font = "italic 30px 'Plus Jakarta Sans', sans-serif";
+            ctx.fillStyle = "#64748b";
+            ctx.fillText("This certifies that", 600, 250);
+
+            // Name/Identity Logic
+            const identity = identityText || "A DEDICATED ACHIEVER";
+
+            // Identity Display
+            ctx.fillStyle = "#4f46e5";
+            ctx.font = "800 50px 'Plus Jakarta Sans', sans-serif";
+            ctx.fillText(identity.toUpperCase(), 600, 350);
+
+            // Divider Line
+            ctx.beginPath();
+            ctx.moveTo(400, 380);
+            ctx.lineTo(800, 380);
+            ctx.strokeStyle = "#cbd5e1";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Tanglish Quote
+            ctx.fillStyle = "#334155";
+            ctx.font = "italic 500 32px 'Plus Jakarta Sans', sans-serif";
+            ctx.fillText("Has officially decided to change their identity.", 600, 450);
+            ctx.fillStyle = "#059669"; // Green
+            ctx.font = "bold 36px 'Plus Jakarta Sans', sans-serif";
+            ctx.fillText("Wait pannadhu podhum. Action edukra neram idhu!", 600, 520);
+
+            // Date
+            const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            ctx.fillStyle = "#94a3b8";
+            ctx.font = "24px 'Plus Jakarta Sans', sans-serif";
+            ctx.fillText(`Dated: ${date}`, 600, 650);
+
+            // Logo/Watermark (Simple Circle for now)
+            ctx.beginPath();
+            ctx.arc(600, 600, 50, 0, 2 * Math.PI);
+            ctx.strokeStyle = "#e2e8f0";
+            ctx.lineWidth = 5;
+            ctx.stroke();
+            ctx.font = "bold 20px sans-serif";
+            ctx.fillStyle = "#cbd5e1";
+            ctx.fillText("PRO", 600, 595);
+            ctx.fillText("CHECK", 600, 615);
+
+            // Show Modal
+            new bootstrap.Modal(document.getElementById('certificateModal')).show();
+        }
+
+        function downloadCertificate() {
+            const canvas = document.getElementById('certCanvas');
+            const link = document.createElement('a');
+            link.download = 'My_Commitment.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        window.onload = () => {
+            loadData();
+            detectChanges();
+        };
+
+    </script>
+</body>
+
+</html>

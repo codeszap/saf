@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Problem Solver - 5 Whys</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/theme.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+
+        body {
+            background: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+            padding-bottom: 80px;
+            /* Space for bottom nav */
+        }
+
+        #topBar {
+            position: sticky;
+            top: 0;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] #topBar {
+            background: rgba(10, 10, 10, 0.85);
+        }
+
+        .page-title {
+            font-weight: 700;
+            font-size: 18px;
+            margin: 0;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card-premium {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 20px var(--shadow-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card-premium:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+        }
+
+        .input-premium {
+            background: var(--bg-input);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 15px;
+            width: 100%;
+            color: var(--text-main);
+            font-weight: 500;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-premium:focus {
+            background: var(--bg-card);
+            box-shadow: inset 0 0 0 2px var(--primary-color);
+        }
+
+        .why-container {
+            position: relative;
+            padding-left: 20px;
+            margin-top: 20px;
+        }
+
+        .why-line {
+            position: absolute;
+            left: 0;
+            top: 10px;
+            bottom: -20px;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary-color), transparent);
+            opacity: 0.3;
+        }
+
+        .why-step {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideIn 0.5s forwards ease-out;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .why-badge {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .why-badge i {
+            font-size: 12px;
+        }
+
+        .btn-action {
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .btn-primary-soft {
+            background: rgba(13, 110, 253, 0.1);
+            color: var(--primary-color);
+        }
+
+        .btn-primary-soft:active {
+            background: rgba(13, 110, 253, 0.2);
+            transform: scale(0.98);
+        }
+
+        .btn-solution {
+            background: linear-gradient(135deg, #198754, #20c997);
+            color: white;
+            box-shadow: 0 4px 15px rgba(25, 135, 84, 0.3);
+        }
+
+        .history-item {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px;
+            transition: background 0.2s;
+        }
+
+        .history-item:active {
+            background: var(--bg-input);
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            opacity: 0.6;
+        }
+
+        /* Floating Nav Button Override if needed or standard bottom nav handles it */
+    </style>
+</head>
+
+<body>
+
+    <div class="container px-0" style="max-width: 450px;">
+
+        <!-- Header -->
+        <div id="topBar">
+            <i class="bi bi-grid-fill fs-5 text-primary" onclick="toggleDrawer(true)" style="cursor: pointer;"></i>
+            <h1 class="page-title">Problem Solver</h1>
+            <div>
+                <i class="bi bi-question-circle fs-5 text-primary me-3" data-bs-toggle="modal"
+                    data-bs-target="#helpModal" style="cursor: pointer;"></i>
+                <i class="bi bi-clock-history fs-5 text-muted" onclick="toggleHistory()" style="cursor: pointer;"></i>
+            </div>
+        </div>
+
+        <!-- content -->
+        <div class="p-3" id="solverView">
+
+            <div class="card-premium">
+                <input type="hidden" id="editProblemId">
+                <div class="why-badge"><i class="bi bi-exclamation-circle-fill"></i> The Problem</div>
+                <textarea id="rootProblem" class="input-premium" rows="2"
+                    placeholder="What's wrong? (e.g. Car won't start)"></textarea>
+            </div>
+
+            <div id="whysList">
+                <!-- Why steps will be injected here -->
+            </div>
+
+            <div class="d-flex gap-2 mt-3" id="actionButtons">
+                <button class="btn btn-primary-soft flex-grow-1 btn-action" onclick="addWhyStep()" id="askWhyBtn">
+                    <i class="bi bi-arrow-return-right"></i> Ask Why?
+                </button>
+                <button class="btn btn-solution flex-grow-1 btn-action" onclick="showSolutionInput()" id="solveBtn"
+                    style="display:none;">
+                    <i class="bi bi-check-circle-fill"></i> Solve It
+                </button>
+            </div>
+
+            <div id="solutionSection" class="mt-4" style="display:none; animation: slideIn 0.5s ease-out;">
+                <div class="card-premium" style="border-color: #198754;">
+                    <div class="why-badge" style="color: #198754;"><i class="bi bi-lightbulb-fill"></i> Root Cause &
+                        Solution</div>
+                    <textarea id="solutionInput" class="input-premium" rows="3"
+                        placeholder="What is the root cause and how will you fix it?"></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary btn-action" id="cancelEditBtn" onclick="resetForm()"
+                        style="display:none;">Cancel</button>
+                    <button class="btn btn-dark btn-action flex-grow-1" id="saveBtn" onclick="saveProblem()">Save to
+                        History</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- History View -->
+        <div class="p-0" id="historyView" style="display:none;">
+            <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center"
+                style="background: var(--bg-input) !important;">
+                <span class="fw-bold text-muted small">SAVED PROBLEMS</span>
+                <span class="text-primary small fw-bold" onclick="toggleHistory()" style="cursor: pointer;">BACK</span>
+            </div>
+            <div id="historyList">
+                <!-- History Items -->
+            </div>
+        </div>
+
+        <!-- Help Modal -->
+        <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content"
+                    style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color);">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <h5 class="modal-title fw-bold" id="helpModalLabel">How to use 5 Whys?</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                            style="filter: var(--invert-filter);"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="small text-muted mb-3">The <strong>5 Whys</strong> is a technique to find the root
+                            cause of a problem by asking "Why?" five times.</p>
+
+                        <div class="card-premium p-3 mb-0" style="background: var(--bg-input); border: none;">
+                            <h6 class="fw-bold text-primary mb-2"><i class="bi bi-lightbulb-fill me-1"></i> Example: Car
+                                Start Aagala</h6>
+
+                            <div class="d-flex flex-column gap-2 small">
+                                <div>
+                                    <span class="badge bg-danger mb-1">Problem</span><br>
+                                    <strong>Car start aagala.</strong>
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary mb-1">1. Why?</span><br>
+                                    Battery dead aayiduchu.
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary mb-1">2. Why?</span><br>
+                                    Alternator work aagala.
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary mb-1">3. Why?</span><br>
+                                    Alternator belt arufinju pochu.
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary mb-1">4. Why?</span><br>
+                                    Belt romba pazhasu, mathave illa.
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary mb-1">5. Why?</span><br>
+                                    Car-a olunga service pannala.
+                                </div>
+                                <div class="mt-2 text-success">
+                                    <strong><i class="bi bi-check-circle-fill"></i> Root Cause & Solution:</strong><br>
+                                    Correct time-ku service pannanum.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0 pt-0">
+                        <button type="button" class="btn btn-primary w-100 rounded-pill" data-bs-dismiss="modal">Got
+                            it!</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-init.js"></script>
+    <!-- drawer.js and bottom-nav.js are expected to exist -->
+    <script src="drawer.js"></script>
+    <script src="bottom-nav.js"></script>
+
+    <script>
+        let whyCount = 0;
+        const maxWhys = 5;
+        let allProblems = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHistory();
+        });
+
+        function addWhyStep(value = "") {
+            if (whyCount >= maxWhys) return;
+            whyCount++;
+
+            const container = document.getElementById('whysList');
+            const step = document.createElement('div');
+            step.className = 'why-container';
+            step.innerHTML = `
+                <div class="why-line"></div>
+                <div class="why-step">
+                    <div class="why-badge">Why? #${whyCount}</div>
+                    <input type="text" class="input-premium why-input" placeholder="Because..." oninput="checkInputs()" value="${value}">
+                </div>
+            `;
+            container.appendChild(step);
+
+            if (!value) {
+                setTimeout(() => step.querySelector('input').focus(), 100);
+            }
+
+            checkInputs();
+            if (!value) window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+
+        function checkInputs() {
+            const problem = document.getElementById('rootProblem').value.trim();
+            const whys = document.querySelectorAll('.why-input');
+
+            const askBtn = document.getElementById('askWhyBtn');
+            const solveBtn = document.getElementById('solveBtn');
+
+            if (!problem) {
+                askBtn.disabled = true;
+                solveBtn.style.display = 'none';
+                return;
+            }
+            askBtn.disabled = false;
+
+            if (whyCount > 0) {
+                solveBtn.style.display = 'block';
+            }
+
+            if (whyCount >= maxWhys) {
+                askBtn.style.display = 'none';
+                solveBtn.className = "btn btn-solution w-100 btn-action";
+            }
+        }
+
+        function showSolutionInput() {
+            document.getElementById('actionButtons').style.display = 'none';
+            document.getElementById('solutionSection').style.display = 'block';
+            setTimeout(() => document.getElementById('solutionInput').focus(), 100);
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+
+        async function saveProblem() {
+            const problem = document.getElementById('rootProblem').value.trim();
+            const solution = document.getElementById('solutionInput').value.trim();
+            const editId = document.getElementById('editProblemId').value;
+
+            if (!problem || !solution) {
+                alert("Please fill in the problem and solution.");
+                return;
+            }
+
+            const btn = document.getElementById('saveBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+            btn.disabled = true;
+
+            const whys = Array.from(document.querySelectorAll('.why-input')).map(i => i.value.trim()).filter(v => v);
+
+            const entry = {
+                date: new Date().toISOString(),
+                problem,
+                whys,
+                solution
+            };
+
+            try {
+                if (editId) {
+                    await db.collection('problems').doc(editId).update(entry);
+                } else {
+                    await db.collection('problems').add(entry);
+                }
+
+                resetForm();
+                await loadHistory();
+                toggleHistory();
+            } catch (error) {
+                console.error("Error saving problem: ", error);
+                alert("Failed to save to Firebase.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function toggleHistory() {
+            const viewer = document.getElementById('solverView');
+            const history = document.getElementById('historyView');
+
+            if (viewer.style.display !== 'none') {
+                viewer.style.display = 'none';
+                history.style.display = 'block';
+            } else {
+                viewer.style.display = 'block';
+                history.style.display = 'none';
+            }
+        }
+
+        async function loadHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary"></div></div>';
+
+            try {
+                const snap = await db.collection('problems').orderBy('date', 'desc').get();
+                allProblems = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                if (allProblems.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <i class="bi bi-journal-album fs-1 text-muted"></i>
+                            <p class="mt-3 text-muted">No problems solved yet.</p>
+                        </div>`;
+                    return;
+                }
+
+                list.innerHTML = allProblems.map(item => `
+                    <div class="history-item">
+                        <div class="d-flex justify-content-between mb-1" onclick="viewDetail('${item.id}')">
+                            <small class="text-muted fw-bold" style="font-size: 10px;">${new Date(item.date).toLocaleDateString()}</small>
+                            <div class="d-flex gap-2">
+                                <i class="bi bi-pencil-fill text-primary" style="font-size: 14px; cursor: pointer;" onclick="event.stopPropagation(); editProblem('${item.id}')"></i>
+                                <i class="bi bi-trash-fill text-danger" style="font-size: 14px; cursor: pointer;" onclick="event.stopPropagation(); deleteProblem('${item.id}')"></i>
+                            </div>
+                        </div>
+                        <div class="fw-bold mb-1" onclick="viewDetail('${item.id}')">${item.problem}</div>
+                        <div class="text-success small" onclick="viewDetail('${item.id}')"><i class="bi bi-check-circle-fill me-1"></i> ${item.solution}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error("Error loading history: ", error);
+                list.innerHTML = '<div class="text-center p-4 text-danger">Error loading history from Firebase.</div>';
+            }
+        }
+
+        function viewDetail(id) {
+            const item = allProblems.find(i => i.id === id);
+            if (!item) return;
+
+            let steps = item.whys.map((w, i) => `${i + 1}. ${w}`).join('\n');
+            alert(`PROBLEM:\n${item.problem}\n\n5 WHYS:\n${steps}\n\nSOLUTION:\n${item.solution}`);
+        }
+
+        function editProblem(id) {
+            const item = allProblems.find(i => i.id === id);
+            if (!item) return;
+
+            // Switch to solver view
+            const viewer = document.getElementById('solverView');
+            const history = document.getElementById('historyView');
+            viewer.style.display = 'block';
+            history.style.display = 'none';
+
+            // Populate fields
+            document.getElementById('editProblemId').value = id;
+            document.getElementById('rootProblem').value = item.problem;
+
+            // Populate Whys
+            whyCount = 0;
+            document.getElementById('whysList').innerHTML = '';
+            item.whys.forEach(why => addWhyStep(why));
+
+            // Populate Solution
+            document.getElementById('solutionInput').value = item.solution;
+            showSolutionInput();
+
+            // Update Buttons
+            document.getElementById('saveBtn').innerHTML = 'Update Problem';
+            document.getElementById('cancelEditBtn').style.display = 'block';
+        }
+
+        async function deleteProblem(id) {
+            if (!confirm("Are you sure you want to delete this problem?")) return;
+
+            try {
+                await db.collection('problems').doc(id).delete();
+                loadHistory();
+            } catch (e) {
+                console.error(e);
+                alert("Delete failed");
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('editProblemId').value = '';
+            document.getElementById('rootProblem').value = '';
+            document.getElementById('whysList').innerHTML = '';
+            document.getElementById('solutionInput').value = '';
+            document.getElementById('actionButtons').style.display = 'flex';
+            document.getElementById('solutionSection').style.display = 'none';
+            document.getElementById('askWhyBtn').style.display = 'block';
+            document.getElementById('solveBtn').style.display = 'none';
+            document.getElementById('solveBtn').className = "btn btn-solution flex-grow-1 btn-action";
+
+            document.getElementById('saveBtn').innerHTML = 'Save to History';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+
+            whyCount = 0;
+            checkInputs();
+        }
+
+        // Input listener for root problem
+        document.getElementById('rootProblem').addEventListener('input', checkInputs);
+
+    </script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

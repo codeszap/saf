@@ -45,6 +45,9 @@ function injectDrawer() {
         <div onclick="navigationHandler('todo.html')" class="drawer-item ${page === 'todo.html' ? 'active' : ''}" id="nav-todo">
             <i class="bi bi-card-checklist"></i> Tasks
         </div>
+        <div onclick="navigationHandler('problem_solver.html')" class="drawer-item ${page === 'problem_solver.html' ? 'active' : ''}" id="nav-problem-solver">
+            <i class="bi bi-lightbulb-fill"></i> Solver
+        </div>
         <div onclick="navigationHandler('purchase.html')" class="drawer-item ${page === 'purchase.html' ? 'active' : ''}" id="nav-purchase">
             <i class="bi bi-cart3"></i> Purchase
         </div>
