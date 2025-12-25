@@ -169,6 +169,68 @@
             opacity: 0.6;
         }
 
+        /* Timeline Styles */
+        .timeline {
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, #dc3545, var(--primary-color), #198754);
+            border-radius: 2px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 20px;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -21px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: 2px solid var(--bg-card);
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
+        }
+
+        .timeline-item.item-problem::before {
+            background: #dc3545;
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+        }
+
+        .timeline-item.item-solution::before {
+            background: #198754;
+            box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.2);
+        }
+
+        .timeline-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+        }
+
+        .timeline-content {
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
         /* Floating Nav Button Override if needed or standard bottom nav handles it */
     </style>
 </head>
@@ -299,6 +361,27 @@
             </div>
         </div>
 
+        <!-- Detail Modal (Timeline View) -->
+        <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content"
+                    style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color);">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <h5 class="modal-title fw-bold" id="detailModalLabel">Problem Timeline</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                            style="filter: var(--invert-filter);"></button>
+                    </div>
+                    <div class="modal-body" id="detailModalBody">
+                        <!-- Timeline content injected here -->
+                    </div>
+                    <div class="modal-footer border-top-0 pt-0">
+                        <button type="button" class="btn btn-secondary w-100 rounded-pill"
+                            data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Scripts -->
@@ -320,7 +403,6 @@
         });
 
         function addWhyStep(value = "") {
-            if (whyCount >= maxWhys) return;
             whyCount++;
 
             const container = document.getElementById('whysList');
@@ -329,7 +411,10 @@
             step.innerHTML = `
                 <div class="why-line"></div>
                 <div class="why-step">
-                    <div class="why-badge">Why? #${whyCount}</div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="why-badge mb-0">Why? #${whyCount}</div>
+                        <i class="bi bi-x-circle-fill text-danger" onclick="removeWhyStep(this)" style="cursor: pointer; font-size: 14px;"></i>
+                    </div>
                     <input type="text" class="input-premium why-input" placeholder="Because..." oninput="checkInputs()" value="${value}">
                 </div>
             `;
@@ -341,6 +426,36 @@
 
             checkInputs();
             if (!value) window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+
+        function removeWhyStep(element) {
+            // Element is the icon. Parent of icon is d-flex div. Parent of d-flex is why-step. Parent of why-step is why-container.
+            const container = element.closest('.why-container');
+            container.remove();
+
+            // Re-index remaining steps
+            const badges = document.querySelectorAll('.why-badge');
+            badges.forEach((badge, index) => {
+                // The first badge is "The Problem", we should skip it. 
+                // Wait, "The Problem" badge is static HTML.
+                // The querySelectorAll will pick up "The Problem" badge too?
+                // "The Problem" badge is: <div class="why-badge"><i class="bi bi-exclamation-circle-fill"></i> The Problem</div>
+                // The dynamic badges are: <div class="why-badge mb-0">Why? #${whyCount}</div>
+                // Let's filter or be more specific.
+
+                if (badge.innerText.includes("Why?")) {
+                    // logic handled in loop below
+                }
+            });
+
+            whyCount = 0;
+            const steps = document.querySelectorAll('.why-container .why-badge');
+            steps.forEach((badge) => {
+                whyCount++;
+                badge.innerText = `Why? #${whyCount}`;
+            });
+
+            checkInputs();
         }
 
         function checkInputs() {
@@ -359,12 +474,13 @@
 
             if (whyCount > 0) {
                 solveBtn.style.display = 'block';
+            } else {
+                solveBtn.style.display = 'none';
             }
 
-            if (whyCount >= maxWhys) {
-                askBtn.style.display = 'none';
-                solveBtn.className = "btn btn-solution w-100 btn-action";
-            }
+            // Always show ask button since limit is removed
+            askBtn.style.display = 'block';
+            solveBtn.className = "btn btn-solution flex-grow-1 btn-action";
         }
 
         function showSolutionInput() {
@@ -470,8 +586,40 @@
             const item = allProblems.find(i => i.id === id);
             if (!item) return;
 
-            let steps = item.whys.map((w, i) => `${i + 1}. ${w}`).join('\n');
-            alert(`PROBLEM:\n${item.problem}\n\n5 WHYS:\n${steps}\n\nSOLUTION:\n${item.solution}`);
+            // Build timeline HTML
+            let timelineHtml = '<div class="timeline">';
+
+            // Problem node
+            timelineHtml += `
+                <div class="timeline-item item-problem">
+                    <div class="timeline-label text-danger">Problem</div>
+                    <div class="timeline-content fw-bold">${item.problem}</div>
+                </div>
+            `;
+
+            // Why nodes
+            item.whys.forEach((why, i) => {
+                timelineHtml += `
+                    <div class="timeline-item">
+                        <div class="timeline-label text-primary">Why #${i + 1}</div>
+                        <div class="timeline-content">${why}</div>
+                    </div>
+                `;
+            });
+
+            // Solution node
+            timelineHtml += `
+                <div class="timeline-item item-solution">
+                    <div class="timeline-label text-success">Root Cause & Solution</div>
+                    <div class="timeline-content fw-bold">${item.solution}</div>
+                </div>
+            `;
+
+            timelineHtml += '</div>';
+
+            document.getElementById('detailModalBody').innerHTML = timelineHtml;
+            const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+            modal.show();
         }
 
         function editProblem(id) {
