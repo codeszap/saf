@@ -426,6 +426,157 @@
         [data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
             filter: none;
         }
+
+        /* Report Styles */
+        .report-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 12px;
+        }
+
+        .report-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .report-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .report-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 800;
+            color: var(--text-muted);
+        }
+
+        .report-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* Fullscreen Overlay Styles */
+        .fullscreen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-main);
+            z-index: 3000;
+            display: none;
+            flex-direction: column;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .overlay-header {
+            padding: 15px 20px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .overlay-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            padding-bottom: 20px;
+        }
+
+        .overlay-footer {
+            padding: 15px 20px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+        }
+
+        /* Table View Styles */
+        .report-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+
+        .report-table th {
+            font-size: 9px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 5px 10px;
+            font-weight: 800;
+        }
+
+        .report-table td {
+            background: var(--bg-card);
+            padding: 12px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .report-table tr td:first-child {
+            border-radius: 12px 0 0 12px;
+            border: 1px solid var(--border-color);
+            border-right: none;
+        }
+
+        .report-table tr td:last-child {
+            border-radius: 0 12px 12px 0;
+            border: 1px solid var(--border-color);
+            border-left: none;
+        }
+
+        .report-table tr td:not(:first-child):not(:last-child) {
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .view-toggle {
+            background: var(--bg-input);
+            padding: 4px;
+            border-radius: 10px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .view-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 14px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+
+        .view-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
     </style>
 </head>
 
@@ -433,7 +584,7 @@
     <div id="topBar">
         <i class="bi bi-grid-fill menu-icon" onclick="toggleDrawer(true)"></i>
         <h6 class="mb-0 fw-bold">Loans Tracking</h6>
-        <div></div>
+        <i class="bi bi-file-earmark-bar-graph menu-icon" onclick="showReport()"></i>
     </div>
     <div class="dashboard">
         <div class="dash-card">
@@ -555,6 +706,33 @@
                         LOAN</button>
                 </div>
             </div>
+        </div>
+    </div>
+    <div id="loanReportOverlay" class="fullscreen-overlay">
+        <div class="overlay-header">
+            <div class="d-flex align-items-center gap-3">
+                <i class="bi bi-arrow-left fs-4" onclick="hideReport()" style="cursor: pointer;"></i>
+                <h5 class="fw-bold mb-0">Report</h5>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <div class="view-toggle">
+                    <button class="view-btn active" id="btnViewCards" onclick="setReportView('cards')">
+                        <i class="bi bi-grid-fill"></i>
+                    </button>
+                    <button class="view-btn" id="btnViewTable" onclick="setReportView('table')">
+                        <i class="bi bi-list-task"></i>
+                    </button>
+                </div>
+                <i class="bi bi-sort-numeric-down fs-4" id="reportSortBtn" onclick="toggleReportSort()"
+                    style="cursor: pointer; color: var(--primary-color);"></i>
+                <i class="bi bi-x-lg fs-5" onclick="hideReport()" style="cursor: pointer;"></i>
+            </div>
+        </div>
+        <div class="overlay-content" id="reportContent">
+            <!-- Report items will be injected here -->
+        </div>
+        <div class="overlay-footer" id="reportFooter">
+            <!-- Footer summary will be injected here -->
         </div>
     </div>
 
@@ -1032,16 +1210,237 @@
                 setTimeout(() => { if (!isListening) voiceStatusOverlay.style.display = "none"; }, 3000);
             };
 
-            recognition.onerror = () => {
-                isListening = false;
-                voiceStatusOverlay.innerText = "Error! Try again.";
-                setTimeout(() => { if (!isListening) voiceStatusOverlay.style.display = "none"; }, 2000);
-            };
-
             recognition.onend = () => {
                 isListening = false;
                 voiceFab.classList.remove("listening");
             };
+        }
+
+        let reportSortOrder = 'desc'; // 'desc' (high to low) or 'asc' (low to high)
+        let reportViewMode = 'cards'; // 'cards' or 'table'
+
+        function setReportView(view) {
+            reportViewMode = view;
+            document.getElementById('btnViewCards').classList.toggle('active', view === 'cards');
+            document.getElementById('btnViewTable').classList.toggle('active', view === 'table');
+            showReport();
+        }
+
+        function toggleReportSort() {
+            reportSortOrder = reportSortOrder === 'desc' ? 'asc' : 'desc';
+            const sortBtn = document.getElementById('reportSortBtn');
+            sortBtn.className = reportSortOrder === 'desc' ? 'bi bi-sort-numeric-down fs-4' : 'bi bi-sort-numeric-up fs-4';
+            showReport();
+        }
+
+        function showReport() {
+            const overlay = document.getElementById('loanReportOverlay');
+            const reportContent = document.getElementById('reportContent');
+            reportContent.innerHTML = '<div class="text-center p-4">Generating Report...</div>';
+
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            const summary = {};
+            let grandTotal = 0;
+            let grandPaid = 0;
+            let grandPending = 0;
+            let grandMonthly = 0;
+
+            loansData.forEach(loan => {
+                const name = loan.name.trim().toUpperCase();
+                if (!summary[name]) {
+                    summary[name] = {
+                        name: loan.name,
+                        amount: loan.amount,
+                        totalDues: loan.totalDues || 0,
+                        latestDue: loan.currentDue || 1,
+                        isSettled: loan.settled
+                    };
+                }
+
+                if (loan.currentDue > summary[name].latestDue) {
+                    summary[name].latestDue = loan.currentDue;
+                    summary[name].isSettled = loan.settled;
+                } else if (loan.currentDue === summary[name].latestDue && loan.settled) {
+                    summary[name].isSettled = true;
+                }
+            });
+
+            // Convert to array and calculate values for sorting
+            const reportData = Object.keys(summary).map(key => {
+                const s = summary[key];
+                let totalVal = 0;
+                let paidVal = 0;
+                let pendingVal = 0;
+
+                if (s.totalDues > 0) {
+                    totalVal = s.amount * s.totalDues;
+                    const paidCount = s.isSettled ? s.latestDue : s.latestDue - 1;
+                    paidVal = s.amount * paidCount;
+                    pendingVal = totalVal - paidVal;
+                } else {
+                    totalVal = s.amount;
+                    paidVal = s.isSettled ? s.amount : 0;
+                    pendingVal = s.isSettled ? 0 : s.amount;
+                }
+
+                return { ...s, totalVal, paidVal, pendingVal };
+            });
+
+            // Apply Sorting
+            reportData.sort((a, b) => {
+                return reportSortOrder === 'desc' ? b.totalVal - a.totalVal : a.totalVal - b.totalVal;
+            });
+
+            let itemsHtml = '';
+
+            if (reportData.length === 0) {
+                itemsHtml = '<div class="text-center p-5 text-muted">No loans found to generate report.</div>';
+            } else {
+                if (reportViewMode === 'cards') {
+                    reportData.forEach(s => {
+                        grandTotal += s.totalVal;
+                        grandPaid += s.paidVal;
+                        grandPending += s.pendingVal;
+                        if (s.pendingVal > 0) grandMonthly += s.amount;
+
+                        const progress = s.totalDues > 0 ? (s.isSettled ? s.latestDue : s.latestDue - 1) : (s.isSettled ? 1 : 0);
+                        const totalSteps = s.totalDues > 0 ? s.totalDues : 1;
+                        const percent = Math.min(100, (progress / totalSteps) * 100);
+
+                        itemsHtml += `
+                        <div class="report-card">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <div class="fw-bold text-primary fs-5">${s.name}</div>
+                                    <div class="small text-muted">${s.totalDues > 0 ? `Monthly Loan (${s.totalDues} Dues)` : 'One-time Loan'}</div>
+                                </div>
+                                <div class="badge ${s.pendingVal === 0 ? 'bg-success' : 'bg-warning'} rounded-pill">
+                                    ${s.pendingVal === 0 ? 'COMPLETED' : 'ACTIVE'}
+                                </div>
+                            </div>
+                            
+                            <div class="progress mb-3" style="height: 6px; background: var(--bg-card);">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: ${percent}%; border-radius: 6px;"></div>
+                            </div>
+
+                            <div class="report-grid">
+                                <div class="report-item">
+                                    <div class="report-label">Monthly EMI</div>
+                                    <div class="report-value text-primary">₹${s.amount.toLocaleString()}</div>
+                                </div>
+                                <div class="report-item">
+                                    <div class="report-label">Total Loan</div>
+                                    <div class="report-value">₹${s.totalVal.toLocaleString()}</div>
+                                </div>
+                                <div class="report-item">
+                                    <div class="report-label">Remaining</div>
+                                    <div class="report-value text-danger">₹${s.pendingVal.toLocaleString()}</div>
+                                </div>
+                                <div class="report-item">
+                                    <div class="report-label">Dues Progress</div>
+                                    <div class="report-value">${progress}/${totalSteps}</div>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                    });
+                } else {
+                    // Render Table Mode
+                    itemsHtml = `
+                    <div class="table-responsive">
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Name</th>
+                                    <th class="text-center">Monthly</th>
+                                    <th class="text-center">Dues</th>
+                                    <th class="text-end">Remain</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    reportData.forEach(s => {
+                        grandTotal += s.totalVal;
+                        grandPaid += s.paidVal;
+                        grandPending += s.pendingVal;
+                        if (s.pendingVal > 0) grandMonthly += s.amount;
+
+                        const progress = s.totalDues > 0 ? (s.isSettled ? s.latestDue : s.latestDue - 1) : (s.isSettled ? 1 : 0);
+                        const totalSteps = s.totalDues > 0 ? s.totalDues : 1;
+
+                        itemsHtml += `
+                        <tr>
+                            <td>
+                                <div class="text-primary text-truncate" style="max-width: 70px;">${s.name}</div>
+                            </td>
+                            <td class="text-center" style="font-size: 10px;">₹${s.amount.toLocaleString()}</td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border" style="font-size: 9px; font-weight: 800; padding: 3px 6px;">
+                                    ${progress}/${totalSteps}
+                                </span>
+                            </td>
+                            <td class="text-end text-danger" style="font-size: 10px;">₹${s.pendingVal.toLocaleString()}</td>
+                            <td class="text-end" style="font-size: 10px; opacity: 0.7;">₹${s.totalVal.toLocaleString()}</td>
+                        </tr>
+                        `;
+                    });
+
+                    itemsHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+                    `;
+                }
+            }
+
+            const headerHtml = `
+                <div class="report-card mb-4" style="background: linear-gradient(135deg, var(--primary-color), #a855f7); border: none;">
+                    <div class="row text-center g-0">
+                        <div class="col-12 mb-3">
+                            <div class="text-white opacity-75 text-uppercase" style="font-size: 10px; font-weight: 800; letter-spacing: 1px;">Overall Progress</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center px-3 mb-1">
+                                <div class="text-white opacity-75" style="font-size: 10px; font-weight: 700;">TOTAL PAID: ₹${grandPaid.toLocaleString()}</div>
+                                <div class="text-white fw-bold" style="font-size: 10px;">${Math.round((grandPaid / grandTotal * 100) || 0)}% Done</div>
+                            </div>
+                            <div class="progress mx-3" style="height: 6px; background: rgba(255,255,255,0.2); border-radius: 10px;">
+                                <div class="progress-bar bg-white" style="width: ${(grandPaid / grandTotal * 100) || 0}%; border-radius: 10px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <h6 class="fw-bold mb-3 px-1">Detailed Breakdown</h6>
+            `;
+
+            const footerHtml = `
+                <div class="row text-center g-0">
+                    <div class="col-4 border-end border-color">
+                        <div class="report-label" style="font-size: 8px;">Monthly EMI</div>
+                        <div class="fw-bold text-primary" style="font-size: 13px;">₹${grandMonthly.toLocaleString()}</div>
+                    </div>
+                    <div class="col-4 border-end border-color">
+                        <div class="report-label" style="font-size: 8px;">Remaining</div>
+                        <div class="fw-bold text-danger" style="font-size: 13px;">₹${grandPending.toLocaleString()}</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="report-label" style="font-size: 8px;">Total Loan</div>
+                        <div class="fw-bold text-main" style="font-size: 13px;">₹${grandTotal.toLocaleString()}</div>
+                    </div>
+                </div>
+            `;
+
+            reportContent.innerHTML = headerHtml + itemsHtml;
+            document.getElementById('reportFooter').innerHTML = footerHtml;
+        }
+
+        function hideReport() {
+            document.getElementById('loanReportOverlay').style.display = 'none';
+            document.body.style.overflow = 'auto'; // Restore scroll
         }
 
         window.onload = loadLoans;
