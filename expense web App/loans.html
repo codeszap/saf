@@ -92,6 +92,9 @@
             justify-content: center;
             font-size: 18px;
             flex-shrink: 0;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
         }
 
         .pending-btn {
@@ -564,7 +567,7 @@
                     <div class="swipe-content">
                         <div class="loan-row-inner">
                             <!-- Status Icon -->
-                            <div class="status-btn ${l.settled ? 'settled-btn' : 'pending-btn'}" onclick="toggleSettlement('${l.id}', ${l.settled})">
+                            <div class="status-btn ${l.settled ? 'settled-btn' : 'pending-btn'}" onclick="toggleSettlement(event, '${l.id}', ${l.settled})">
                                 <i class="bi ${l.settled ? 'bi-check-all' : 'bi-clock-history'}"></i>
                             </div>
 
@@ -707,7 +710,12 @@
             myModal.hide(); loadLoans();
         }
 
-        async function toggleSettlement(id, isSettled) {
+        window.toggleSettlement = async function (event, id, isSettled) {
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+
             if (isSettled) {
                 if (confirm("Move this loan back to Pending?")) {
                     await db.collection("loans").doc(id).update({ settled: false });
@@ -718,16 +726,21 @@
             }
         }
 
-        async function settleLoan(id) {
-            if (confirm("Mark as settled? This will automatically create a reminder for the next month.")) {
-                const loan = loansData.find(l => l.id === id);
-                if (loan) {
+        window.settleLoan = async function (id) {
+            const loan = loansData.find(l => l.id === id);
+            if (!loan) return;
+
+            const oldDate = new Date(loan.date);
+            const nextDate = new Date(oldDate);
+            nextDate.setMonth(oldDate.getMonth() + 1);
+            const nextDateStr = nextDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+
+            if (confirm(`Mark "${loan.name}" as settled? \n\nA new entry for "${nextDateStr}" will be added to your Pending list automatically.`)) {
+                try {
+                    // 1. Mark current as settled
                     await db.collection("loans").doc(id).update({ settled: true });
 
-                    const oldDate = new Date(loan.date);
-                    const nextDate = new Date(oldDate);
-                    nextDate.setMonth(oldDate.getMonth() + 1);
-
+                    // 2. Generate Next Month Entry
                     const nextLoan = {
                         name: loan.name,
                         amount: loan.amount,
@@ -735,12 +748,12 @@
                         type: loan.type || 'Loan',
                         settled: false
                     };
-
-                    try {
-                        await db.collection("loans").add(nextLoan);
-                    } catch (e) { console.error(e); }
+                    await db.collection("loans").add(nextLoan);
 
                     loadLoans();
+                } catch (e) {
+                    console.error("Settlement failed:", e);
+                    alert("Error updating loan status.");
                 }
             }
         }
