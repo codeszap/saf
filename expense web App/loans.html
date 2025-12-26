@@ -564,12 +564,12 @@
                     <div class="swipe-content">
                         <div class="loan-row-inner">
                             <!-- Status Icon -->
-                            <div class="status-btn ${l.settled ? 'settled-btn' : 'pending-btn'}">
+                            <div class="status-btn ${l.settled ? 'settled-btn' : 'pending-btn'}" onclick="toggleSettlement('${l.id}', ${l.settled})">
                                 <i class="bi ${l.settled ? 'bi-check-all' : 'bi-clock-history'}"></i>
                             </div>
 
                             <!-- Info -->
-                            <div class="loan-info">
+                            <div class="loan-info" onclick="openModal('${l.id}', '${l.name}', ${l.amount}, '${l.date}', 'Loan', ${l.settled})">
                                 <div class="d-flex align-items-center flex-wrap">
                                     <span class="loan-name">${l.name}</span>
                                     ${daysHtml}
@@ -707,10 +707,41 @@
             myModal.hide(); loadLoans();
         }
 
+        async function toggleSettlement(id, isSettled) {
+            if (isSettled) {
+                if (confirm("Move this loan back to Pending?")) {
+                    await db.collection("loans").doc(id).update({ settled: false });
+                    loadLoans();
+                }
+            } else {
+                await settleLoan(id);
+            }
+        }
+
         async function settleLoan(id) {
-            if (confirm("Mark this loan as settled?")) {
-                await db.collection("loans").doc(id).update({ settled: true });
-                loadLoans();
+            if (confirm("Mark as settled? This will automatically create a reminder for the next month.")) {
+                const loan = loansData.find(l => l.id === id);
+                if (loan) {
+                    await db.collection("loans").doc(id).update({ settled: true });
+
+                    const oldDate = new Date(loan.date);
+                    const nextDate = new Date(oldDate);
+                    nextDate.setMonth(oldDate.getMonth() + 1);
+
+                    const nextLoan = {
+                        name: loan.name,
+                        amount: loan.amount,
+                        date: nextDate.toISOString(),
+                        type: loan.type || 'Loan',
+                        settled: false
+                    };
+
+                    try {
+                        await db.collection("loans").add(nextLoan);
+                    } catch (e) { console.error(e); }
+
+                    loadLoans();
+                }
             }
         }
 
