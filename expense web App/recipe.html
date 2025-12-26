@@ -131,6 +131,14 @@
             background: #007bff;
         }
 
+        .btn-edit {
+            background: var(--primary-color);
+        }
+
+        .btn-delete {
+            background: #dc3545;
+        }
+
         .list-item {
             display: flex;
             align-items: center;
@@ -744,7 +752,7 @@
                         </div>
                         <div class="list-item" id="recipe-${r.id}" 
                              onclick="openRecipeDetail('${r.id}')"
-                             ontouchstart="handleTouchStart(event, '${r.id}')"
+                             ontouchstart="handleTouchStart(event, 'recipe-', '${r.id}')"
                              ontouchmove="handleTouchMove(event)"
                              ontouchend="handleTouchEnd(event)">
                             <div class="recipe-item-content">
@@ -766,9 +774,9 @@
         let touchMoveX = 0;
         let activeSwipeElement = null;
 
-        function handleTouchStart(e, id) {
+        function handleTouchStart(e, prefix, id) {
             touchStartX = e.touches[0].clientX;
-            activeSwipeElement = document.getElementById('recipe-' + id);
+            activeSwipeElement = document.getElementById(prefix + id);
             // Close any other open swipes
             document.querySelectorAll('.list-item.swiped').forEach(el => {
                 if (el !== activeSwipeElement) el.classList.remove('swiped');
@@ -776,14 +784,12 @@
         }
 
         function handleTouchMove(e) {
+            if (!activeSwipeElement) return;
             touchMoveX = e.touches[0].clientX;
-            const diff = touchStartX - touchMoveX;
-            if (activeSwipeElement && diff > 20) {
-                // Potential swipe left
-            }
         }
 
         function handleTouchEnd(e) {
+            if (!activeSwipeElement) return;
             const diff = touchStartX - e.changedTouches[0].clientX;
             if (diff > 100) activeSwipeElement.classList.add('swiped');
             else if (diff < -50) activeSwipeElement.classList.remove('swiped');
@@ -1010,21 +1016,27 @@
                 empty.classList.add('hidden');
                 r.ingredients.forEach(i => {
                     const pr = parseFloat(i.price) || 0; if (i.checked) total += pr;
-                    const d = document.createElement('div');
-                    d.className = `list-item ${i.checked ? 'checked' : ''}`;
-                    d.setAttribute('data-id', i.id);
-                    d.innerHTML = `
-                        <div class="drag-handle"><i class="bi bi-grip-vertical"></i></div>
-                        <div class="custom-checkbox" onclick="event.stopPropagation(); toggleIngredient(${i.id})"></div>
-                        <div class="recipe-item-content" onclick="viewIngredientDetail(event, ${i.id})">
-                            <div class="item-title">${i.name}</div>
-                            ${pr > 0 ? `<div class="small text-muted">₹${pr.toFixed(0)}</div>` : ''}
+                    const wrapper = document.createElement('div');
+                    wrapper.className = "list-item-wrapper";
+                    wrapper.innerHTML = `
+                        <div class="swipe-actions">
+                            <button class="swipe-btn btn-edit" onclick="openEditIngredientModal(event, ${i.id})"><i class="bi bi-pencil"></i></button>
+                            <button class="swipe-btn btn-delete" onclick="deleteRecipeItem(event, ${i.id})"><i class="bi bi-trash"></i></button>
                         </div>
-                        <div class="item-actions">
-                            <i class="bi bi-pencil-square action-icon" onclick="openEditIngredientModal(event, ${i.id})"></i>
-                            <i class="bi bi-x-circle action-icon text-danger" onclick="deleteRecipeItem(event, ${i.id})"></i>
+                        <div class="list-item ${i.checked ? 'checked' : ''}" 
+                             id="ing-${i.id}"
+                             data-id="${i.id}"
+                             ontouchstart="handleTouchStart(event, 'ing-', '${i.id}')"
+                             ontouchmove="handleTouchMove(event)"
+                             ontouchend="handleTouchEnd(event)">
+                            <div class="drag-handle"><i class="bi bi-grip-vertical"></i></div>
+                            <div class="custom-checkbox" onclick="event.stopPropagation(); toggleIngredient(${i.id})"></div>
+                            <div class="recipe-item-content" onclick="viewIngredientDetail(event, ${i.id})">
+                                <div class="item-title">${i.name}</div>
+                                ${pr > 0 ? `<div class="small text-muted">₹${pr.toFixed(0)}</div>` : ''}
+                            </div>
                         </div>`;
-                    box.appendChild(d);
+                    box.appendChild(wrapper);
                 });
             }
             document.getElementById('currentTotalCost').innerText = total.toLocaleString('en-IN');
