@@ -485,6 +485,39 @@
                 <div class="modal-body">
                     <input type="hidden" id="loanId">
                     <input type="hidden" id="loanType" value="Loan">
+
+                    <!-- NEW: Loan Progress Summary -->
+                    <div id="loanSummary"
+                        class="mb-3 p-3 rounded-4 bg-primary-subtle text-primary border border-primary-subtle"
+                        style="display:none;">
+                        <div class="row text-center g-2">
+                            <div class="col-6 mb-2">
+                                <div class="text-uppercase" style="font-size: 8px; font-weight: 800; opacity: 0.7;">
+                                    Started On</div>
+                                <div id="summaryStart" class="fw-bold fs-6">-</div>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <div class="text-uppercase" style="font-size: 8px; font-weight: 800; opacity: 0.7;">Ends
+                                    On</div>
+                                <div id="summaryEnd" class="fw-bold fs-6">-</div>
+                            </div>
+                            <div class="col-4 border-top pt-2">
+                                <div class="text-uppercase" style="font-size: 7px; font-weight: 800; opacity: 0.7;">Paid
+                                    (₹)</div>
+                                <div id="summaryPaid" class="fw-bold">₹0</div>
+                            </div>
+                            <div class="col-4 border-top border-start pt-2">
+                                <div class="text-uppercase" style="font-size: 7px; font-weight: 800; opacity: 0.7;">
+                                    Pending (₹)</div>
+                                <div id="summaryPending" class="fw-bold">₹0</div>
+                            </div>
+                            <div class="col-4 border-top border-start pt-2">
+                                <div class="text-uppercase" style="font-size: 7px; font-weight: 800; opacity: 0.7;">
+                                    Progress</div>
+                                <div id="summaryProgress" class="fw-extrabold">-</div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <label class="small text-muted mb-2">Ref Name / Person</label>
                         <input type="text" id="personName" class="form-control"
@@ -493,6 +526,16 @@
                     <div class="mb-3">
                         <label class="small text-muted mb-2">Amount (₹)</label>
                         <input type="number" id="loanAmount" class="form-control" placeholder="0.00">
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="small text-muted mb-2">Total Dues</label>
+                            <input type="number" id="totalDues" class="form-control" placeholder="E.g. 12">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="small text-muted mb-2">Current Due #</label>
+                            <input type="number" id="currentDue" class="form-control" placeholder="1">
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="small text-muted mb-2">Loan Date (Target/EMI Date)</label>
@@ -614,9 +657,10 @@
                             </div>
 
                             <!-- Info -->
-                            <div class="loan-info" onclick="openModal('${l.id}', '${l.name}', ${l.amount}, '${l.date}', 'Loan', ${l.settled})">
+                            <div class="loan-info" onclick="openModal('${l.id}', '${l.name}', ${l.amount}, '${l.date}', 'Loan', ${l.settled}, ${l.totalDues || 0}, ${l.currentDue || 1})">
                                 <div class="d-flex align-items-center flex-wrap">
                                     <span class="loan-name">${l.name}</span>
+                                    <span class="ms-2 badge bg-info-subtle text-info border border-info-subtle" style="font-size: 9px;">${l.currentDue || 1} / ${l.totalDues || '-'}</span>
                                     ${daysHtml}
                                     ${reminderHtml}
                                 </div>
@@ -649,16 +693,26 @@
 
         function calculateSelectedTotal(totalB) {
             let selected = 0;
+            let count = 0;
             document.querySelectorAll('.loan-selector:checked').forEach(cb => {
                 selected += parseFloat(cb.getAttribute('data-price')) || 0;
+                count++;
             });
             document.getElementById('selectedTotal').innerText = `₹${selected}`;
             document.getElementById('remainingTotal').innerText = `₹${totalB - selected}`;
         }
 
+
+
         async function toggleCheck(id, current) {
-            await db.collection("loans").doc(id).update({ isChecked: !current });
-            loadLoans();
+            if (currentTab === 'pending') {
+                // If checking a pending item, move to settled + next month
+                await settleLoan(id);
+            } else {
+                // If in settled tab, just toggle the mark
+                await db.collection("loans").doc(id).update({ isChecked: !current });
+                loadLoans();
+            }
         }
 
         function enableSwipe(row) {
@@ -688,13 +742,40 @@
             });
         }
 
-        function openModal(id = '', name = '', amount = '', date = '', type = 'Loan', settled = false) {
+        function openModal(id = '', name = '', amount = '', date = '', type = 'Loan', settled = false, totalDues = '', currentDue = 1) {
             document.getElementById('modalTitle').innerText = id ? 'Edit Loan' : 'Add Loan';
             document.getElementById('loanId').value = id;
             document.getElementById('personName').value = name;
             document.getElementById('loanAmount').value = amount;
             document.getElementById('loanDate').value = date ? date.split('T')[0] : new Date().toISOString().split('T')[0];
             document.getElementById('loanType').value = type;
+            document.getElementById('totalDues').value = totalDues;
+            document.getElementById('currentDue').value = currentDue;
+
+            const summaryDiv = document.getElementById('loanSummary');
+            if (id && totalDues > 0) {
+                summaryDiv.style.display = 'block';
+                const d = new Date(date);
+                const tD = Number(totalDues);
+                const cD = Number(currentDue);
+                const amt = Number(amount);
+
+                // Start Date (subtract months based on current due)
+                const startD = new Date(d);
+                startD.setMonth(startD.getMonth() - (cD - 1));
+
+                // End Date (Start + totalDues - 1 months)
+                const endD = new Date(startD);
+                endD.setMonth(endD.getMonth() + (tD - 1));
+
+                document.getElementById('summaryStart').innerText = startD.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
+                document.getElementById('summaryEnd').innerText = endD.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
+                document.getElementById('summaryPaid').innerText = `₹${amt * (cD - 1)}`;
+                document.getElementById('summaryPending').innerText = `₹${amt * (tD - (cD - 1))}`;
+                document.getElementById('summaryProgress').innerText = `${cD - 1}/${tD}`;
+            } else {
+                summaryDiv.style.display = 'none';
+            }
 
             const editActions = document.getElementById('editActions');
             const settleBtn = document.getElementById('settleBtn');
@@ -727,9 +808,8 @@
         async function unsettleLoanFromModal() {
             const id = document.getElementById('loanId').value;
             if (id) {
-                if (confirm("Move this loan back to Pending?")) {
-                    await db.collection("loans").doc(id).update({ settled: false });
-                    loadLoans();
+                if (confirm("Move this loan back to Pending? This will also remove the auto-generated reminder for next month if it exists.")) {
+                    await restoreLoan(id);
                     myModal.hide();
                 }
             }
@@ -751,6 +831,8 @@
             const amount = document.getElementById('loanAmount').value;
             const date = document.getElementById('loanDate').value;
             const type = document.getElementById('loanType').value;
+            const totalDues = document.getElementById('totalDues').value;
+            const currentDue = document.getElementById('currentDue').value;
 
             if (!name || !amount) return alert("Fill all fields");
 
@@ -759,7 +841,9 @@
                 amount: Number(amount),
                 date: new Date(date).toISOString(),
                 type,
-                settled: false
+                settled: false,
+                totalDues: totalDues ? Number(totalDues) : 0,
+                currentDue: currentDue ? Number(currentDue) : 1
             };
 
             if (id) {
@@ -780,12 +864,44 @@
             }
 
             if (isSettled) {
-                if (confirm("Move this loan back to Pending?")) {
-                    await db.collection("loans").doc(id).update({ settled: false });
-                    loadLoans();
+                if (confirm("Move this loan back to Pending? This will also remove the auto-generated reminder for next month if it exists.")) {
+                    await restoreLoan(id);
                 }
             } else {
                 await settleLoan(id);
+            }
+        }
+
+        async function restoreLoan(id) {
+            const loan = loansData.find(l => l.id === id);
+            if (!loan) return;
+
+            try {
+                // 1. Mark current as NOT settled
+                await db.collection("loans").doc(id).update({ settled: false });
+
+                // 2. Find and Delete Next Month Entry
+                const oldDate = new Date(loan.date);
+                const nextDate = new Date(oldDate);
+                nextDate.setMonth(oldDate.getMonth() + 1);
+                const nextDateISO = nextDate.toISOString();
+
+                // Look for matching loan: same name, same amount, same next-month date, and still pending
+                const nextLoan = loansData.find(l =>
+                    l.name === loan.name &&
+                    Number(l.amount) === Number(loan.amount) &&
+                    l.date === nextDateISO &&
+                    l.settled === false
+                );
+
+                if (nextLoan) {
+                    await db.collection("loans").doc(nextLoan.id).delete();
+                    console.log("Deleted auto-generated next month loan:", nextLoan.id);
+                }
+
+                loadLoans();
+            } catch (e) {
+                console.error("Restore failed:", e);
             }
         }
 
@@ -800,18 +916,28 @@
 
             if (confirm(`Mark "${loan.name}" as settled? \n\nA new entry for "${nextDateStr}" will be added to your Pending list automatically.`)) {
                 try {
+                    const totalDues = loan.totalDues || 0;
+                    const currentDue = loan.currentDue || 1;
+
                     // 1. Mark current as settled
                     await db.collection("loans").doc(id).update({ settled: true });
 
-                    // 2. Generate Next Month Entry
-                    const nextLoan = {
-                        name: loan.name,
-                        amount: loan.amount,
-                        date: nextDate.toISOString(),
-                        type: loan.type || 'Loan',
-                        settled: false
-                    };
-                    await db.collection("loans").add(nextLoan);
+                    // 2. Generate Next Month Entry (only if more dues left)
+                    if (totalDues === 0 || currentDue < totalDues) {
+                        const nextLoan = {
+                            name: loan.name,
+                            amount: loan.amount,
+                            date: nextDate.toISOString(),
+                            type: loan.type || 'Loan',
+                            settled: false,
+                            totalDues: totalDues,
+                            currentDue: currentDue + 1,
+                            isChecked: false
+                        };
+                        await db.collection("loans").add(nextLoan);
+                    } else {
+                        alert("Congratulations! All dues for this loan are completed.");
+                    }
 
                     loadLoans();
                 } catch (e) {
