@@ -42,27 +42,28 @@
         .dashboard {
             margin: 15px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
         }
 
         .dash-card {
             background: var(--bg-input);
             border: 1px solid var(--border-color);
-            padding: 18px;
-            border-radius: 16px;
+            padding: 10px 4px;
+            border-radius: 12px;
+            text-align: center;
         }
 
         .dash-label {
-            font-size: 10px;
+            font-size: 8px;
             font-weight: 800;
             color: var(--text-muted);
             text-transform: uppercase;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
 
         .dash-val {
-            font-size: 20px;
+            font-size: 13px;
             font-weight: 800;
             color: var(--text-main);
         }
@@ -406,12 +407,20 @@
     </div>
     <div class="dashboard">
         <div class="dash-card">
-            <div class="dash-label">Total Balance</div>
+            <div class="dash-label">Balance</div>
             <div class="dash-val text-primary" id="totalBalance">₹0</div>
         </div>
         <div class="dash-card">
-            <div class="dash-label">Total Entries</div>
-            <div class="dash-val text-primary" id="totalEntries">0</div>
+            <div class="dash-label">Selected</div>
+            <div class="dash-val text-warning" id="selectedTotal">₹0</div>
+        </div>
+        <div class="dash-card">
+            <div class="dash-label">Remaining</div>
+            <div class="dash-val text-secondary" id="remainingTotal">₹0</div>
+        </div>
+        <div class="dash-card">
+            <div class="dash-label">Entries</div>
+            <div class="dash-val" id="totalEntries">0</div>
         </div>
     </div>
     <div class="px-3 mb-3">
@@ -566,6 +575,11 @@
                     </div>
                     <div class="swipe-content">
                         <div class="loan-row-inner">
+                            <!-- Checkbox -->
+                            <div class="form-check me-1">
+                                <input class="form-check-input loan-selector" type="checkbox" data-price="${l.amount}" ${l.isChecked ? 'checked' : ''} onclick="event.stopPropagation(); toggleCheck('${l.id}', ${l.isChecked})">
+                            </div>
+
                             <!-- Status Icon -->
                             <div class="status-btn ${l.settled ? 'settled-btn' : 'pending-btn'}" onclick="toggleSettlement(event, '${l.id}', ${l.settled})">
                                 <i class="bi ${l.settled ? 'bi-check-all' : 'bi-clock-history'}"></i>
@@ -591,11 +605,32 @@
                 `;
             });
 
+            document.getElementById('totalEntries').innerText = filtered.length;
+
+            renderLoansList(filtered, html);
+            calculateSelectedTotal(totalB);
+        }
+
+        function renderLoansList(filtered, html) {
             const listContainer = document.getElementById('loansList');
             listContainer.innerHTML = html || `<div class="text-center p-5 text-muted">No ${currentTab} entries found</div>`;
 
             // Re-apply swipe listeners
             listContainer.querySelectorAll('.swipe-container').forEach(row => enableSwipe(row));
+        }
+
+        function calculateSelectedTotal(totalB) {
+            let selected = 0;
+            document.querySelectorAll('.loan-selector:checked').forEach(cb => {
+                selected += parseFloat(cb.getAttribute('data-price')) || 0;
+            });
+            document.getElementById('selectedTotal').innerText = `₹${selected}`;
+            document.getElementById('remainingTotal').innerText = `₹${totalB - selected}`;
+        }
+
+        async function toggleCheck(id, current) {
+            await db.collection("loans").doc(id).update({ isChecked: !current });
+            loadLoans();
         }
 
         function enableSwipe(row) {
