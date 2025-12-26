@@ -435,12 +435,15 @@
                     <textarea id="ingDesc" class="modern-input" placeholder="Description / Notes (Optional)"
                         rows="2"></textarea>
 
+                    <!-- Buttons Row -->
+                    <div id="ingModalFooter" class="mt-3"></div>
+
+                    <!-- Recent Preview -->
                     <div id="modalPreviewSection" class="mt-3 hidden">
                         <div class="small fw-bold text-muted mb-2 border-top pt-2">Recently Added:</div>
                         <div id="modalPreviewList" class="small"></div>
                     </div>
                 </div>
-                <div class="modal-footer flex-column" id="ingModalFooter"></div>
             </div>
         </div>
     </div>
@@ -887,8 +890,14 @@
             document.getElementById('modalPreviewList').innerHTML = "";
 
             document.getElementById('ingModalFooter').innerHTML = `
-                <button class="btn btn-primary w-100 rounded-pill mb-2" onclick="addIngredient()">ADD ITEM</button>
-                <button class="btn btn-light w-100 rounded-pill text-muted" data-bs-dismiss="modal">DONE</button>`;
+                <div class="row g-2">
+                    <div class="col-6">
+                        <button class="btn btn-primary w-100 rounded-pill fw-bold" onclick="addIngredient()">ADD ITEM</button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-light w-100 rounded-pill text-muted fw-bold" data-bs-dismiss="modal">DONE</button>
+                    </div>
+                </div>`;
             ingModal.show(); setTimeout(() => document.getElementById('ingName').focus(), 500);
         }
 
@@ -920,7 +929,15 @@
             document.getElementById('ingName').value = i.name;
             document.getElementById('ingPrice').value = i.price || "";
             document.getElementById('ingDesc').value = i.desc || "";
-            document.getElementById('ingModalFooter').innerHTML = `<button class="btn btn-primary w-100 rounded-pill" onclick="updateIngredient()">SAVE</button>`;
+            document.getElementById('ingModalFooter').innerHTML = `
+                <div class="row g-2">
+                    <div class="col-6">
+                        <button class="btn btn-primary w-100 rounded-pill fw-bold" onclick="updateIngredient()">SAVE</button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-light w-100 rounded-pill text-muted fw-bold" data-bs-dismiss="modal">DONE</button>
+                    </div>
+                </div>`;
             ingModal.show();
         }
 
