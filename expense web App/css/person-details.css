@@ -1,0 +1,239 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    margin: 0;
+    padding-bottom: 90px;
+    overflow-x: hidden;
+    transition: background 0.3s, color 0.3s;
+}
+
+#topBar {
+    padding: 15px 20px;
+    background: var(--bg-card);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#topBar i {
+    font-size: 22px;
+    cursor: pointer;
+    color: var(--primary-color);
+    margin-right: 15px;
+}
+
+.person-header-card {
+    background: var(--bg-input);
+    margin: 10px 15px 20px 15px;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.net-balance {
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 5px;
+    padding: 4px 10px;
+    border-radius: 5px;
+    display: inline-block;
+}
+
+.bg-receive {
+    background: rgba(46, 204, 113, 0.15);
+    color: #2ecc71;
+}
+
+.bg-pay {
+    background: rgba(231, 76, 60, 0.15);
+    color: #e74c3c;
+}
+
+.header-stats {
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid var(--border-color);
+    padding-top: 15px;
+    margin-top: 15px;
+}
+
+.stat-label {
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.stat-val {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.history-container {
+    margin: 0 15px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.swipe-wrapper {
+    position: relative;
+    background: var(--bg-input);
+    margin-bottom: 8px;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.action-bg {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1;
+    visibility: hidden;
+}
+
+.bg-edit-icon {
+    background: var(--primary-color);
+    width: 50%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.bg-delete-icon {
+    background: #ef4444;
+    width: 50%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 20px;
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.history-item {
+    position: relative;
+    background: var(--bg-card);
+    padding: 18px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 2;
+    transition: transform 0.2s ease-out;
+    touch-action: pan-y;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.h-date {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.h-desc {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.text-get {
+    color: #2ecc71;
+}
+
+.text-give {
+    color: #e74c3c;
+}
+
+.action-bar {
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+    z-index: 1000;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-act {
+    flex: 1;
+    padding: 14px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 800;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.bg-give {
+    background: #e74c3c;
+    color: #fff;
+}
+
+.bg-get {
+    background: #2ecc71;
+    color: #fff;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    border-radius: 15px;
+    opacity: 1;
+    z-index: 1056;
+}
+
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 1;
+}
+
+.btn-close-white {
+    filter: invert(1);
+}
+
+[data-theme="light"] .btn-close-white {
+    filter: none;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.form-control {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+}
+
+.form-control:focus {
+    background: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--primary-color);
+    box-shadow: none;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: none;
+}

@@ -1,0 +1,159 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.4);
+}
+
+[data-theme="dark"] :root {
+    --glass-bg: rgba(0, 0, 0, 0.5);
+    --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    margin: 0;
+    padding-bottom: 120px;
+    transition: 0.3s;
+    overflow-x: hidden;
+}
+
+#topBar {
+    padding: 12px 20px;
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.back-btn {
+    font-size: 20px;
+    color: var(--text-main);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    transition: 0.2s;
+}
+
+.back-btn:active {
+    background: var(--bg-input);
+}
+
+.section-title {
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 15px;
+    padding-left: 5px;
+    border-left: 3px solid var(--primary-color);
+}
+
+.law-card {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px -5px var(--shadow-color);
+}
+
+.law-number {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 80px;
+    font-weight: 900;
+    opacity: 0.03;
+    color: var(--text-main);
+    user-select: none;
+}
+
+.law-header {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(45deg, var(--start-color), var(--end-color));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.law-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.formula-box {
+    background: var(--bg-input);
+    padding: 15px;
+    border-radius: 12px;
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--text-main);
+    border: 1px dashed var(--border-color);
+    margin-bottom: 20px;
+}
+
+.highlight {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.identity-input {
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--primary-color);
+    width: 100%;
+    outline: none;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 5px;
+    transition: 0.3s;
+}
+
+.identity-input:focus {
+    border-color: var(--primary-color);
+}
+
+.form-floating>.form-control {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+}
+
+.form-floating>label {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.save-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 1000;
+    transform: translateY(150%);
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.save-banner.show {
+    transform: translateY(0);
+}

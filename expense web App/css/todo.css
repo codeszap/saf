@@ -1,0 +1,308 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    margin: 0;
+    padding-bottom: 90px;
+    overflow-x: hidden;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* Top Bar */
+#topBar {
+    padding: 15px 20px;
+    background: var(--bg-card);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#topBar h6 {
+    font-size: 16px;
+    margin-bottom: 0;
+}
+
+.view-controls {
+    background: var(--bg-input);
+    padding: 4px;
+    border-radius: 10px;
+    display: flex;
+    gap: 2px;
+}
+
+.v-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.v-btn.active {
+    background: var(--bg-card);
+    color: var(--primary-color);
+    box-shadow: 0 2px 5px var(--shadow-color);
+}
+
+/* Tabs Navigation */
+#tabBar {
+    display: none;
+    background: var(--bg-card);
+    padding: 5px 15px;
+    gap: 15px;
+    overflow-x: auto;
+    justify-content: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab-item {
+    padding: 8px 5px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    min-width: 80px;
+}
+
+.tab-item.active {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.tab-count {
+    display: block;
+    font-size: 10px;
+    opacity: 0.6;
+}
+
+/* Grouping */
+.date-group {
+    margin: 10px 15px 15px 15px;
+}
+
+.group-header {
+    padding: 8px 5px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.header-stats {
+    font-size: 10px;
+    background: var(--bg-input);
+    padding: 2px 8px;
+    border-radius: 20px;
+    color: var(--text-muted);
+}
+
+.group-content {
+    display: none;
+}
+
+.group-content.show {
+    display: block;
+}
+
+/* Card Style */
+.todo-item-row {
+    position: relative;
+    background: #ff3b30;
+    overflow: hidden;
+    border-radius: 14px;
+    margin-bottom: 8px;
+}
+
+.todo-card-content {
+    background: var(--bg-card);
+    position: relative;
+    z-index: 10;
+    transition: transform 0.3s;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 12px var(--shadow-color);
+    border: 1px solid var(--border-color);
+}
+
+.todo-card-content.swiped {
+    transform: translateX(-60px);
+}
+
+.delete-reveal {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 1;
+    font-size: 18px;
+}
+
+.todo-text {
+    font-size: 14px;
+    font-weight: 600;
+    flex: 1;
+    color: var(--text-main);
+    line-height: 1.4;
+}
+
+.todo-text.done {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+.sub-badge {
+    font-size: 10px;
+    background: var(--bg-input);
+    color: var(--primary-color);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: 800;
+    margin-left: 10px;
+    border: 1px solid var(--border-color);
+}
+
+.check-box {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.check-box.done {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Subtasks */
+.sub-task-container {
+    background: var(--bg-input);
+    display: none;
+    position: relative;
+    z-index: 11;
+}
+
+.sub-item {
+    padding: 10px 15px 10px 49px;
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sub-dot {
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid var(--text-muted);
+    border-radius: 3px;
+    margin-right: 12px;
+}
+
+.sub-dot.done {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    padding: 15px 20px;
+    z-index: 1000;
+    border-top: 1px solid var(--border-color);
+}
+
+.add-trigger {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    border-radius: 12px;
+    padding: 12px 15px;
+    width: 100%;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Modal Styles */
+.task-modal {
+    position: fixed;
+    bottom: -100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border-radius: 24px 24px 0 0;
+    z-index: 2100;
+    padding: 25px 20px;
+    transition: 0.4s;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-main);
+}
+
+.task-modal.open {
+    bottom: 0;
+}
+
+.modal-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-main);
+    width: 100%;
+    padding: 12px 0;
+    margin-bottom: 20px;
+    outline: none;
+    font-size: 16px;
+}
+
+.modal-input::placeholder {
+    color: var(--text-muted);
+}
+
+.sub-entry {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-main);
+    padding: 10px;
+    width: 100%;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+input[type="date"] {
+    color: var(--text-main);
+    background: transparent;
+}
+
+/* Invert calendar icon for dark mode only via filter if needed */
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}

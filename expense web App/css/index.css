@@ -1,0 +1,200 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+
+body {
+    background: var(--bg-main);
+    color: var(--text-main);
+    overflow-x: hidden;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* Shimmer Loading Effect */
+.shimmer-card {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    padding: 15px;
+    overflow: hidden;
+    position: relative;
+}
+
+.shimmer-item {
+    background: var(--bg-input);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+}
+
+.shimmer-item::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shimmer 1.5s infinite;
+}
+
+[data-theme="dark"] .shimmer-item::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+}
+
+@keyframes shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.shimmer-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.shimmer-title {
+    width: 140px;
+    height: 14px;
+    margin-bottom: 8px;
+}
+
+.shimmer-desc {
+    width: 100px;
+    height: 10px;
+}
+
+.shimmer-amt {
+    width: 60px;
+    height: 16px;
+}
+
+#overlayLoader {
+    display: none !important;
+}
+
+#topBar {
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+    background: var(--bg-card);
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Search Box with Clear Button */
+.search-wrapper {
+    flex-grow: 1;
+    margin: 0 10px;
+    position: relative;
+}
+
+#searchInput {
+    border-radius: 20px;
+    padding-left: 35px;
+    padding-right: 35px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+#searchInput:focus {
+    border-color: var(--primary-color);
+    box-shadow: none;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+#clearSearchBtn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: none;
+    font-size: 16px;
+}
+
+#balanceSummary {
+    position: sticky;
+    top: 52px;
+    z-index: 1000;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    padding: 10px 15px;
+    box-shadow: 0 4px 6px -1px var(--shadow-color);
+}
+
+.compact-stat {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.swipe-container {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-card);
+    touch-action: pan-y;
+    margin-bottom: 1px;
+}
+
+.swipe-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    display: flex;
+    visibility: hidden;
+}
+
+.swipe-actions button {
+    width: 65px;
+    border: none;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.btn-edit {
+    background: var(--primary-color);
+}
+
+.btn-delete {
+    background: #dc3545;
+}
+
+.swipe-content {
+    width: 100%;
+    background: var(--bg-card);
+    transition: transform .25s ease;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-main);
+}
+
+.date-header {
+    background: var(--bg-input);
+    padding: 6px 15px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.day-total-in {
+    color: #198754;
+    margin-right: 8px;
+}
+
+.day-total-out {
+    color: #dc3545;
+}
