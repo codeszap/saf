@@ -193,6 +193,9 @@ function renderDashboard() {
 
     const sortedDates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
 
+    const mainBox = document.createElement('div');
+    mainBox.className = "list-group-box";
+
     sortedDates.forEach(dateStr => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -223,14 +226,11 @@ function renderDashboard() {
         }
 
         if (showHeader) {
-            const header = document.createElement('div');
-            header.className = "section-header mt-3";
-            header.innerHTML = `<span class="section-header-title">${displayDate}</span>`;
-            container.appendChild(header);
+            const headerRow = document.createElement('div');
+            headerRow.className = "p-2 bg-light fw-bold small text-muted border-bottom border-top";
+            headerRow.innerText = displayDate;
+            mainBox.appendChild(headerRow);
         }
-
-        const box = document.createElement('div');
-        box.className = "list-group-box";
 
         groups[dateStr].forEach(r => {
             const total = (r.ingredients || []).reduce((acc, curr) => acc + (curr.checked ? (parseFloat(curr.price) || 0) : 0), 0);
@@ -255,10 +255,10 @@ function renderDashboard() {
                     <i class="bi bi-trash3 action-icon text-danger" onclick="deleteRecipeDirect(event, '${r.id}')"></i>
                 </div>
             `;
-            box.appendChild(wrapper);
+            mainBox.appendChild(wrapper);
         });
-        container.appendChild(box);
     });
+    container.appendChild(mainBox);
 }
 
 // SWIPE LOGIC
@@ -267,6 +267,7 @@ let touchMoveX = 0;
 let activeSwipeElement = null;
 
 window.handleTouchStart = function (e, prefix, id) {
+    if (e.target.closest('.drag-handle')) return; // Allow drag, ignore swipe
     touchStartX = e.touches[0].clientX;
     activeSwipeElement = document.getElementById(prefix + id);
     document.querySelectorAll('.list-item.swiped').forEach(el => {
@@ -565,7 +566,7 @@ function renderIngredients() {
                      ontouchstart="handleTouchStart(event, 'ing-', '${i.id}')"
                      ontouchmove="handleTouchMove(event)"
                      ontouchend="handleTouchEnd(event)">
-                    <div class="drag-handle" onpointerdown="event.stopPropagation()" ontouchstart="event.stopPropagation()"><i class="bi bi-grip-vertical"></i></div>
+                    <div class="drag-handle"><i class="bi bi-grip-vertical"></i></div>
                     <div class="custom-checkbox" onclick="event.stopPropagation(); toggleIngredient(${i.id})"></div>
                     <div class="recipe-item-content" onclick="viewIngredientDetail(event, ${i.id})">
                         <div class="item-title">${i.name}</div>
