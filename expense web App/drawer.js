@@ -66,6 +66,9 @@ function injectDrawer() {
         <div onclick="navigationHandler('debitcredit.html')" class="drawer-item ${page === 'debitcredit.html' ? 'active' : ''}" id="nav-debitcredit">
             <i class="bi bi-credit-card-2-back"></i> Debit Credit
         </div>
+        <div onclick="navigationHandler('insta.html')" class="drawer-item ${page === 'insta.html' ? 'active' : ''}" id="nav-insta">
+            <i class="bi bi-instagram"></i> Reels
+        </div>
         <div id="installAppBtn" onclick="installApp()" class="drawer-item" style="display:none; color: #2ecc71;">
             <i class="bi bi-download"></i> Install App
         </div>

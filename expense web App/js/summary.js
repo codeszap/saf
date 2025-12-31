@@ -53,9 +53,9 @@ function calculateAccountSums() {
         }
     });
 
-    document.getElementById('accCash').innerText = `₹\${accs.CASH.toFixed(2)}`;
-    document.getElementById('accBank').innerText = `₹\${accs.BANK.toFixed(2)}`;
-    document.getElementById('accOther').innerText = `₹\${accs.OTHER.toFixed(2)}`;
+    document.getElementById('accCash').innerText = `₹${accs.CASH.toFixed(2)}`;
+    document.getElementById('accBank').innerText = `₹${accs.BANK.toFixed(2)}`;
+    document.getElementById('accOther').innerText = `₹${accs.OTHER.toFixed(2)}`;
 
     const totalBal = accs.CASH + accs.BANK + accs.OTHER;
     const existingTotal = document.getElementById("accTotalRow");
@@ -67,7 +67,7 @@ function calculateAccountSums() {
         const totalRow = document.createElement("div");
         totalRow.id = "accTotalRow";
         totalRow.className = "d-flex justify-content-between mt-3 pt-2 border-top";
-        totalRow.innerHTML = `<span class="small fw-bold text-primary">TOTAL BALANCE</span><span class="fw-bold text-primary">₹\${totalBal.toFixed(2)}</span>`;
+        totalRow.innerHTML = `<span class="small fw-bold text-primary">TOTAL BALANCE</span><span class="fw-bold text-primary">₹${totalBal.toFixed(2)}</span>`;
         accContainer.appendChild(totalRow);
     }
 }
@@ -150,7 +150,7 @@ function updateDateLabel() {
             day: 'numeric',
             year: 'numeric'
         });
-        labelEl.innerText = `\${sStr} - \${eStr}`;
+        labelEl.innerText = `${sStr} - ${eStr}`;
     } else if (currentMode === 'month') {
         labelEl.innerText = currentDate.toLocaleDateString('en-GB', {
             month: 'long',
@@ -190,7 +190,7 @@ function filterAndRender() {
             const year = d.getFullYear();
             const month = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
-            const targetIso = `\${year}-\${month}-\${day}`;
+            const targetIso = `${year}-${month}-${day}`;
 
             start = new Date(d);
             end = new Date(d);
@@ -285,10 +285,10 @@ function filterAndRender() {
                 const diff = curExp - prevExp;
                 const pct = ((diff / prevExp) * 100).toFixed(0);
                 if (diff > 0) {
-                    compLabel.innerHTML = `<i class="bi bi-arrow-up"></i> \${pct}% more than prev`;
+                    compLabel.innerHTML = `<i class="bi bi-arrow-up"></i> ${pct}% more than prev`;
                     compLabel.className = "badge bg-danger text-wrap";
                 } else if (diff < 0) {
-                    compLabel.innerHTML = `<i class="bi bi-arrow-down"></i> \${Math.abs(pct)}% less than prev`;
+                    compLabel.innerHTML = `<i class="bi bi-arrow-down"></i> ${Math.abs(pct)}% less than prev`;
                     compLabel.className = "badge bg-success text-wrap";
                 } else {
                     compLabel.innerText = "Same as prev";
@@ -417,7 +417,7 @@ function renderTrends(data, startDate, endDate) {
 function showCategoryDetails(category, type) {
     const modalBody = document.getElementById('catModalBody');
     const catModalTitle = document.getElementById('catModalTitle');
-    if (catModalTitle) catModalTitle.innerText = `\${category} (\${type})`;
+    if (catModalTitle) catModalTitle.innerText = `${category} (${type})`;
     if (!modalBody) return;
     modalBody.innerHTML = '';
 
@@ -438,16 +438,16 @@ function showCategoryDetails(category, type) {
                 day: 'numeric',
                 month: 'short'
             });
-            const acc = t.account ? ` <span class="badge bg-secondary kv-badge" style="font-size:9px;">\${t.account}</span>` : '';
+            const acc = t.account ? ` <span class="badge bg-secondary kv-badge" style="font-size:9px;">${t.account}</span>` : '';
 
             html += `
                 <li class="list-group-item d-flex justify-content-between align-items-center" style="background:var(--bg-card); color:var(--text-main); border-color:var(--border-color);">
                     <div>
-                        <div class="fw-bold small">\${t.description || "No Description"}</div>
-                        <div class="text-muted" style="font-size:11px;">\${dateStr}\${acc}</div>
+                        <div class="fw-bold small">${t.description || "No Description"}</div>
+                        <div class="text-muted" style="font-size:11px;">${dateStr}${acc}</div>
                     </div>
-                    <span class="fw-bold \${type === 'Income' ? 'text-success' : 'text-danger'}">
-                        \${type === 'Income' ? '+' : '-'}₹\${Number(t.amount).toFixed(2)}
+                    <span class="fw-bold ${type === 'Income' ? 'text-success' : 'text-danger'}">
+                        ${type === 'Income' ? '+' : '-'}₹${Number(t.amount).toFixed(2)}
                     </span>
                 </li>`;
         });
@@ -467,7 +467,7 @@ function renderSection(listId, data, cls, sign, canvasId, typeLabel) {
     const keys = Object.keys(data);
 
     if (keys.length === 0) {
-        listDiv.innerHTML = `<div class="text-center text-muted small py-3">No \${typeLabel.toLowerCase()} recorded</div>`;
+        listDiv.innerHTML = `<div class="text-center text-muted small py-3">No ${typeLabel.toLowerCase()} recorded</div>`;
         return;
     }
 
@@ -495,10 +495,10 @@ function renderSection(listId, data, cls, sign, canvasId, typeLabel) {
 
         row.innerHTML = `
                 <div>
-                    <span class="fw-semibold small">\${k}</span>
-                    <span class="text-muted ms-2" style="font-size:10px;">(\${percent}%)</span>
+                    <span class="fw-semibold small">${k}</span>
+                    <span class="text-muted ms-2" style="font-size:10px;">(${percent}%)</span>
                 </div>
-                <span class="\${cls} fw-bold small">\${sign}₹\${val.toFixed(2)} <i class="bi bi-chevron-right text-muted ms-1" style="font-size:10px;"></i></span>
+                <span class="${cls} fw-bold small">${sign}₹${val.toFixed(2)} <i class="bi bi-chevron-right text-muted ms-1" style="font-size:10px;"></i></span>
         `;
         listDiv.appendChild(row);
     });
@@ -510,7 +510,7 @@ function renderSection(listId, data, cls, sign, canvasId, typeLabel) {
 
     totalRow.innerHTML = `
             <span class="small fw-bold">TOTAL</span>
-            <span class="\${cls} fw-bold small">\${sign}₹\${total.toFixed(2)}</span>
+            <span class="${cls} fw-bold small">${sign}₹${total.toFixed(2)}</span>
     `;
     listDiv.appendChild(totalRow);
 
@@ -567,7 +567,7 @@ function configChart(labels, data, colors, label) {
                             let val = context.parsed;
                             let total = context.dataset.data.reduce((a, b) => a + b, 0);
                             let pct = ((val / total) * 100).toFixed(1) + '%';
-                            return ` ₹\${val} (\${pct})`;
+                            return ` ₹${val} (${pct})`;
                         }
                     }
                 }

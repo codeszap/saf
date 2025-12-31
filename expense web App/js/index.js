@@ -194,15 +194,39 @@ function enableSwipe(row) {
     const content = row.querySelector(".swipe-content");
     const actions = row.querySelector(".swipe-actions");
     let startX = 0, moveX = 0;
+
+    // Swipe Logic
     content.addEventListener("touchstart", e => { startX = e.touches[0].clientX; actions.style.visibility = "visible"; }, { passive: true });
     content.addEventListener("touchmove", e => {
         moveX = e.touches[0].clientX - startX;
         if (moveX < 0) content.style.transform = `translateX(${Math.max(moveX, -195)}px)`;
     });
     content.addEventListener("touchend", () => {
-        if (moveX < -60) content.style.transform = "translateX(-195px)";
-        else { content.style.transform = "translateX(0)"; actions.style.visibility = "hidden"; }
+        if (moveX < -60) {
+            content.style.transform = "translateX(-195px)";
+        } else {
+            // If it was just a tap (not a swipe), let the click listener handle it.
+            // But if it was a small swipe that didn't cross threshold, revert.
+            if (moveX === 0) return; // Let click bubble
+            content.style.transform = "translateX(0)";
+            setTimeout(() => actions.style.visibility = "hidden", 300);
+        }
         moveX = 0;
+    });
+
+    // Tap/Click to Toggle Logic
+    content.addEventListener("click", () => {
+        // Check current state
+        const currentTransform = content.style.transform;
+        if (currentTransform === "translateX(-195px)") {
+            // Close
+            content.style.transform = "translateX(0)";
+            setTimeout(() => actions.style.visibility = "hidden", 300);
+        } else {
+            // Open (and close others if needed, but for now simple toggle)
+            actions.style.visibility = "visible";
+            content.style.transform = "translateX(-195px)";
+        }
     });
 }
 

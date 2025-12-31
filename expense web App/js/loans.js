@@ -565,33 +565,33 @@ function showReport() {
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <div class="fw-bold text-primary fs-5">${s.name}</div>
-                            <div class="small text-muted">${s.totalDues > 0 ?\`Monthly Loan (\${s.totalDues} Dues)\` : 'One-time Loan'}</div>
+                            <div class="small text-muted">${s.totalDues > 0 ? `Monthly Loan (${s.totalDues} Dues)` : 'One-time Loan'}</div>
                         </div>
-                        <div class="badge \${s.pendingVal === 0 ? 'bg-success' : 'bg-warning'} rounded-pill">
-                            \${s.pendingVal === 0 ? 'COMPLETED' : 'ACTIVE'}
+                        <div class="badge ${s.pendingVal === 0 ? 'bg-success' : 'bg-warning'} rounded-pill">
+                            ${s.pendingVal === 0 ? 'COMPLETED' : 'ACTIVE'}
                         </div>
                     </div>
                     
                     <div class="progress mb-3" style="height: 6px; background: var(--bg-card);">
-                        <div class="progress-bar bg-primary" role="progressbar" style="width: \${percent}%; border-radius: 6px;"></div>
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: ${percent}%; border-radius: 6px;"></div>
                     </div>
 
                     <div class="report-grid">
                         <div class="report-item">
                             <div class="report-label">Monthly EMI</div>
-                            <div class="report-value text-primary">₹\${s.amount.toLocaleString()}</div>
+                            <div class="report-value text-primary">₹${s.amount.toLocaleString()}</div>
                         </div>
                         <div class="report-item">
                             <div class="report-label">Total Loan</div>
-                            <div class="report-value">₹\${s.totalVal.toLocaleString()}</div>
+                            <div class="report-value">₹${s.totalVal.toLocaleString()}</div>
                         </div>
                         <div class="report-item">
                             <div class="report-label">Remaining</div>
-                            <div class="report-value text-danger">₹\${s.pendingVal.toLocaleString()}</div>
+                            <div class="report-value text-danger">₹${s.pendingVal.toLocaleString()}</div>
                         </div>
                         <div class="report-item">
                             <div class="report-label">Dues Progress</div>
-                            <div class="report-value">\${progress}/\${totalSteps}</div>
+                            <div class="report-value">${progress}/${totalSteps}</div>
                         </div>
                     </div>
                 </div>
@@ -599,7 +599,7 @@ function showReport() {
             });
         } else {
             // Render Table Mode
-            itemsHtml = \`
+            itemsHtml = `
             <div class="table-responsive">
                 <table class="report-table">
                     <thead>
@@ -612,7 +612,7 @@ function showReport() {
                         </tr>
                     </thead>
                     <tbody>
-            \`;
+            `;
 
             reportData.forEach(s => {
                 grandTotal += s.totalVal;
@@ -623,32 +623,32 @@ function showReport() {
                 const progress = s.totalDues > 0 ? (s.isSettled ? s.latestDue : s.latestDue - 1) : (s.isSettled ? 1 : 0);
                 const totalSteps = s.totalDues > 0 ? s.totalDues : 1;
 
-                itemsHtml += \`
+                itemsHtml += `
                 <tr>
                     <td>
-                        <div class="text-primary text-truncate" style="max-width: 70px;">\${s.name}</div>
+                        <div class="text-primary text-truncate" style="max-width: 70px;">${s.name}</div>
                     </td>
-                    <td class="text-center" style="font-size: 10px;">₹\${s.amount.toLocaleString()}</td>
+                    <td class="text-center" style="font-size: 10px;">₹${s.amount.toLocaleString()}</td>
                     <td class="text-center">
                         <span class="badge bg-light text-dark border" style="font-size: 9px; font-weight: 800; padding: 3px 6px;">
-                            \${progress}/\${totalSteps}
+                            ${progress}/${totalSteps}
                         </span>
                     </td>
-                    <td class="text-end text-danger" style="font-size: 10px;">₹\${s.pendingVal.toLocaleString()}</td>
-                    <td class="text-end" style="font-size: 10px; opacity: 0.7;">₹\${s.totalVal.toLocaleString()}</td>
+                    <td class="text-end text-danger" style="font-size: 10px;">₹${s.pendingVal.toLocaleString()}</td>
+                    <td class="text-end" style="font-size: 10px; opacity: 0.7;">₹${s.totalVal.toLocaleString()}</td>
                 </tr>
-                \`;
+                `;
             });
 
-            itemsHtml += \`
+            itemsHtml += `
                     </tbody>
                 </table>
             </div>
-            \`;
+            `;
         }
     }
 
-    const headerHtml = \`
+    const headerHtml = `
         <div class="report-card mb-4" style="background: linear-gradient(135deg, var(--primary-color), #a855f7); border: none;">
             <div class="row text-center g-0">
                 <div class="col-12 mb-3">
@@ -656,34 +656,34 @@ function showReport() {
                 </div>
                 <div class="col-12">
                     <div class="d-flex justify-content-between align-items-center px-3 mb-1">
-                        <div class="text-white opacity-75" style="font-size: 10px; font-weight: 700;">TOTAL PAID: ₹\${grandPaid.toLocaleString()}</div>
-                        <div class="text-white fw-bold" style="font-size: 10px;">\${Math.round((grandPaid / grandTotal * 100) || 0)}% Done</div>
+                        <div class="text-white opacity-75" style="font-size: 10px; font-weight: 700;">TOTAL PAID: ₹${grandPaid.toLocaleString()}</div>
+                        <div class="text-white fw-bold" style="font-size: 10px;">${Math.round((grandPaid / grandTotal * 100) || 0)}% Done</div>
                     </div>
                     <div class="progress mx-3" style="height: 6px; background: rgba(255,255,255,0.2); border-radius: 10px;">
-                        <div class="progress-bar bg-white" style="width: \${(grandPaid / grandTotal * 100) || 0}%; border-radius: 10px;"></div>
+                        <div class="progress-bar bg-white" style="width: ${(grandPaid / grandTotal * 100) || 0}%; border-radius: 10px;"></div>
                     </div>
                 </div>
             </div>
         </div>
         <h6 class="fw-bold mb-3 px-1">Detailed Breakdown</h6>
-    \`;
+    `;
 
-    const footerHtml = \`
+    const footerHtml = `
         <div class="row text-center g-0">
             <div class="col-4 border-end border-color">
                 <div class="report-label" style="font-size: 8px;">Monthly EMI</div>
-                <div class="fw-bold text-primary" style="font-size: 13px;">₹\${grandMonthly.toLocaleString()}</div>
+                <div class="fw-bold text-primary" style="font-size: 13px;">₹${grandMonthly.toLocaleString()}</div>
             </div>
             <div class="col-4 border-end border-color">
                 <div class="report-label" style="font-size: 8px;">Remaining</div>
-                <div class="fw-bold text-danger" style="font-size: 13px;">₹\${grandPending.toLocaleString()}</div>
+                <div class="fw-bold text-danger" style="font-size: 13px;">₹${grandPending.toLocaleString()}</div>
             </div>
             <div class="col-4">
                 <div class="report-label" style="font-size: 8px;">Total Loan</div>
-                <div class="fw-bold text-main" style="font-size: 13px;">₹\${grandTotal.toLocaleString()}</div>
+                <div class="fw-bold text-main" style="font-size: 13px;">₹${grandTotal.toLocaleString()}</div>
             </div>
         </div>
-    \`;
+    `;
 
     reportContent.innerHTML = headerHtml + itemsHtml;
     document.getElementById('reportFooter').innerHTML = footerHtml;

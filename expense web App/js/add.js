@@ -19,9 +19,13 @@ typeSelect.addEventListener("change", (e) => {
     }
 });
 
-const today = new Date().toISOString().split('T')[0];
 const now = new Date();
 const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+
+const year = now.getFullYear();
+const month = String(now.getMonth() + 1).padStart(2, '0');
+const day = String(now.getDate()).padStart(2, '0');
+const today = `${year}-${month}-${day}`;
 
 document.getElementById("dateInput").value = today;
 document.getElementById("timeInput").value = currentTime;
@@ -61,8 +65,19 @@ if (docId) {
         transactionsCol.doc(duplicateId).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
-                // Keep today's date for duplicate
-                form.time.value = data.time || currentTime;
+                // Reset Date and Time to NOW for duplicates (Do not copy from old data)
+                const nowFresh = new Date();
+                const timeString = nowFresh.getHours().toString().padStart(2, '0') + ':' + nowFresh.getMinutes().toString().padStart(2, '0');
+
+                // Use local date to avoid UTC mismatch
+                const year = nowFresh.getFullYear();
+                const month = String(nowFresh.getMonth() + 1).padStart(2, '0');
+                const day = String(nowFresh.getDate()).padStart(2, '0');
+                const dateString = `${year}-${month}-${day}`;
+
+                form.date.value = dateString;
+                form.time.value = timeString;
+
                 form.type.value = data.type;
                 form.amount.value = data.amount;
                 form.account.value = data.account;
