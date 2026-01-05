@@ -28,8 +28,19 @@
                     placeholder="SEARCH CAT, AMT, DESC..." oninput="handleSearch()">
                 <i class="bi bi-x-circle-fill" id="clearSearchBtn" onclick="clearSearch()"></i>
             </div>
-            <i class="bi bi-bar-chart-line fs-5 text-dark" onclick="window.location.href='summary.html'"></i>
+            <div class="d-flex gap-3 align-items-center">
+                <i class="bi bi-ui-checks fs-5 text-dark" id="selectModeBtn" onclick="toggleSelectionMode()"
+                    style="cursor: pointer;"></i>
+                <i class="bi bi-bar-chart-line fs-5 text-dark" onclick="window.location.href='summary.html'"></i>
+            </div>
         </div>
+
+        <!-- Multi-Delete FAB -->
+        <button id="deleteSelectedBtn"
+            class="btn btn-danger position-fixed start-50 translate-middle-x shadow-lg rounded-pill px-4 fw-bold"
+            style="bottom: 80px; z-index: 1050; display: none;" onclick="deleteSelectedItems()">
+            <i class="bi bi-trash-fill me-2"></i> DELETE (<span id="selectedCount">0</span>)
+        </button>
 
         <div id="balanceSummary">
             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -53,11 +64,50 @@
             <div class="row g-0 pt-2 border-top text-center" id="accountBreakdown" style="font-size: 10px;"></div>
         </div>
 
+        <div id="monthNav"
+            class="d-flex justify-content-between align-items-center mb-3 mt-2 px-3 bg-light py-2 rounded">
+            <button class="btn btn-sm btn-outline-secondary border-0" onclick="changeMonth(-1)">
+                <i class="bi bi-caret-left-fill fs-4"></i>
+            </button>
+            <span id="currentMonthLabel" class="fw-bold text-primary text-uppercase"
+                style="font-size: 1.1rem; letter-spacing: 1px;"></span>
+            <button class="btn btn-sm btn-outline-secondary border-0" onclick="changeMonth(1)">
+                <i class="bi bi-caret-right-fill fs-4"></i>
+            </button>
+        </div>
+
         <div id="transactionList" class="pb-5"></div>
         <button id="loadMoreBtn" class="btn btn-light btn-sm w-100 py-2 text-primary fw-bold"
             onclick="loadTransactions(true)" style="display:none; border-radius:0;">LOAD OLDER</button>
     </div>
 
+    <!-- Transaction Options Modal -->
+    <div class="modal fade" id="txOptionsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content rounded-4 shadow">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="txModalTitle">Transaction</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-2 text-center">
+                    <p class="text-muted small mb-4" id="txModalDesc">Details here...</p>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary fw-bold" id="btnCopyTx">
+                            <i class="bi bi-files me-2"></i>Duplicate / Copy
+                        </button>
+                        <button class="btn btn-outline-dark fw-bold" id="btnEditTx">
+                            <i class="bi bi-pencil-square me-2"></i>Edit Transaction
+                        </button>
+                        <button class="btn btn-outline-danger fw-bold" id="btnDeleteTx">
+                            <i class="bi bi-trash me-2"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="drawer.js"></script>

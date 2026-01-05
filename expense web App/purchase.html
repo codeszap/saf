@@ -21,11 +21,20 @@
         <h6 class="mb-0 fw-bold d-none d-sm-block">Shopping List</h6>
 
         <div class="header-search">
-            <i class="bi bi-search text-muted small"></i>
+            <div class="position-relative d-inline-block me-2" data-bs-toggle="offcanvas" data-bs-target="#filterSheet"
+                style="cursor: pointer;">
+                <i class="bi bi-funnel text-muted small"></i>
+                <span id="filterIndicatorDot"
+                    class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
+                    style="display: none; width: 8px; height: 8px;"></span>
+            </div>
             <input type="text" id="searchInput" placeholder="Search items..." oninput="handleSearch()">
         </div>
 
-        <i class="bi bi-trash3 text-danger fs-5" onclick="confirmClear()"></i>
+        <div class="d-flex gap-3 align-items-center">
+            <i class="bi bi-plus-circle-fill text-primary fs-3" onclick="openModal()"></i>
+            <i class="bi bi-trash3 text-danger fs-5" onclick="confirmClear()"></i>
+        </div>
     </div>
 
     <div class="dashboard">
@@ -47,23 +56,48 @@
         </div>
     </div>
 
-    <!-- Consolidated Tabs & Filters -->
-    <div class="px-3">
-        <div class="filter-scroll">
-            <div class="filter-chip tab-chip active" id="chip-pending" onclick="setTabFilter('pending', this)">Pending
+    </div>
+
+    <!-- Main Tabs -->
+    <div class="px-3 mb-2">
+        <div class="d-flex bg-light rounded-pill p-1 border">
+            <button class="btn btn-sm w-50 rounded-pill fw-bold btn-primary" id="tab-pending"
+                onclick="setTabFilter('pending', this)">PENDING</button>
+            <button class="btn btn-sm w-50 rounded-pill fw-bold text-muted" id="tab-history"
+                onclick="setTabFilter('history', this)">HISTORY</button>
+        </div>
+    </div>
+
+    <!-- Dynamic Tags Only -->
+    <div class="px-3" id="tagScrollContainer">
+        <div class="filter-scroll" id="categoryFilters"></div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="offcanvas offcanvas-bottom rounded-top-4 h-auto" tabindex="-1" id="filterSheet">
+        <div class="offcanvas-header pb-0">
+            <h5 class="offcanvas-title fw-bold">Filters</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body small pb-5 mb-5">
+            <h6 class="text-muted mb-3 small fw-bold">STATUS</h6>
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <button class="btn btn-outline-dark btn-sm rounded-pill filter-btn active" data-filter="all"
+                    onclick="setFilter('all', this)">ALL ITEMS</button>
+                <button class="btn btn-outline-dark btn-sm rounded-pill filter-btn" data-filter="checked"
+                    onclick="setFilter('checked', this)">CHECKED</button>
+                <button class="btn btn-outline-dark btn-sm rounded-pill filter-btn" data-filter="unchecked"
+                    onclick="setFilter('unchecked', this)">UNCHECKED</button>
+                <button class="btn btn-outline-dark btn-sm rounded-pill filter-btn" data-filter="priority"
+                    onclick="setFilter('priority', this)">STARRED ONLY</button>
             </div>
-            <div class="filter-chip tab-chip" id="chip-history" onclick="setTabFilter('history', this)">History</div>
-            <div style="width: 1px; background: var(--border-color); margin: 5px 5px 15px 5px; flex-shrink: 0;"></div>
-            <div class="filter-chip" onclick="setFilter('all', this)">All</div>
-            <div class="filter-chip" onclick="setFilter('checked', this)">Checked</div>
-            <div class="filter-chip" onclick="setFilter('unchecked', this)">Unchecked</div>
-            <div class="filter-chip" onclick="setFilter('priority', this)">Starred</div>
         </div>
     </div>
 
     <div class="items-grid" id="purchaseList"></div>
 
-    <button class="add-fab" onclick="openModal()"><i class="bi bi-plus-lg"></i></button>
+
+
 
     <div class="modal fade" id="itemModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -84,8 +118,9 @@
 
                     <div class="mb-3">
                         <label class="small text-muted mb-2">Item Name</label>
-                        <input type="text" id="itemName" class="form-control" placeholder="E.g., Milk, Battery"
-                            list="itemSuggestions">
+                        <input type="text" id="itemName" class="form-control text-uppercase"
+                            placeholder="E.g., Milk, Battery" list="itemSuggestions"
+                            oninput="this.value = this.value.toUpperCase()">
                         <datalist id="itemSuggestions"></datalist>
                     </div>
 
@@ -93,7 +128,7 @@
                         <div class="col-7">
                             <label class="small text-muted mb-2">Category</label>
                             <div class="searchable-dropdown" id="categoryDropdown">
-                                <input type="text" class="form-control" id="itemCategoryInput"
+                                <input type="text" class="form-control text-uppercase" id="itemCategoryInput"
                                     placeholder="Select category..." autocomplete="off">
                                 <div class="options-list" id="categoryOptions">
                                     <div class="option-item" data-value="GROCERY">GROCERY</div>
@@ -112,11 +147,19 @@
                         </div>
                     </div>
 
+                    <div class="mb-3">
+                        <label class="small text-muted mb-2">Tag (For Filtering)</label>
+                        <input type="text" id="itemTagInput" class="form-control text-uppercase"
+                            placeholder="e.g. DMART, ONLINE" list="tagSuggestions"
+                            oninput="this.value = this.value.toUpperCase()">
+                        <datalist id="tagSuggestions"></datalist>
+                    </div>
+
                     <div class="row g-2 mb-3">
                         <div class="col">
                             <label class="small text-muted mb-2">Account (When Bought)</label>
                             <div class="searchable-dropdown" id="accountDropdown">
-                                <input type="text" class="form-control" id="itemAccountInput"
+                                <input type="text" class="form-control text-uppercase" id="itemAccountInput"
                                     placeholder="Select account..." autocomplete="off">
                                 <div class="options-list" id="accountOptions">
                                     <div class="option-item" data-value="BANK">BANK</div>
@@ -133,7 +176,7 @@
                     </div>
                     <p class="text-muted" style="font-size:10px;">* Marking as "Bought" will auto-add to Expenses.</p>
                 </div>
-                <div class="modal-footer border-0 p-3 pt-0">
+                <div class="modal-footer border-0 p-3 pt-0 pb-5 mb-5">
                     <button class="btn btn-primary w-100 py-3 fw-bold rounded-4 shadow" onclick="saveItem()">SAVE
                         ITEM</button>
                 </div>

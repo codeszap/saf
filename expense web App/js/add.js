@@ -1,27 +1,17 @@
 const transactionsCol = db.collection('transactions');
 const form = document.getElementById("transactionForm");
 const typeSelect = document.getElementById("typeSelect");
+const accountSelect = document.getElementById("accountSelect");
 const toAccountDiv = document.getElementById("toAccountDiv");
-const fromAccLabel = document.getElementById("fromAccLabel");
-const saveAddMoreBtn = document.getElementById("saveAddMoreBtn");
+const itemsContainer = document.getElementById("itemsContainer");
+const addItemBtn = document.getElementById("addItemBtn");
+const saveButton = document.getElementById("saveButton");
 const statusMsg = document.getElementById("statusMsg");
+const totalAmountDisplay = document.getElementById("totalAmountDisplay");
 
-// Logic to show/hide To Account for Transfers
-typeSelect.addEventListener("change", (e) => {
-    if (e.target.value === "Transfer") {
-        toAccountDiv.classList.remove("d-none");
-        fromAccLabel.innerText = "FROM";
-        form.toAccount.required = true;
-    } else {
-        toAccountDiv.classList.add("d-none");
-        fromAccLabel.innerText = "ACCOUNT";
-        form.toAccount.required = false;
-    }
-});
-
+// --- Global Date/Time/Type Setup ---
 const now = new Date();
 const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-
 const year = now.getFullYear();
 const month = String(now.getMonth() + 1).padStart(2, '0');
 const day = String(now.getDate()).padStart(2, '0');
@@ -30,341 +20,265 @@ const today = `${year}-${month}-${day}`;
 document.getElementById("dateInput").value = today;
 document.getElementById("timeInput").value = currentTime;
 
+// Logic to show/hide To Account for Transfers
+typeSelect.addEventListener("change", (e) => {
+    if (e.target.value === "Transfer") {
+        toAccountDiv.classList.remove("d-none");
+        form.toAccount.required = true;
+    } else {
+        toAccountDiv.classList.add("d-none");
+        form.toAccount.required = false;
+    }
+});
+
+// --- Dynamic Items Logic ---
+function createItemRow(data = {}) {
+    const amount = data.amount || "";
+    const category = data.category || "";
+    const description = data.description || "";
+
+    const rowId = 'row-' + Date.now() + Math.random().toString(36).substr(2, 5);
+    const div = document.createElement("div");
+    div.className = "item-row card card-body p-3 mb-3 bg-light border position-relative";
+    div.id = rowId;
+
+    div.innerHTML = `
+        <button type="button" class="btn-close position-absolute top-0 end-0 m-2 small" aria-label="Remove" onclick="removeItem('${rowId}')"></button>
+        <div class="row g-2">
+            <div class="col-4">
+               <label class="form-label small fw-bold">AMOUNT</label>
+               <input type="text" class="form-control fw-bold amount-input" placeholder="0" value="${amount}" inputmode="decimal" oninput="calculateTotal()" onblur="evalInput(this)">
+            </div>
+            <div class="col-8">
+               <label class="form-label small fw-bold">CATEGORY</label>
+               <input type="text" class="form-control category-input text-uppercase" placeholder="CAT" value="${category}" onfocus="loadSuggestionsFor(this)">
+            </div>
+            <div class="col-12">
+               <input type="text" class="form-control form-control-sm desc-input" placeholder="Description (Optional)" value="${description}">
+            </div>
+        </div>
+    `;
+    itemsContainer.appendChild(div);
+    calculateTotal();
+}
+
+// Make removeItem global so onclick works
+window.removeItem = function (id) {
+    if (itemsContainer.children.length > 1) {
+        document.getElementById(id).remove();
+        calculateTotal();
+    } else {
+        const row = document.getElementById(id);
+        row.querySelector('.amount-input').value = "";
+        row.querySelector('.category-input').value = "";
+        row.querySelector('.desc-input').value = "";
+        calculateTotal(); // Update total to 0 if cleared
+    }
+};
+
+addItemBtn.addEventListener("click", () => {
+    const rows = document.querySelectorAll(".item-row");
+    if (rows.length > 0) {
+        const lastRow = rows[rows.length - 1];
+        const amt = lastRow.querySelector(".amount-input").value.trim();
+        const cat = lastRow.querySelector(".category-input").value.trim();
+
+        if (!amt || !cat) {
+            // Highlight them or just alert
+            if (!amt) lastRow.querySelector(".amount-input").focus();
+            else if (!cat) lastRow.querySelector(".category-input").focus();
+
+            // Optional: Shake effect or red border could be added here
+            return; // Stop here
+        }
+    }
+    createItemRow();
+});
+
+window.calculateTotal = function () {
+    let total = 0;
+    const inputs = document.querySelectorAll(".amount-input");
+    inputs.forEach(inp => {
+        let val = parseFloat(inp.value) || 0;
+        total += val;
+    });
+    totalAmountDisplay.innerText = `₹${total.toLocaleString('en-IN')}`;
+};
+
+window.evalInput = function (input) {
+    let result = evaluateExpression(input.value);
+    if (result !== null && input.value.split('').some(c => ['+', '-', '*', '/'].includes(c))) {
+        input.value = result;
+    }
+    calculateTotal();
+};
+
+function evaluateExpression(str) {
+    try {
+        let cleaned = str.replace(/[^0-9+\-*/.()]/g, '');
+        if (!cleaned) return null;
+        let result = new Function(`return ${cleaned}`)();
+        return isFinite(result) ? parseFloat(result.toFixed(2)) : null;
+    } catch (e) { return null; }
+}
+
+
+// --- Params & Edit/Duplicate Logic ---
 const params = new URLSearchParams(window.location.search);
 let isEditMode = false;
 let docId = params.get('id');
 
-const saveButton = document.getElementById("saveButton");
+// Clear container initially
+itemsContainer.innerHTML = "";
 
 if (docId) {
     isEditMode = true;
     document.getElementById("formTitle").textContent = "Edit Transaction";
     saveButton.textContent = "Update Transaction";
+    addItemBtn.style.display = "none"; // Simplified edit
 
     transactionsCol.doc(docId).get().then(doc => {
         if (doc.exists) {
             const data = doc.data();
             form.date.value = data.date;
-            form.time.value = data.time || "12:00"; // Default if missing
-            form.type.value = data.type;
-            form.amount.value = data.amount;
-            form.account.value = data.account;
-            form.category.value = data.category || "";
-            form.description.value = data.description || "";
-
+            form.time.value = data.time || "12:00";
+            typeSelect.value = data.type;
             if (data.type === "Transfer") {
                 typeSelect.dispatchEvent(new Event('change'));
                 form.toAccount.value = data.toAccount;
             }
+            accountSelect.value = data.account;
+
+            createItemRow({
+                amount: data.amount,
+                category: data.category,
+                description: data.description
+            });
         }
     });
+
 } else {
+    // Default Empty Row
     const duplicateId = params.get('duplicate');
     if (duplicateId) {
         document.getElementById("formTitle").textContent = "Duplicate Transaction";
         transactionsCol.doc(duplicateId).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
-                // Reset Date and Time to NOW for duplicates (Do not copy from old data)
-                const nowFresh = new Date();
-                const timeString = nowFresh.getHours().toString().padStart(2, '0') + ':' + nowFresh.getMinutes().toString().padStart(2, '0');
-
-                // Use local date to avoid UTC mismatch
-                const year = nowFresh.getFullYear();
-                const month = String(nowFresh.getMonth() + 1).padStart(2, '0');
-                const day = String(nowFresh.getDate()).padStart(2, '0');
-                const dateString = `${year}-${month}-${day}`;
-
-                form.date.value = dateString;
-                form.time.value = timeString;
-
-                form.type.value = data.type;
-                form.amount.value = data.amount;
-                form.account.value = data.account;
-                form.category.value = data.category || "";
-                form.description.value = data.description || "";
-
+                accountSelect.value = data.account;
+                typeSelect.value = data.type;
                 if (data.type === "Transfer") {
                     typeSelect.dispatchEvent(new Event('change'));
                     form.toAccount.value = data.toAccount;
                 }
+                createItemRow({
+                    amount: data.amount,
+                    category: data.category,
+                    description: data.description
+                });
             }
         });
+    } else {
+        createItemRow();
     }
 }
 
-const amountInput = document.getElementById("amountInput");
-const voiceFab = document.getElementById("voiceFab");
-const voiceStatusOverlay = document.getElementById("voiceStatusOverlay");
+// --- Save Logic ---
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-// --- Mini Calculator Logic ---
-function evaluateExpression(str) {
-    try {
-        // Basic cleanup: remove everything except numbers and + - * / . ( )
-        let cleaned = str.replace(/[^0-9+\-*/.()]/g, '');
-        if (!cleaned) return null;
-        // Use Function constructor instead of eval for a bit more safety in a controlled env
-        let result = new Function(`return ${cleaned}`)();
-        return isFinite(result) ? parseFloat(result.toFixed(2)) : null;
-    } catch (e) {
-        return null;
+    const date = form.date.value;
+    const time = form.time.value;
+    const type = typeSelect.value;
+    const account = accountSelect.value;
+    let toAccount = null;
+    if (type === "Transfer") {
+        toAccount = form.toAccount.value;
     }
-}
 
-amountInput.addEventListener("blur", function () {
-    let result = evaluateExpression(this.value);
-    if (result !== null && this.value.includesAny(['+', '-', '*', '/'])) {
-        this.value = result;
+    const rows = document.querySelectorAll(".item-row");
+    const batchData = [];
+
+    for (let row of rows) {
+        const amtInput = row.querySelector(".amount-input");
+        const catInput = row.querySelector(".category-input");
+        const descInput = row.querySelector(".desc-input");
+
+        let amt = parseFloat(amtInput.value);
+        if (!amt || amt <= 0) continue;
+
+        if (!catInput.value.trim()) {
+            alert("Category is required for all items");
+            return;
+        }
+
+        batchData.push({
+            date, time, type, account, toAccount,
+            amount: amt,
+            category: catInput.value.trim().toUpperCase(),
+            description: descInput.value.trim().toUpperCase(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
     }
-});
 
-// Helper for includesAny
-String.prototype.includesAny = function (arr) {
-    return arr.some(v => this.includes(v));
-};
-
-// --- Advanced Voice Input Logic ---
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (!SpeechRecognition) {
-    voiceFab.style.display = "none";
-} else {
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-    let isListening = false;
-
-    voiceFab.addEventListener("click", () => {
-        if (isListening) {
-            recognition.stop();
-        } else {
-            try {
-                recognition.start();
-            } catch (e) {
-                recognition.stop();
-            }
-        }
-    });
-
-    recognition.onstart = () => {
-        isListening = true;
-        voiceFab.classList.add("listening");
-        voiceStatusOverlay.style.display = "block";
-        voiceStatusOverlay.innerText = "Listening...";
-    };
-
-    recognition.onresult = (event) => {
-        isListening = false;
-        const text = event.results[0][0].transcript.toLowerCase();
-        voiceStatusOverlay.innerText = `Heard: "${text}"`;
-
-        // --- SMART PARSING ---
-        // 1. TYPE
-        const types = ["expense", "income", "transfer"];
-        const foundType = types.find(t => text.includes(t));
-        if (foundType) {
-            form.type.value = foundType.charAt(0).toUpperCase() + foundType.slice(1);
-            typeSelect.dispatchEvent(new Event('change'));
-        }
-
-        // 2. AMOUNT
-        const amountMatch = text.match(/\d+/);
-        if (amountMatch) {
-            amountInput.value = amountMatch[0];
-        }
-
-        // 3. ACCOUNT (Detect Bank/Cash)
-        const accounts = ["bank", "cash", "other"];
-        const words = text.split(" ");
-        let accountFoundCount = 0;
-
-        words.forEach((word, idx) => {
-            const found = accounts.find(a => word.includes(a));
-            if (found) {
-                accountFoundCount++;
-                if (accountFoundCount === 1) {
-                    form.account.value = found.toUpperCase();
-                } else if (accountFoundCount === 2 && form.type.value === "Transfer") {
-                    form.toAccount.value = found.toUpperCase();
-                }
-            }
-        });
-
-        // 4. CATEGORY (Everything else that isn't a keyword)
-        let categoryText = text;
-        [...types, ...accounts, ...(amountMatch ? [amountMatch[0]] : []), "from", "to", "for", "account"].forEach(kw => {
-            categoryText = categoryText.replace(new RegExp(`\\b${kw}\\b`, 'g'), "");
-        });
-
-        const finalCategory = categoryText.trim().replace(/\s+/g, " ");
-        if (finalCategory) {
-            document.getElementById("categoryInput").value = finalCategory.toUpperCase();
-        }
-
-        setTimeout(() => {
-            if (!isListening) voiceStatusOverlay.style.display = "none";
-        }, 3000);
-    };
-
-    recognition.onerror = () => {
-        isListening = false;
-        voiceStatusOverlay.innerText = "Error! Try again.";
-        setTimeout(() => {
-            if (!isListening) voiceStatusOverlay.style.display = "none";
-        }, 2000);
-    };
-
-    recognition.onend = () => {
-        isListening = false;
-        voiceFab.classList.remove("listening");
-    };
-}
-
-// Helper to show success message briefly
-function showStatus() {
-    statusMsg.classList.remove("d-none");
-    setTimeout(() => statusMsg.classList.add("d-none"), 2000);
-}
-
-// Helper to reset form but keep Date and Account (for speed)
-function resetForm() {
-    amountInput.value = "";
-    form.category.value = "";
-    form.description.value = "";
-    amountInput.focus();
-    saveButton.disabled = false;
-    saveAddMoreBtn.disabled = false;
-    saveButton.textContent = isEditMode ? "Update Transaction" : "SAVE & CLOSE";
-    saveAddMoreBtn.textContent = "+ SAVE MORE";
-}
-
-async function handleSave(stayOnPage = false) {
-    // First check if amount needs evaluation
-    let finalAmt = evaluateExpression(amountInput.value);
-    if (finalAmt === null) finalAmt = parseFloat(amountInput.value);
-
-    if (!finalAmt || finalAmt <= 0) return alert("Enter valid amount");
-    if (!form.category.value.trim()) return alert("Category is required");
-
-    const transactionData = {
-        date: form.date.value,
-        time: form.time.value,
-        type: form.type.value,
-        amount: finalAmt,
-        account: form.account.value,
-        category: form.category.value.trim().toUpperCase(),
-        description: form.description.value.trim().toUpperCase(),
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    if (form.type.value === "Transfer") {
-        transactionData.toAccount = form.toAccount.value;
+    if (batchData.length === 0) {
+        alert("Please add at least one valid item.");
+        return;
     }
 
     saveButton.disabled = true;
-    saveAddMoreBtn.disabled = true;
-    const originalBtnText = stayOnPage ? saveAddMoreBtn.textContent : saveButton.textContent;
-
-    if (stayOnPage) saveAddMoreBtn.textContent = "Saving...";
-    else saveButton.textContent = "Saving...";
+    saveButton.textContent = "Saving...";
 
     try {
         if (isEditMode) {
-            await transactionsCol.doc(docId).update(transactionData);
+            const d = batchData[0];
+            delete d.createdAt;
+            await transactionsCol.doc(docId).update(d);
         } else {
-            await transactionsCol.add(transactionData);
+            const batch = db.batch();
+            batchData.forEach(data => {
+                const docRef = transactionsCol.doc();
+                batch.set(docRef, data);
+            });
+            await batch.commit();
         }
-
-        if (stayOnPage) {
-            showStatus();
-            resetForm();
-            loadSuggestions(); // Reload suggestions for autocomplete
-        } else {
-            window.location.replace("index.html");
-        }
+        window.location.replace("index.html");
     } catch (err) {
-        alert("Error: " + err);
+        console.error(err);
+        alert("Error saving: " + err.message);
         saveButton.disabled = false;
-        saveAddMoreBtn.disabled = false;
-        if (stayOnPage) saveAddMoreBtn.textContent = originalBtnText;
-        else saveButton.textContent = originalBtnText;
+        saveButton.textContent = isEditMode ? "Update Transaction" : "SAVE ALL TRANSACTIONS";
     }
-}
-
-form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    await handleSave(false);
 });
 
-saveAddMoreBtn.addEventListener("click", async () => {
-    await handleSave(true);
-});
 
-// --- Custom Autocomplete Logic ---
+// --- Autocomplete Hook ---
+window.loadSuggestionsFor = function (inputElement) {
+    if (inputElement.getAttribute("data-loaded") === "true") return;
+    initAutocomplete(inputElement);
+    inputElement.setAttribute("data-loaded", "true");
+};
 
-function autocomplete(inp, arr) {
-    let currentFocus;
-
-    inp.addEventListener("input", function (e) {
-        let a, b, i, val = this.value;
-        closeAllLists();
-        if (!val) { return false; }
-        currentFocus = -1;
-
-        a = document.createElement("DIV");
-        a.setAttribute("id", this.id + "autocomplete-list");
-        a.setAttribute("class", "autocomplete-items");
-        this.parentNode.appendChild(a);
-
-        for (i = 0; i < arr.length; i++) {
-            // Match logic: Check if parts of string match? Or just includes?
-            // User wants suggestion when typing. Let's do case-insensitive includes
-            if (arr[i].toUpperCase().includes(val.toUpperCase())) {
-                b = document.createElement("DIV");
-                b.className = "autocomplete-item";
-                // Highlight matching part?? Too complex for now, just show text
-                b.innerHTML = arr[i];
-                b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
-                b.addEventListener("click", function (e) {
-                    inp.value = this.getElementsByTagName("input")[0].value;
-                    closeAllLists();
-                });
-                a.appendChild(b);
-            }
-        }
-    });
-
-    function closeAllLists(elmnt) {
-        var x = document.getElementsByClassName("autocomplete-items");
-        for (var i = 0; i < x.length; i++) {
-            if (elmnt != x[i] && elmnt != inp) {
-                x[i].parentNode.removeChild(x[i]);
-            }
-        }
-    }
-
-    document.addEventListener("click", function (e) {
-        closeAllLists(e.target);
-    });
-}
-
-async function loadSuggestions() {
+let cachedCategories = [];
+async function fetchSuggestions() {
     try {
-        // Limit to recent 200 to keep it fast
-        const snapshot = await transactionsCol.orderBy('date', 'desc').limit(200).get();
-        const categories = new Set();
-        const descriptions = new Set();
-
-        snapshot.forEach(doc => {
-            const d = doc.data();
-            if (d.category) categories.add(d.category);
-            if (d.description) descriptions.add(d.description);
-        });
-
-        // Init Autocomplete
-        autocomplete(document.getElementById("categoryInput"), [...categories].sort());
-        autocomplete(document.getElementById("descriptionInput"), [...descriptions].sort());
-
-    } catch (e) { console.error("Error loading suggestions", e); }
+        const snap = await transactionsCol.orderBy('date', 'desc').limit(100).get();
+        const cats = new Set();
+        snap.forEach(doc => { if (doc.data().category) cats.add(doc.data().category); });
+        cachedCategories = [...cats].sort();
+    } catch (e) { }
 }
+fetchSuggestions();
 
-loadSuggestions();
+function initAutocomplete(inp) {
+    let listId = "cat-list-" + Math.random().toString(36).substr(2, 9);
+    let datalist = document.createElement("datalist");
+    datalist.id = listId;
+    cachedCategories.forEach(c => {
+        let opt = document.createElement("option");
+        opt.value = c;
+        datalist.appendChild(opt);
+    });
+    document.body.appendChild(datalist);
+    inp.setAttribute("list", listId);
+}

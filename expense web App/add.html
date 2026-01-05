@@ -17,9 +17,12 @@
 <body>
 
     <div class="container py-3" style="max-width:420px">
-        <div class="d-flex align-items-center mb-3">
-            <a href="javascript:history.back()" class="btn btn-light btn-sm me-2 border">← Back</a>
-            <h6 class="mb-0 fw-bold" id="formTitle">Add Transaction</h6>
+        <div class="d-flex align-items-center mb-4 pt-2">
+            <a href="javascript:history.back()" class="text-decoration-none text-body me-3 p-2 rounded-circle hover-bg"
+                style="margin-left: -8px;">
+                <i class="bi bi-arrow-left fs-4"></i>
+            </a>
+            <h5 class="mb-0 fw-bold flex-grow-1" id="formTitle">Add Transaction</h5>
         </div>
 
         <div class="card shadow-sm border-0">
@@ -37,37 +40,21 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-muted">TYPE</label>
-                        <select name="type" id="typeSelect" class="form-select fw-bold" required>
-                            <option value="Expense" selected>EXPENSE</option>
-                            <option value="Income">INCOME</option>
-                            <option value="Transfer">TRANSFER (⇆)</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-muted d-flex justify-content-between">
-                            <span>AMOUNT (₹)</span>
-                            <span id="calcHint" class="text-primary small" style="opacity:0.7">Supports 10+5
-                                format</span>
-                        </label>
-                        <div class="input-group">
-                            <input type="text" name="amount" id="amountInput" class="form-control fw-bold fs-5"
-                                placeholder="0.00" required inputmode="decimal">
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-3">
-                        <div class="col">
-                            <label class="form-label fw-bold text-muted" id="fromAccLabel">ACCOUNT</label>
-                            <select name="account" class="form-select" required>
+                        <label class="form-label fw-bold text-muted">TYPE & ACCOUNT</label>
+                        <div class="input-group mb-2">
+                            <select name="type" id="typeSelect" class="form-select fw-bold" required>
+                                <option value="Expense" selected>EXPENSE</option>
+                                <option value="Income">INCOME</option>
+                                <option value="Transfer">TRANSFER (⇆)</option>
+                            </select>
+                            <select name="account" class="form-select" id="accountSelect" required>
                                 <option value="BANK" selected>BANK</option>
                                 <option value="CASH">CASH</option>
                                 <option value="OTHER">OTHER</option>
                             </select>
                         </div>
-                        <div class="col d-none" id="toAccountDiv">
-                            <label class="form-label fw-bold text-primary">TO ACCOUNT</label>
+                        <div class="d-none" id="toAccountDiv">
+                            <label class="form-label fw-bold text-primary" style="font-size: 10px;">TO ACCOUNT</label>
                             <select name="toAccount" class="form-select border-primary">
                                 <option value="CASH">CASH</option>
                                 <option value="BANK">BANK</option>
@@ -76,28 +63,26 @@
                         </div>
                     </div>
 
-                    <div class="mb-3 position-relative">
-                        <label class="form-label fw-bold text-muted">CATEGORY</label>
-                        <input type="text" name="category" id="categoryInput" class="form-control"
-                            placeholder="E.g., FOOD, RENT" required autocomplete="off">
+                    <!-- Dynamic Items Section -->
+                    <div id="itemsContainer">
+                        <!-- Items will be injected here via JS -->
                     </div>
 
-                    <div class="mb-3 position-relative">
-                        <label class="form-label fw-bold text-muted">DESCRIPTION (OPTIONAL)</label>
-                        <input type="text" name="description" id="descriptionInput" class="form-control"
-                            placeholder="Details..." autocomplete="off">
+                    <button type="button" class="btn btn-light w-100 mb-4 fw-bold border-dashed text-primary"
+                        id="addItemBtn">
+                        <i class="bi bi-plus-circle me-1"></i> ADD ANOTHER ITEM
+                    </button>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3 px-2 border-top pt-2">
+                        <span class="text-muted fw-bold small">TOTAL AMOUNT</span>
+                        <span class="h4 fw-bold mb-0 text-primary" id="totalAmountDisplay">₹0.00</span>
                     </div>
 
-                    <div class="row g-2 mt-4">
-                        <div class="col-6">
-                            <button type="button" class="btn btn-outline-primary w-100 py-2 fw-bold"
-                                id="saveAddMoreBtn">
-                                + SAVE MORE
-                            </button>
-                        </div>
-                        <div class="col-6">
-                            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm" id="saveButton">
-                                SAVE & CLOSE
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm rounded-pill"
+                                id="saveButton">
+                                SAVE ALL TRANSACTIONS
                             </button>
                         </div>
                     </div>

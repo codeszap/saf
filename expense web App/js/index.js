@@ -49,6 +49,70 @@ function clearSearch() {
     loadTransactions();
 }
 
+// Selection State
+let isSelectionMode = false;
+let selectedIds = new Set();
+
+function toggleSelectionMode() {
+    isSelectionMode = !isSelectionMode;
+    selectedIds.clear();
+    updateSelectionUI();
+    renderMonthView(); // Re-render to show/hide checkboxes
+}
+
+function updateSelectionUI() {
+    const btn = document.getElementById('selectModeBtn');
+    const delBtn = document.getElementById('deleteSelectedBtn');
+
+    if (isSelectionMode) {
+        btn.classList.add('text-primary');
+        delBtn.style.display = 'block';
+    } else {
+        btn.classList.remove('text-primary');
+        delBtn.style.display = 'none';
+    }
+    updateDeleteBtnCount();
+}
+
+function updateDeleteBtnCount() {
+    document.getElementById('selectedCount').innerText = selectedIds.size;
+}
+
+function toggleSelection(id) {
+    if (selectedIds.has(id)) selectedIds.delete(id);
+    else selectedIds.add(id);
+
+    updateDeleteBtnCount();
+
+    // Update visual state of that specific row immediately
+    const row = document.getElementById(`tx-row-${id}`);
+    const checkbox = document.getElementById(`tx-check-${id}`);
+    if (row && checkbox) {
+        checkbox.checked = selectedIds.has(id);
+        if (selectedIds.has(id)) row.classList.add("bg-light-primary");
+        else row.classList.remove("bg-light-primary");
+    }
+}
+
+async function deleteSelectedItems() {
+    if (selectedIds.size === 0) return alert("Select items to delete");
+
+    if (confirm(`Delete ${selectedIds.size} transaction(s)? This cannot be undone.`)) {
+        const batch = db.batch();
+        selectedIds.forEach(id => {
+            const ref = db.collection("transactions").doc(id);
+            batch.delete(ref);
+        });
+
+        try {
+            await batch.commit();
+            location.reload();
+        } catch (e) {
+            alert("Error deleting: " + e.message);
+        }
+    }
+}
+
 function renderListFromData(dataArray) {
     list.innerHTML = "";
     if (dataArray.length === 0) {
@@ -91,33 +155,48 @@ function renderListFromData(dataArray) {
 
         group.items.forEach(t => {
             const row = document.createElement("div");
-            row.className = "swipe-container";
+            // Use custom class for theming support instead of bg-white
+            const isSelected = selectedIds.has(t.id);
+            row.className = `transaction-card ${isSelected ? 'bg-light-primary' : ''}`;
+            row.id = `tx-row-${t.id}`;
+
             const isInc = t.type === "Income";
             const isTrf = t.type === "Transfer";
+
+            // Checkbox logic
+            const checkHtml = isSelectionMode
+                ? `<div class="me-3"><input type="checkbox" class="form-check-input fs-5" id="tx-check-${t.id}" ${isSelected ? 'checked' : ''} disabled></div>`
+                : '';
+
             row.innerHTML = `
-            <div class="swipe-actions">
-                <button class="btn-edit" style="background: #0dcaf0;" onclick="window.location.href='add.html?duplicate=${t.id}'">Copy</button>
-                <button class="btn-edit" onclick="window.location.href='add.html?id=${t.id}'">Edit</button>
-                <button class="btn-delete" onclick="deleteTx('${t.id}')">Del</button>
-            </div>
-            <div class="swipe-content d-flex justify-content-between align-items-center px-3 py-2">
-                <div style="max-width: 70%;">
-                    <div class="fw-bold" style="font-size: 13px;">${t.category}</div>
-                    <div class="text-muted" style="font-size: 10px;">${t.account}${isTrf ? ' → ' + t.toAccount : ''} • ${t.description || ''}</div>
-                </div>
-                <div class="text-end">
-                    <div class="${isInc ? 'text-success' : (isTrf ? 'text-primary' : 'text-danger')} fw-bold" style="font-size: 14px;">
-                        ${isInc ? '+' : (isTrf ? '⇆' : '-')}₹${parseFloat(t.amount).toFixed(2)}
+            <div class="d-flex align-items-center px-3 py-2 clickable-row" onclick="handleRowClick('${t.id}')">
+                ${checkHtml}
+                <div class="flex-grow-1 d-flex justify-content-between align-items-center">
+                    <div style="max-width: 70%;">
+                        <div class="fw-bold" style="font-size: 13px;">${t.category}</div>
+                        <div class="text-muted" style="font-size: 10px;">${t.account}${isTrf ? ' → ' + t.toAccount : ''} • ${t.description || ''}</div>
                     </div>
-                    <div class="text-muted" style="font-size: 10px;">
-                         ${t.time || ''}
+                    <div class="text-end">
+                        <div class="${isInc ? 'text-success' : (isTrf ? 'text-primary' : 'text-danger')} fw-bold" style="font-size: 14px;">
+                            ${isInc ? '+' : (isTrf ? '⇆' : '-')}₹${parseFloat(t.amount).toFixed(2)}
+                        </div>
+                        <div class="text-muted" style="font-size: 10px;">
+                             ${t.time || ''}
+                        </div>
                     </div>
                 </div>
             </div>`;
             dayWrap.appendChild(row);
-            enableSwipe(row);
         });
     });
+}
+
+function handleRowClick(id) {
+    if (isSelectionMode) {
+        toggleSelection(id);
+    } else {
+        openTxModal(id);
+    }
 }
 
 function renderShimmer() {
@@ -136,44 +215,76 @@ function renderShimmer() {
     list.innerHTML = shimmerHtml;
 }
 
+let currentViewDate = new Date();
+
+function changeMonth(step) {
+    currentViewDate.setMonth(currentViewDate.getMonth() + step);
+    renderMonthView();
+}
+
+function renderMonthView() {
+    // Update Label
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+    const lbl = document.getElementById("currentMonthLabel");
+    if (lbl) {
+        lbl.innerText = `${monthNames[currentViewDate.getMonth()]} ${currentViewDate.getFullYear()}`;
+    }
+
+    // Filter Data
+    const year = currentViewDate.getFullYear();
+    const month = currentViewDate.getMonth();
+
+    const filtered = allData.filter(t => {
+        const d = new Date(t.date);
+        return d.getFullYear() === year && d.getMonth() === month;
+    });
+
+    renderListFromData(filtered);
+    updateGlobalSummary(filtered);
+
+    // Hide load more button as we use month view
+    if (loadMoreBtn) loadMoreBtn.style.display = "none";
+}
+
 async function loadTransactions(isMore = false) {
     try {
         if (!isMore) {
             renderShimmer();
             await fetchAllData();
-            await updateGlobalSummary();
-            list.innerHTML = "";
+            // Initial render will trigger summary update
+            renderMonthView();
         }
-        let query = db.collection("transactions").orderBy("date", "desc").limit(50);
-        if (isMore && lastVisible) {
-            overlay.style.display = "flex"; // Fallback for loading more
-            query = query.startAfter(lastVisible);
-        }
+        overlay.style.display = "none";
 
-        const snap = await query.get();
-        if (snap.empty) {
-            loadMoreBtn.style.display = "none";
-            overlay.style.display = "none";
-            if (!isMore) list.innerHTML = "<div class='text-center p-5 text-muted'>No transactions found.</div>";
-            return;
-        }
-
-        lastVisible = snap.docs[snap.docs.length - 1];
-        const currentData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        if (!isMore) list.innerHTML = ""; // Clear shimmer
-        renderListFromData(currentData);
-        loadMoreBtn.style.display = snap.docs.length === 50 ? "block" : "none";
     } catch (e) {
         console.error(e);
         list.innerHTML = "<div class='text-center p-5 text-danger font-bold'>Error loading data.</div>";
+        overlay.style.display = "none";
     }
-    overlay.style.display = "none";
 }
 
-async function updateGlobalSummary() {
+async function updateGlobalSummary(dataToSummarize) {
+    // If no filtered data provided (e.g. initial load before month filter), use allData
+    // BUT we want month view by default, so renderMonthView will call this with filtered data.
+    // If called without args, we might want to default to empty or specific month? 
+    // Safest is to rely on renderMonthView calling this. 
+
+    const sourceData = dataToSummarize || allData; // Fallback to allData if not provided (though we prefer month)
+
     let bank = 0, cash = 0, others = 0, inc = 0, exp = 0;
-    allData.forEach(t => {
+
+    // NOTE: If we want "Available Balance" to be TOTAL (all time) but Income/Expense to be MONTHLY:
+    // The user asked "topla ula avialble balance income expense this month mattumthan show aaganum"
+    // This implies ALL stats should be for this month. 
+    // However, "Available Balance" usually means "Total Money I Have Now". 
+    // If I filter Balance by month, it just shows "Net Flow of this Month".
+    // I will assume the user wants EVERYTHING specific to this month, including the "Balance" displayed there (which effectively becomes "Savings for this month").
+    // IF valid wallet balance is needed, we'd need to calculate that separately from allData.
+    // Let's stick to the user's request: "this month mattumthan show aaganum" (Show only this month).
+
+    sourceData.forEach(t => {
         const amt = parseFloat(t.amount) || 0;
         const acc = (t.account || "OTHERS").toUpperCase();
         if (t.type === "Income") { inc += amt; if (acc === "BANK") bank += amt; else if (acc === "CASH") cash += amt; else others += amt; }
@@ -190,44 +301,23 @@ async function updateGlobalSummary() {
     document.getElementById("accountBreakdown").innerHTML = `<div class="col-4 border-end">BANK: <b>₹${bank.toFixed(0)}</b></div><div class="col-4 border-end">CASH: <b>₹${cash.toFixed(0)}</b></div><div class="col-4">OTHERS: <b>₹${others.toFixed(0)}</b></div>`;
 }
 
-function enableSwipe(row) {
-    const content = row.querySelector(".swipe-content");
-    const actions = row.querySelector(".swipe-actions");
-    let startX = 0, moveX = 0;
+// Modal Logic
+let currentTxId = null;
+const txModal = new bootstrap.Modal(document.getElementById('txOptionsModal'));
 
-    // Swipe Logic
-    content.addEventListener("touchstart", e => { startX = e.touches[0].clientX; actions.style.visibility = "visible"; }, { passive: true });
-    content.addEventListener("touchmove", e => {
-        moveX = e.touches[0].clientX - startX;
-        if (moveX < 0) content.style.transform = `translateX(${Math.max(moveX, -195)}px)`;
-    });
-    content.addEventListener("touchend", () => {
-        if (moveX < -60) {
-            content.style.transform = "translateX(-195px)";
-        } else {
-            // If it was just a tap (not a swipe), let the click listener handle it.
-            // But if it was a small swipe that didn't cross threshold, revert.
-            if (moveX === 0) return; // Let click bubble
-            content.style.transform = "translateX(0)";
-            setTimeout(() => actions.style.visibility = "hidden", 300);
-        }
-        moveX = 0;
-    });
+function openTxModal(id) {
+    currentTxId = id;
+    const t = allData.find(item => item.id === id);
+    if (t) {
+        document.getElementById('txModalTitle').innerText = t.category;
+        document.getElementById('txModalDesc').innerText = `${t.amount} - ${t.description || 'No Description'}`;
 
-    // Tap/Click to Toggle Logic
-    content.addEventListener("click", () => {
-        // Check current state
-        const currentTransform = content.style.transform;
-        if (currentTransform === "translateX(-195px)") {
-            // Close
-            content.style.transform = "translateX(0)";
-            setTimeout(() => actions.style.visibility = "hidden", 300);
-        } else {
-            // Open (and close others if needed, but for now simple toggle)
-            actions.style.visibility = "visible";
-            content.style.transform = "translateX(-195px)";
-        }
-    });
+        document.getElementById('btnCopyTx').onclick = () => window.location.href = `add.html?duplicate=${id}`;
+        document.getElementById('btnEditTx').onclick = () => window.location.href = `add.html?id=${id}`;
+        document.getElementById('btnDeleteTx').onclick = () => deleteTx(id);
+
+        txModal.show();
+    }
 }
 
 async function deleteTx(id) {

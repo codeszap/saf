@@ -462,7 +462,8 @@ window.viewIngredientDetail = function (e, id) {
     const r = recipes.find(rec => rec.id === currentRecipeId);
     const i = r.ingredients.find(item => item.id === id);
     document.getElementById('detailModalTitle').innerText = i.name;
-    document.getElementById('detailModalPrice').innerText = i.price > 0 ? `₹\${i.price.toLocaleString('en-IN')}` : '';
+    const price = parseFloat(i.price) || 0;
+    document.getElementById('detailModalPrice').innerText = price > 0 ? `₹${price.toLocaleString('en-IN')}` : '';
     document.getElementById('detailModalDesc').innerText = i.desc || "No additional description added.";
     detailModal.show();
 };

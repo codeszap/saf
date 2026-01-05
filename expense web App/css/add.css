@@ -140,3 +140,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     z-index: 2000;
     max-width: 250px;
 }
+
+.hover-bg {
+    transition: background-color 0.2s;
+}
+
+.hover-bg:hover,
+.hover-bg:active {
+    background-color: var(--bg-input);
+}

@@ -198,3 +198,42 @@ body {
 .day-total-out {
     color: #dc3545;
 }
+
+.transaction-card {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+
+/* Modal Dark Mode Fixes */
+.modal-content {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.btn-close {
+    filter: invert(var(--invert-icon));
+    /* need to define or hack it */
+}
+
+[data-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.bg-light-primary {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+}
+
+[data-theme="dark"] .bg-light-primary {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+}
