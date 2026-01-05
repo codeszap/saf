@@ -517,4 +517,81 @@ async function loadAvailableBalance() {
     }
 }
 
+const manageTagsModal = new bootstrap.Modal(document.getElementById('manageTagsModal'));
+
+function openManageTags() {
+    renderManageTagsList();
+    manageTagsModal.show();
+    // Close filter sheet
+    const filterSheetEl = document.getElementById('filterSheet');
+    const filterSheet = bootstrap.Offcanvas.getInstance(filterSheetEl);
+    if (filterSheet) filterSheet.hide();
+}
+
+function renderManageTagsList() {
+    const list = document.getElementById('manageTagsList');
+    if (!list) return;
+
+    const tags = new Set(purchaseData.map(i => i.tag).filter(t => t));
+
+    if (tags.size === 0) {
+        list.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-tags display-4 d-block mb-2 opacity-50"></i>No tags found.</div>';
+        return;
+    }
+
+    list.innerHTML = Array.from(tags).sort().map(tag => {
+        const safeTag = tag.replace(/'/g, "\\'");
+        return `
+            <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded-3 border">
+                <span class="fw-bold text-dark">#${tag}</span>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-white border shadow-sm" onclick="startRenameTag('${safeTag}')" title="Rename"><i class="bi bi-pencil-square text-primary"></i></button>
+                    <button class="btn btn-sm btn-white border shadow-sm" onclick="confirmDeleteTag('${safeTag}')" title="Delete"><i class="bi bi-trash text-danger"></i></button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function startRenameTag(oldTag) {
+    const newTag = prompt("Rename Tag:", oldTag);
+    if (newTag && newTag.toUpperCase() !== oldTag) {
+        const finalTag = newTag.toUpperCase().trim();
+        if (!finalTag) return;
+
+        if (confirm(`Rename #${oldTag} to #${finalTag}?`)) {
+            await batchUpdateTag(oldTag, finalTag);
+        }
+    }
+}
+
+async function confirmDeleteTag(tag) {
+    if (confirm(`Delete tag #${tag}? This will remove it from all items.`)) {
+        await batchUpdateTag(tag, "");
+    }
+}
+
+async function batchUpdateTag(oldTag, newTag) {
+    // Find docs
+    try {
+        const batch = db.batch();
+        const snap = await db.collection("purchase").where("tag", "==", oldTag).get();
+
+        if (snap.empty) {
+            manageTagsModal.hide();
+            return;
+        }
+
+        snap.forEach(doc => {
+            batch.update(doc.ref, { tag: newTag });
+        });
+
+        await batch.commit();
+        manageTagsModal.hide();
+        loadPurchases(); // Reload to refresh UI
+    } catch (e) {
+        alert("Error updating tags: " + e.message);
+    }
+}
+
 window.onload = loadPurchases;

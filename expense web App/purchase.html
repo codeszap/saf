@@ -91,6 +91,29 @@
                 <button class="btn btn-outline-dark btn-sm rounded-pill filter-btn" data-filter="priority"
                     onclick="setFilter('priority', this)">STARRED ONLY</button>
             </div>
+
+            <hr class="my-3 text-muted">
+            <div class="d-grid">
+                <button class="btn btn-light fw-bold text-muted py-2" onclick="openManageTags()">MANAGE EXISTING
+                    TAGS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Tags Modal -->
+    <div class="modal fade" id="manageTagsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Manage Tags</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <p class="small text-muted mb-3">Renaming or deleting a tag will update all items associated with
+                        it.</p>
+                    <div id="manageTagsList" class="d-flex flex-column gap-2"></div>
+                </div>
+            </div>
         </div>
     </div>
 
