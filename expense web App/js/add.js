@@ -54,13 +54,88 @@ function createItemRow(data = {}) {
                <input type="text" class="form-control category-input text-uppercase" placeholder="CAT" value="${category}" onfocus="loadSuggestionsFor(this)">
             </div>
             <div class="col-12">
-               <input type="text" class="form-control form-control-sm desc-input" placeholder="Description (Optional)" value="${description}">
+               <div class="input-group">
+                   <input type="text" class="form-control form-control-sm desc-input" placeholder="Description (Optional)" value="${description}">
+                   <button class="btn btn-outline-secondary border-dashed" type="button" onclick="startVoiceInput('${rowId}')"><i class="bi bi-mic-fill text-primary"></i></button>
+               </div>
             </div>
         </div>
     `;
     itemsContainer.appendChild(div);
     calculateTotal();
 }
+
+window.startVoiceInput = function (rowId) {
+    if (!('webkitSpeechRecognition' in window)) {
+        alert("Voice input not supported in this browser.");
+        return;
+    }
+
+    const row = document.getElementById(rowId);
+    if (!row) return;
+
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US'; // Or en-IN
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    const overlay = document.getElementById('voiceStatusOverlay');
+    if (overlay) overlay.style.display = 'flex'; // Assuming CSS handles flex/block
+
+    recognition.start();
+
+    recognition.onresult = function (event) {
+        if (overlay) overlay.style.display = 'none';
+        const transcript = event.results[0][0].transcript.toLowerCase();
+
+        // Simple heuristic parsing: "500 milk" -> Amt: 500, Cat: Milk
+        // "100 petrol bike" -> Amt: 100, Cat: Petrol, Desc: Bike
+
+        const parts = transcript.split(' ');
+        let setAmount = false;
+        let setCategory = false;
+        let descParts = [];
+
+        const amtInput = row.querySelector('.amount-input');
+        const catInput = row.querySelector('.category-input');
+        const descInput = row.querySelector('.desc-input');
+
+        parts.forEach(part => {
+            // Check if number (and we haven't set amount yet)
+            // Allow decimals? part.replace(',', '.')
+            const num = parseFloat(part);
+            if (!isNaN(num) && !setAmount) {
+                amtInput.value = num;
+                setAmount = true;
+            } else if (!setCategory && part.length > 2) { // Assume category is first non-number word > 2 chars? Crude but works for now
+                catInput.value = part.toUpperCase();
+                setCategory = true;
+            } else {
+                descParts.push(part);
+            }
+        });
+
+        if (descParts.length > 0) {
+            // If we used the first word as category, the rest is desc.
+            // If we didn't find category, maybe first word was desc?
+            // Let's just append to desc.
+            const text = descParts.join(' ');
+            // If existing desc, append?
+            descInput.value = (descInput.value ? descInput.value + ' ' : '') + text.toUpperCase();
+        }
+
+        calculateTotal();
+    };
+
+    recognition.onerror = function (event) {
+        if (overlay) overlay.style.display = 'none';
+        console.error("Speech error", event.error);
+    };
+
+    recognition.onend = function () {
+        if (overlay) overlay.style.display = 'none';
+    };
+};
 
 // Make removeItem global so onclick works
 window.removeItem = function (id) {

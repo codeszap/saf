@@ -399,6 +399,15 @@ window.openAddIngredientModal = function () {
     document.getElementById('ingName').value = "";
     document.getElementById('ingPrice').value = "";
     document.getElementById('ingDesc').value = "";
+
+    // Auto-fill Next Step
+    const r = recipes.find(rec => rec.id === currentRecipeId);
+    let nextStep = 1;
+    if (r && r.ingredients) {
+        const steps = r.ingredients.map(i => parseFloat(i.steps)).filter(n => !isNaN(n));
+        if (steps.length > 0) nextStep = Math.max(...steps) + 1;
+    }
+    document.getElementById('ingSteps').value = nextStep;
     document.getElementById('addFeedback').classList.add('hidden');
     document.getElementById('modalPreviewSection').classList.add('hidden');
     document.getElementById('modalPreviewList').innerHTML = "";
@@ -445,6 +454,18 @@ window.openEditIngredientModal = function (e, id) {
     document.getElementById('ingName').value = i.name;
     document.getElementById('ingPrice').value = i.price || "";
     document.getElementById('ingDesc').value = i.desc || "";
+
+    // Auto-fill Step: Use existing or calculate Next
+    if (i.steps) {
+        document.getElementById('ingSteps').value = i.steps;
+    } else {
+        let nextStep = 1;
+        if (r && r.ingredients) {
+            const steps = r.ingredients.map(it => parseFloat(it.steps)).filter(n => !isNaN(n));
+            if (steps.length > 0) nextStep = Math.max(...steps) + 1;
+        }
+        document.getElementById('ingSteps').value = nextStep;
+    }
     document.getElementById('ingModalFooter').innerHTML = `
         <div class="row g-2">
             <div class="col-6">
@@ -472,13 +493,27 @@ window.addIngredient = async function () {
     const n = document.getElementById('ingName').value.trim();
     const p = parseFloat(document.getElementById('ingPrice').value) || 0;
     const d = document.getElementById('ingDesc').value.trim();
+    const s = document.getElementById('ingSteps').value.trim();
     if (!n) return;
     const r = recipes.find(r => r.id === currentRecipeId);
+
+    // Shift existing steps if collision
+    const newStep = parseFloat(s);
+    if (!isNaN(newStep)) {
+        r.ingredients.forEach(item => {
+            const val = parseFloat(item.steps);
+            if (!isNaN(val) && val >= newStep) {
+                item.steps = val + 1;
+            }
+        });
+    }
+
     r.ingredients.push({
         id: Date.now(),
         name: n,
         price: p,
         desc: d,
+        steps: s,
         checked: false
     });
     await db.collection("recipes").doc(currentRecipeId).update({
@@ -492,6 +527,10 @@ window.addIngredient = async function () {
     document.getElementById('ingName').value = "";
     document.getElementById('ingPrice').value = "";
     document.getElementById('ingDesc').value = "";
+
+    // Auto-increment Step for next item
+    const currentStep = parseFloat(document.getElementById('ingSteps').value) || 0;
+    document.getElementById('ingSteps').value = currentStep + 1;
     document.getElementById('ingName').focus();
     setTimeout(() => f.classList.add('hidden'), 1500);
 };
@@ -500,11 +539,27 @@ window.updateIngredient = async function () {
     const n = document.getElementById('ingName').value.trim();
     const p = parseFloat(document.getElementById('ingPrice').value) || 0;
     const d = document.getElementById('ingDesc').value.trim();
+    const s = document.getElementById('ingSteps').value.trim();
     const r = recipes.find(rec => rec.id === currentRecipeId);
     const i = r.ingredients.find(item => item.id === currentEditIngredientId);
+
+    // Shift others if changing step
+    const newStep = parseFloat(s);
+    const oldStep = parseFloat(i.steps);
+    if (!isNaN(newStep) && newStep !== oldStep) {
+        r.ingredients.forEach(item => {
+            if (item.id === currentEditIngredientId) return;
+            const val = parseFloat(item.steps);
+            if (!isNaN(val) && val >= newStep) {
+                item.steps = val + 1;
+            }
+        });
+    }
+
     i.name = n;
     i.price = p;
     i.desc = d;
+    i.steps = s;
     await db.collection("recipes").doc(currentRecipeId).update({
         ingredients: r.ingredients
     });
@@ -545,6 +600,18 @@ function renderIngredients() {
     const box = document.getElementById('ingredientListBox');
     const empty = document.getElementById('editorEmptyState');
     if (!box || !empty) return;
+
+    // Auto-Sort by Step Number
+    if (r && r.ingredients) {
+        r.ingredients.sort((a, b) => {
+            const vA = parseFloat(a.steps);
+            const vB = parseFloat(b.steps);
+            const sA = !isNaN(vA) ? vA : 999999;
+            const sB = !isNaN(vB) ? vB : 999999;
+            return sA - sB;
+        });
+    }
+
     let total = 0;
     box.innerHTML = "";
     if (!r || r.ingredients.length === 0) {
@@ -570,7 +637,10 @@ function renderIngredients() {
                     <div class="drag-handle"><i class="bi bi-grip-vertical"></i></div>
                     <div class="custom-checkbox" onclick="event.stopPropagation(); toggleIngredient(${i.id})"></div>
                     <div class="recipe-item-content" onclick="viewIngredientDetail(event, ${i.id})">
-                        <div class="item-title">${i.name}</div>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="item-title text-truncate" style="max-width: 90%;">${i.name}</div>
+                            ${i.steps ? `<span class="badge bg-dark rounded-circle d-flex align-items-center justify-content-center border border-secondary" style="width: 24px; height: 24px; font-size: 0.75rem;">${i.steps}</span>` : ''}
+                        </div>
                         ${pr > 0 ? `<div class="small text-muted">₹${pr.toFixed(0)}</div>` : ''}
                     </div>
                 </div>`;

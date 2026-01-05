@@ -45,29 +45,20 @@ function injectDrawer() {
         <div onclick="navigationHandler('todo.html')" class="drawer-item ${page === 'todo.html' ? 'active' : ''}" id="nav-todo">
             <i class="bi bi-card-checklist"></i> Tasks
         </div>
-        <div onclick="navigationHandler('problem_solver.html')" class="drawer-item ${page === 'problem_solver.html' ? 'active' : ''}" id="nav-problem-solver">
-            <i class="bi bi-lightbulb-fill"></i> Solver
-        </div>
-        <div onclick="navigationHandler('purchase.html')" class="drawer-item ${page === 'purchase.html' ? 'active' : ''}" id="nav-purchase">
-            <i class="bi bi-cart3"></i> Purchase
-        </div>
-        <div onclick="navigationHandler('loans.html')" class="drawer-item ${page === 'loans.html' ? 'active' : ''}" id="nav-loans">
-            <i class="bi bi-bank"></i> Loans
-        </div>
-        <div onclick="navigationHandler('goal.html')" class="drawer-item ${page === 'goal.html' ? 'active' : ''}" id="nav-goal">
-            <i class="bi bi-trophy-fill"></i> Goals
+        <div onclick="navigationHandler('index.html')" class="drawer-item ${page === 'index.html' ? 'active' : ''}" id="nav-index">
+            <i class="bi bi-arrow-left-right"></i> Transactions
         </div>
         <div onclick="navigationHandler('recipe.html')" class="drawer-item ${page === 'recipe.html' ? 'active' : ''}" id="nav-recipe">
             <i class="bi bi-journal-text"></i> Recipe
         </div>
-        <div onclick="navigationHandler('index.html')" class="drawer-item ${page === 'index.html' ? 'active' : ''}" id="nav-transaction">
-            <i class="bi bi-arrow-left-right"></i> Transactions
-        </div>
         <div onclick="navigationHandler('debitcredit.html')" class="drawer-item ${page === 'debitcredit.html' ? 'active' : ''}" id="nav-debitcredit">
             <i class="bi bi-credit-card-2-back"></i> Debit Credit
         </div>
-        <div onclick="navigationHandler('insta.html')" class="drawer-item ${page === 'insta.html' ? 'active' : ''}" id="nav-insta">
-            <i class="bi bi-instagram"></i> Reels
+        <div onclick="navigationHandler('loans.html')" class="drawer-item ${page === 'loans.html' ? 'active' : ''}" id="nav-loans">
+            <i class="bi bi-bank"></i> Loans
+        </div>
+        <div onclick="navigationHandler('purchase.html')" class="drawer-item ${page === 'purchase.html' ? 'active' : ''}" id="nav-purchase">
+            <i class="bi bi-cart3"></i> Purchase
         </div>
         <div id="installAppBtn" onclick="installApp()" class="drawer-item" style="display:none; color: #2ecc71;">
             <i class="bi bi-download"></i> Install App

@@ -16,8 +16,13 @@
 <body>
     <div id="topBar">
         <i class="bi bi-grid-fill menu-icon" onclick="toggleDrawer(true)"></i>
-        <h6 class="mb-0 fw-bold">Loans Tracking</h6>
-        <i class="bi bi-file-earmark-bar-graph menu-icon" onclick="showReport()"></i>
+        <h6 class="mb-0 fw-bold flex-grow-1 ms-3">Loans</h6>
+        <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-mic-fill menu-icon" id="headerVoiceBtn"></i>
+            <i class="bi bi-file-earmark-bar-graph menu-icon" onclick="showReport()"></i>
+            <i class="bi bi-plus-circle-fill text-primary" style="font-size: 1.5rem; cursor: pointer;"
+                onclick="openModal()"></i>
+        </div>
     </div>
     <div class="dashboard">
         <div class="dash-card">
@@ -50,13 +55,9 @@
         </ul>
     </div>
     <div class="items-grid" id="loansList"></div>
-    <button class="add-fab" onclick="openModal()"><i class="bi bi-plus-lg"></i></button>
 
     <!-- Voice Elements -->
     <div id="voiceStatusOverlay">Listening...</div>
-    <button id="voiceFab" class="voice-fab">
-        <i class="bi bi-mic-fill"></i>
-    </button>
 
     <div class="modal fade" id="loanModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">

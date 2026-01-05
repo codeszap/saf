@@ -25,6 +25,23 @@ async function loadPurchases() {
     }
 }
 
+// Palette for tags
+const tagColors = [
+    '#ffe2e2', '#e2f0d9', '#deebff', '#fff5cc',
+    '#e1d5e7', '#ffe6cc', '#d5e8d4', '#dae8fc',
+    '#f8cecc', '#e1f7d5', '#fff2cc', '#f5f5f5'
+];
+
+function getTagColor(tag) {
+    if (!tag) return '#eee';
+    let hash = 0;
+    for (let i = 0; i < tag.length; i++) {
+        hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % tagColors.length;
+    return tagColors[index];
+}
+
 function renderCategoryFilters() {
     const container = document.getElementById('categoryFilters');
     if (!container) return;
@@ -45,7 +62,15 @@ function renderCategoryFilters() {
         Array.from(tags).sort().forEach(tag => {
             const safeTag = tag.replace(/'/g, "\\'");
             const isActive = currentFilter === `tag:${tag}`;
-            html += `<div class="filter-chip ${isActive ? 'active' : ''}" onclick="toggleTagFilter('${safeTag}', this)">#${tag}</div>`;
+            const color = getTagColor(tag);
+
+            // Colorful styling
+            // If active, use dark background. If inactive, use pastel color.
+            const style = isActive ?
+                `background-color: #212529 !important; color: #fff !important; border: 1px solid #212529;` :
+                `background-color: ${color} !important; color: #333 !important; border: 1px solid transparent;`;
+
+            html += `<div class="filter-chip" style="${style}" onclick="toggleTagFilter('${safeTag}', this)">#${tag}</div>`;
         });
     } else {
         // If no tags, and "ALL" is the only chip, no need for "No tags yet" message.
@@ -192,7 +217,8 @@ function renderItems() {
 
             // Display Tag if available, or Category fallback? User asked for separate field.
             // Let's show Tag badge if present.
-            const tagBadge = t.tag ? `<span class="category-badge bg-info text-dark">${t.tag}</span>` : '';
+            const tagBg = getTagColor(t.tag);
+            const tagBadge = t.tag ? `<span class="category-badge border" style="background-color: ${tagBg}; color: #333;">${t.tag}</span>` : '';
             const catBadge = `<span class="category-badge">${t.category || "OTHER"}</span>`;
 
             html += `
@@ -201,14 +227,14 @@ function renderItems() {
                 
                 <div class="info" onclick="openModal('${t.id}', '${safeName}', ${t.price}, '${t.date}', ${t.isPriority}, '${safeCat}', '${safeAcc}', '${safeTag}')">
                     <div class="d-flex align-items-center gap-2">
-                        <div class="name text-truncate">${t.name}</div>
+                        <div class="name text-truncate fw-bold text-dark">${t.name}</div>
                         ${t.isPriority ? '<i class="bi bi-star-fill text-warning flex-shrink-0" style="font-size: 1.1rem; filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.1));"></i>' : ''}
                     </div>
-                    <div class="price-line">
-                        <span class="price">₹${t.price}</span>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-1" style="font-size: 0.85rem;">
+                        <span class="fw-bold text-primary">₹${t.price}</span>
                         ${tagBadge}
                         ${catBadge}
-                        <span class="date-badge">${dateStr}</span>
+                        <span class="text-muted small ms-auto">${dateStr}</span>
                     </div>
                 </div>
 
@@ -220,6 +246,15 @@ function renderItems() {
             `;
         });
         html += '</div>';
+
+        // Show Total for the current filtered view
+        const totalAmount = filtered.reduce((sum, i) => sum + (parseFloat(i.price) || 0), 0);
+        html += `
+            <div class="d-flex justify-content-between align-items-center p-3 bg-white border mt-3 rounded shadow-sm">
+                <span class="fw-bold text-muted small">TOTAL (${filtered.length} Items)</span>
+                <span class="fw-bold text-primary fs-5">₹${totalAmount.toLocaleString('en-IN')}</span>
+            </div>
+        `;
     } else {
         html = '<div class="text-center p-5 text-muted">No items found.</div>';
     }

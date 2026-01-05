@@ -21,9 +21,9 @@ function injectBottomNav() {
                 <i class="bi bi-cash-stack"></i>
                 <span>Loans</span>
             </div>
-            <div class="nav-item ${page === 'todo.html' ? 'active' : ''}" onclick="window.location.replace('todo.html')">
-                <i class="bi bi-check2-square"></i>
-                <span>Tasks</span>
+            <div class="nav-item ${page === 'recipe.html' ? 'active' : ''}" onclick="window.location.replace('recipe.html')">
+                <i class="bi bi-journal-text"></i>
+                <span>Recipe</span>
             </div>
         </div>
         <style>

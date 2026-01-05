@@ -384,36 +384,41 @@ async function deleteLoan(id) {
 }
 
 // --- Advanced Voice Input Logic ---
-const voiceFab = document.getElementById("voiceFab");
+// --- Advanced Voice Input Logic ---
+const voiceBtn = document.getElementById("headerVoiceBtn");
 const voiceStatusOverlay = document.getElementById("voiceStatusOverlay");
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!SpeechRecognition) {
-    voiceFab.style.display = "none";
+    if (voiceBtn) voiceBtn.style.display = "none";
 } else {
     const recognition = new SpeechRecognition();
     recognition.lang = 'en-US';
     recognition.interimResults = false;
     let isListening = false;
 
-    voiceFab.addEventListener("click", () => {
-        if (isListening) recognition.stop();
-        else {
-            try { recognition.start(); } catch (e) { recognition.stop(); }
-        }
-    });
+    if (voiceBtn) {
+        voiceBtn.addEventListener("click", () => {
+            if (isListening) recognition.stop();
+            else {
+                try { recognition.start(); } catch (e) { recognition.stop(); }
+            }
+        });
+    }
 
     recognition.onstart = () => {
         isListening = true;
-        voiceFab.classList.add("listening");
-        voiceStatusOverlay.style.display = "block";
-        voiceStatusOverlay.innerText = "Listening...";
+        if (voiceBtn) voiceBtn.classList.add("text-danger", "beat-animation");
+        if (voiceStatusOverlay) {
+            voiceStatusOverlay.style.display = "block";
+            voiceStatusOverlay.innerText = "Listening...";
+        }
     };
 
     recognition.onresult = (event) => {
         isListening = false;
         const text = event.results[0][0].transcript.toLowerCase();
-        voiceStatusOverlay.innerText = `Heard: "${text}"`;
+        if (voiceStatusOverlay) voiceStatusOverlay.innerText = `Heard: "${text}"`;
 
         // --- SMART LOAN PARSING ---
         // 1. DATE Detection (Specific Date like 01/02/2026)
@@ -458,12 +463,12 @@ if (!SpeechRecognition) {
             openModal('', name.toUpperCase(), amount || '', dateISO, 'Loan');
         }
 
-        setTimeout(() => { if (!isListening) voiceStatusOverlay.style.display = "none"; }, 3000);
+        setTimeout(() => { if (!isListening && voiceStatusOverlay) voiceStatusOverlay.style.display = "none"; }, 3000);
     };
 
     recognition.onend = () => {
         isListening = false;
-        voiceFab.classList.remove("listening");
+        if (voiceBtn) voiceBtn.classList.remove("text-danger", "beat-animation");
     };
 }
 

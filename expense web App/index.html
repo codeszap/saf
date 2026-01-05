@@ -65,14 +65,16 @@
         </div>
 
         <div id="monthNav"
-            class="d-flex justify-content-between align-items-center mb-3 mt-2 px-3 bg-light py-2 rounded">
-            <button class="btn btn-sm btn-outline-secondary border-0" onclick="changeMonth(-1)">
-                <i class="bi bi-caret-left-fill fs-4"></i>
+            class="d-flex justify-content-between align-items-center my-2 px-2 bg-white shadow-sm border rounded-3 py-1">
+            <button class="btn btn-sm btn-light text-muted border-0 rounded-circle"
+                style="width: 32px; height: 32px; display: grid; place-items: center;" onclick="changeMonth(-1)">
+                <i class="bi bi-chevron-left fs-6"></i>
             </button>
-            <span id="currentMonthLabel" class="fw-bold text-primary text-uppercase"
-                style="font-size: 1.1rem; letter-spacing: 1px;"></span>
-            <button class="btn btn-sm btn-outline-secondary border-0" onclick="changeMonth(1)">
-                <i class="bi bi-caret-right-fill fs-4"></i>
+            <span id="currentMonthLabel" class="fw-bold text-primary text-uppercase small"
+                style="letter-spacing: 1px;"></span>
+            <button class="btn btn-sm btn-light text-muted border-0 rounded-circle"
+                style="width: 32px; height: 32px; display: grid; place-items: center;" onclick="changeMonth(1)">
+                <i class="bi bi-chevron-right fs-6"></i>
             </button>
         </div>
 
