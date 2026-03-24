@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker - Money Manager</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 0; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 600px; background: #f4f6f8; min-height: 100vh; position: relative; }
+        
+        /* App Header */
+        .app-header { background: #2c3e50; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
+        .app-header h3 { margin: 0; font-size: 18px; font-weight: 600; }
+        .reset-icon { cursor: pointer; color: white; font-size: 18px; }
+
+        /* Summary Dashboard */
+        .summary-wrapper { padding: 15px 15px 5px 15px; background: #2c3e50; color: white; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .summary-grid { display: flex; justify-content: space-between; text-align: center; }
+        .summary-item { flex: 1; }
+        .summary-item .label { font-size: 11px; text-transform: uppercase; opacity: 0.8; letter-spacing: 0.5px; margin-bottom: 5px; }
+        .summary-item .val { font-size: 18px; font-weight: bold; }
+        .val.income { color: #2ecc71; }
+        .val.expense { color: #e74c3c; }
+
+        /* Transactions List */
+        .transactions-container { padding: 0 10px 20px 10px; }
+        
+        /* Day Group */
+        .day-group { background: white; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
+        
+        .day-header { background: #fafafa; padding: 10px 15px; display: flex; justify-content: space-between; border-bottom: 1px solid #eee; font-size: 13px; font-weight: 600; color: #555; }
+        .day-header .day-date { font-weight: 700; color: #333; }
+        .day-header .day-summary { font-size: 12px; display:flex; gap: 10px; }
+        .day-exp { color: #e74c3c; }
+        .day-inc { color: #2ecc71; }
+
+        /* Transaction Item */
+        .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f5f5f5; }
+        .transaction-item:last-child { border-bottom: none; }
+        .t-info { display: flex; align-items: center; gap: 12px; }
+        .t-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
+        .t-icon.inc { background: #2ecc71; }
+        .t-icon.exp { background: #e74c3c; }
+        .t-details { display: flex; flex-direction: column; text-align: left; }
+        .t-desc { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 2px; }
+        .t-time { font-size: 11px; color: #999; }
+        .t-amount { font-size: 15px; font-weight: bold; }
+        .t-amount.inc { color: #2ecc71; }
+        .t-amount.exp { color: #e74c3c; }
+
+        .loading, .no-data { text-align: center; padding: 30px; color: #777; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="app-header">
+            <h3>Transactions List</h3>
+            <div class="reset-icon" title="Reset Today's Data" onclick="resetTodayData()">🗑️</div>
+        </div>
+        
+        <div class="summary-wrapper">
+            <div style="text-align: center; font-size: 12px; opacity: 0.8; margin-bottom: 10px;" id="monthYearLabel">Current Month</div>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="label">Income</div>
+                    <div id="totalInc" class="val income">₹0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="label">Expenses</div>
+                    <div id="totalExp" class="val expense">₹0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="label">Total</div>
+                    <div id="totalBalance" class="val">₹0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="transactions-container" id="transactionsList">
+            <div class="loading">Loading entries...</div>
+        </div>
+    </div>
+
+    <script>
+        const dbUrl = "https://expense-902db-default-rtdb.firebaseio.com/expenses.json";
+
+        function getToday() {
+            const n = new Date();
+            return `${String(n.getDate()).padStart(2,'0')}-${String(n.getMonth()+1).padStart(2,'0')}-${n.getFullYear()}`;
+        }
+
+        function formatDayDate(dateStr) {
+            const parts = dateStr.split('-');
+            if(parts.length !== 3) return dateStr;
+            const d = new Date(parts[2], parseInt(parts[1])-1, parts[0]);
+            if(isNaN(d.getTime())) return dateStr;
+            const today = new Date();
+            const isToday = d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+            
+            const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'};
+            let formatted = d.toLocaleDateString('en-IN', options);
+            if(isToday) formatted += " (Today)";
+            return formatted;
+        }
+
+        function parseDateTime(dtStr) {
+            if(!dtStr) return new Date(0);
+            const p = dtStr.split(/[\s:-]/);
+            if(p.length < 3) return new Date(0);
+            const day = parseInt(p[0]);
+            const month = parseInt(p[1])-1;
+            const year = parseInt(p[2]);
+            const h = p[3] ? parseInt(p[3]) : 0;
+            const m = p[4] ? parseInt(p[4]) : 0;
+            const s = p[5] ? parseInt(p[5]) : 0;
+            return new Date(year, month, day, h, m, s);
+        }
+
+        async function loadData() {
+            const tList = document.getElementById('transactionsList');
+            const todayDate = new Date();
+            document.getElementById('monthYearLabel').innerText = todayDate.toLocaleDateString('en-IN', {month: 'long', year: 'numeric'});
+
+            try {
+                const res = await fetch(dbUrl);
+                const data = await res.json();
+                
+                if (!data) {
+                    tList.innerHTML = "<div class='no-data'>No transactions found.</div>";
+                    return;
+                }
+
+                let arr = [];
+                for(let key in data) {
+                    arr.push({...data[key], _id: key});
+                }
+
+                // Sort descending by date (newest first)
+                arr.sort((a,b) => {
+                    const dA = parseDateTime(a.date_time).getTime();
+                    const dB = parseDateTime(b.date_time).getTime();
+                    return dB - dA;
+                });
+
+                const grouped = {};
+                let monthInc = 0;
+                let monthExp = 0;
+                const currMonth = todayDate.getMonth();
+                const currYear = todayDate.getFullYear();
+
+                arr.forEach(item => {
+                    const dateStr = item.date_time ? item.date_time.substring(0, 10) : "Unknown Date";
+                    if(!grouped[dateStr]) grouped[dateStr] = { items: [], totalInc:0, totalExp:0 };
+                    
+                    const val = Number(item.amount) || 0;
+                    grouped[dateStr].items.push(item);
+
+                    if(item.type === "Income") {
+                        grouped[dateStr].totalInc += val;
+                    } else {
+                        grouped[dateStr].totalExp += val;
+                    }
+
+                    // For the top summary, we only show current month's total
+                    const tDate = parseDateTime(item.date_time);
+                    if(tDate.getMonth() === currMonth && tDate.getFullYear() === currYear) {
+                        if(item.type === "Income") monthInc += val;
+                        else monthExp += val;
+                    }
+                });
+
+                document.getElementById('totalInc').innerText = "₹" + monthInc;
+                document.getElementById('totalExp').innerText = "₹" + monthExp;
+                document.getElementById('totalBalance').innerText = "₹" + (monthInc - monthExp);
+
+                // Ensure distinct dates maintaining sorted descending order
+                const orderedDates = [...new Set(arr.map(item => item.date_time ? item.date_time.substring(0, 10) : "Unknown Date"))];
+                let html = "";
+
+                orderedDates.forEach(dateStr => {
+                    const group = grouped[dateStr];
+                    
+                    html += `<div class="day-group">
+                        <div class="day-header">
+                            <div class="day-date">${formatDayDate(dateStr)}</div>
+                            <div class="day-summary">
+                                ${group.totalInc > 0 ? `<span class="day-inc">Inc: ₹${group.totalInc}</span>` : ''}
+                                ${group.totalExp > 0 ? `<span class="day-exp">Exp: ₹${group.totalExp}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="day-transactions">`;
+
+                    group.items.forEach(item => {
+                        const isInc = item.type === "Income";
+                        const icon = isInc ? "↓" : "↑";
+                        const iconClass = isInc ? "inc" : "exp";
+                        const amtClass = isInc ? "inc" : "exp";
+                        const val = Number(item.amount) || 0;
+                        const timeStr = item.date_time ? item.date_time.substring(11, 16) : "";
+
+                        html += `
+                            <div class="transaction-item">
+                                <div class="t-info">
+                                    <div class="t-icon ${iconClass}">${icon}</div>
+                                    <div class="t-details">
+                                        <span class="t-desc">${item.description || item.type}</span>
+                                        <span class="t-time">${timeStr}</span>
+                                    </div>
+                                </div>
+                                <div class="t-amount ${amtClass}">${isInc ? '+' : '-'}₹${val}</div>
+                            </div>`;
+                    });
+
+                    html += `</div></div>`;
+                });
+
+                tList.innerHTML = html;
+
+            } catch (e) {
+                console.error(e);
+                tList.innerHTML = "<div class='no-data' style='color:red;'>Error fetching data!</div>";
+            }
+        }
+
+        async function resetTodayData() {
+            if (!confirm("Innaiku records ellathaiyum delete panni page-ah refresh pannalama?")) return;
+            
+            const today = getToday();
+            try {
+                const res = await fetch(dbUrl);
+                const data = await res.json();
+                
+                if (data) {
+                    let deletedCount = 0;
+                    const deletePromises = [];
+                    for (const [key, item] of Object.entries(data)) {
+                        const itemDate = item.date_time ? item.date_time.substring(0, 10) : "";
+                        if (itemDate === today) {
+                            deletePromises.push(
+                                fetch(`https://expense-902db-default-rtdb.firebaseio.com/expenses/${key}.json`, { method: 'DELETE' })
+                            );
+                            deletedCount++;
+                        }
+                    }
+                    
+                    if(deletedCount > 0) {
+                        await Promise.all(deletePromises);
+                        alert("Data deleted! Page refresh aagudhu...");
+                        location.reload(); 
+                    } else {
+                        alert("Innaiku records edhum illa.");
+                    }
+                }
+            } catch (e) {
+                alert("Delete operation failed!");
+            }
+        }
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>
