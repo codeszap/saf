@@ -130,6 +130,11 @@
             color: #2ecc71;
         }
 
+        .day-bal {
+            color: #3498db;
+            font-weight: 600;
+        }
+
         /* Action Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -477,6 +482,9 @@
 
                 orderedDates.forEach(dateStr => {
                     const group = grouped[dateStr];
+                    const dayBal = group.totalInc - group.totalExp;
+                    const balSign = dayBal < 0 ? "-" : "";
+                    const balDisp = balSign + "₹" + Math.abs(dayBal);
 
                     html += `<div class="day-group">
                         <div class="day-header">
@@ -484,6 +492,7 @@
                             <div class="day-summary">
                                 ${group.totalInc > 0 ? `<span class="day-inc">Inc: ₹${group.totalInc}</span>` : ''}
                                 ${group.totalExp > 0 ? `<span class="day-exp">Exp: ₹${group.totalExp}</span>` : ''}
+                                <span class="day-bal">Bal: ${balDisp}</span>
                             </div>
                         </div>
                         <div class="day-transactions">`;
