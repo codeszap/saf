@@ -1,77 +1,296 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Expense Tracker - Money Manager</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 0; display: flex; justify-content: center; overflow-x: hidden; }
-        .container { width: 100%; max-width: 600px; background: #f4f6f8; min-height: 100vh; position: relative; }
-        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: #f4f6f8;
+            min-height: 100vh;
+            position: relative;
+        }
+
         /* App Header */
-        .app-header { background: #2c3e50; color: white; padding: 15px 20px; display: flex; justify-content: center; align-items: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
-        .app-header h3 { margin: 0; font-size: 18px; font-weight: 600; }
+        .app-header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .app-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
 
         /* Summary Dashboard */
-        .summary-wrapper { padding: 15px 15px 5px 15px; background: #2c3e50; color: white; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .summary-grid { display: flex; justify-content: space-between; text-align: center; }
-        .summary-item { flex: 1; }
-        .summary-item .label { font-size: 11px; text-transform: uppercase; opacity: 0.8; letter-spacing: 0.5px; margin-bottom: 5px; }
-        .summary-item .val { font-size: 18px; font-weight: bold; }
-        .val.income { color: #2ecc71; }
-        .val.expense { color: #e74c3c; }
+        .summary-wrapper {
+            padding: 15px 15px 5px 15px;
+            background: #2c3e50;
+            color: white;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-grid {
+            display: flex;
+            justify-content: space-between;
+            text-align: center;
+        }
+
+        .summary-item {
+            flex: 1;
+        }
+
+        .summary-item .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            opacity: 0.8;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .summary-item .val {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .val.income {
+            color: #2ecc71;
+        }
+
+        .val.expense {
+            color: #e74c3c;
+        }
 
         /* Transactions List */
-        .transactions-container { padding: 0 10px 20px 10px; }
-        
+        .transactions-container {
+            padding: 0 10px 20px 10px;
+        }
+
         /* Day Group */
-        .day-group { background: white; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
-        
-        .day-header { background: #fafafa; padding: 10px 15px; display: flex; justify-content: space-between; border-bottom: 1px solid #eee; font-size: 13px; font-weight: 600; color: #555; }
-        .day-header .day-date { font-weight: 700; color: #333; }
-        .day-header .day-summary { font-size: 12px; display:flex; gap: 10px; }
-        .day-exp { color: #e74c3c; }
-        .day-inc { color: #2ecc71; }
+        .day-group {
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
 
-        /* Swipe to Delete Styles */
-        .swipe-container { position: relative; overflow: hidden; border-bottom: 1px solid #f5f5f5; }
-        .swipe-container:last-child { border-bottom: none; }
-        .swipe-background { position: absolute; right: 0; top: 0; bottom: 0; width: 80px; background: #e74c3c; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; z-index: 1; cursor: pointer; }
-        .swipe-background span { font-size: 18px; margin-bottom: 2px; }
-        .swipe-foreground { position: relative; background: white; z-index: 2; width: 100%; box-sizing: border-box; touch-action: pan-y; }
-        
+        .day-header {
+            background: #fafafa;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .day-header .day-date {
+            font-weight: 700;
+            color: #333;
+        }
+
+        .day-header .day-summary {
+            font-size: 12px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .day-exp {
+            color: #e74c3c;
+        }
+
+        .day-inc {
+            color: #2ecc71;
+        }
+
+        /* Action Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .action-dialog {
+            background: white;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 300px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .action-dialog h4 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 18px;
+        }
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn {
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+        }
+        .btn.edit { background: #3498db; }
+        .btn.delete { background: #e74c3c; }
+        .btn.cancel { background: #95a5a6; }
+
         /* Transaction Item */
-        .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; }
-        .t-info { display: flex; align-items: center; gap: 12px; flex: 1; overflow: hidden; }
-        .t-icon { width: 36px; height: 36px; min-width: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
-        .t-icon.inc { background: #2ecc71; }
-        .t-icon.exp { background: #e74c3c; }
-        .t-details { display: flex; flex-direction: column; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-        .t-desc { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; }
-        .t-time { font-size: 11px; color: #999; }
-        .t-amount { font-size: 15px; font-weight: bold; margin-left: 10px; }
-        .t-amount.inc { color: #2ecc71; }
-        .t-amount.exp { color: #e74c3c; }
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f5f5f5;
+            cursor: pointer;
+        }
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
 
-        .loading, .no-data { text-align: center; padding: 30px; color: #777; font-size: 14px; }
+        .t-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .t-icon {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: white;
+        }
+
+        .t-icon.inc {
+            background: #2ecc71;
+        }
+
+        .t-icon.exp {
+            background: #e74c3c;
+        }
+
+        .t-details {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .t-desc {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .t-time {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .t-amount {
+            font-size: 15px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .t-amount.inc {
+            color: #2ecc71;
+        }
+
+        .t-amount.exp {
+            color: #e74c3c;
+        }
+
+        .loading,
+        .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #777;
+            font-size: 14px;
+        }
 
         @media (max-width: 380px) {
-            .summary-item .val { font-size: 16px; }
-            .t-desc { font-size: 13px; }
-            .t-amount { font-size: 13px; }
-            .day-header { font-size: 12px; padding: 8px 12px; }
+            .summary-item .val {
+                font-size: 16px;
+            }
+
+            .t-desc {
+                font-size: 13px;
+            }
+
+            .t-amount {
+                font-size: 13px;
+            }
+
+            .day-header {
+                font-size: 12px;
+                padding: 8px 12px;
+            }
         }
     </style>
 </head>
+
 <body>
 
     <div class="container">
-        <div class="app-header">
-            <h3>Transactions List</h3>
-        </div>
-        
+
         <div class="summary-wrapper">
-            <div style="text-align: center; font-size: 12px; opacity: 0.8; margin-bottom: 10px;" id="monthYearLabel">Current Month</div>
+            <div style="text-align: center; font-size: 12px; opacity: 0.8; margin-bottom: 10px;" id="monthYearLabel">
+                Current Month</div>
             <div class="summary-grid">
                 <div class="summary-item">
                     <div class="label">Income</div>
@@ -93,57 +312,71 @@
         </div>
     </div>
 
+    <!-- Action Modal -->
+    <div class="modal-overlay" id="actionModal">
+        <div class="action-dialog">
+            <h4>Options</h4>
+            <div class="btn-group">
+                <button class="btn edit" onclick="editRecord()">Edit</button>
+                <button class="btn delete" onclick="confirmDelete()">Delete</button>
+                <button class="btn cancel" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const dbUrl = "https://expense-902db-default-rtdb.firebaseio.com/expenses.json";
 
         function formatDayDate(dateStr) {
             const parts = dateStr.split('-');
-            if(parts.length !== 3) return dateStr;
-            const d = new Date(parts[2], parseInt(parts[1])-1, parts[0]);
-            if(isNaN(d.getTime())) return dateStr;
+            if (parts.length !== 3) return dateStr;
+            const d = new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+            if (isNaN(d.getTime())) return dateStr;
             const today = new Date();
             const isToday = d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
-            
-            const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'};
+
+            const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
             let formatted = d.toLocaleDateString('en-IN', options);
-            if(isToday) formatted += " (Today)";
+            if (isToday) formatted += " (Today)";
             return formatted;
         }
 
         function parseDateTime(dtStr) {
-            if(!dtStr) return new Date(0);
-            const p = dtStr.split(/[\s:-]/);
-            if(p.length < 3) return new Date(0);
+            if (!dtStr) return new Date(0);
+            const p = dtStr.split(/[\s:-]+/);
+            if (p.length < 3) return new Date(0);
             const day = parseInt(p[0]);
-            const month = parseInt(p[1])-1;
+            const month = parseInt(p[1]) - 1;
             const year = parseInt(p[2]);
-            const h = p[3] ? parseInt(p[3]) : 0;
-            const m = p[4] ? parseInt(p[4]) : 0;
-            const s = p[5] ? parseInt(p[5]) : 0;
-            return new Date(year, month, day, h, m, s);
+            let h = p[3] ? parseInt(p[3]) : 0;
+            let m = p[4] ? parseInt(p[4]) : 0;
+            const ampm = p[p.length - 1] ? p[p.length - 1].toLowerCase() : "";
+            if (ampm === "pm" && h < 12) h += 12;
+            if (ampm === "am" && h === 12) h = 0;
+            return new Date(year, month, day, h, m, 0);
         }
 
         async function loadData() {
             const tList = document.getElementById('transactionsList');
             const todayDate = new Date();
-            document.getElementById('monthYearLabel').innerText = todayDate.toLocaleDateString('en-IN', {month: 'long', year: 'numeric'});
+            document.getElementById('monthYearLabel').innerText = todayDate.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
 
             try {
                 const res = await fetch(dbUrl);
                 const data = await res.json();
-                
+
                 if (!data) {
                     tList.innerHTML = "<div class='no-data'>No transactions found.</div>";
                     return;
                 }
 
                 let arr = [];
-                for(let key in data) {
-                    arr.push({...data[key], _id: key});
+                for (let key in data) {
+                    arr.push({ ...data[key], _id: key });
                 }
 
                 // Sort descending by date (newest first)
-                arr.sort((a,b) => {
+                arr.sort((a, b) => {
                     const dA = parseDateTime(a.date_time).getTime();
                     const dB = parseDateTime(b.date_time).getTime();
                     return dB - dA;
@@ -157,12 +390,12 @@
 
                 arr.forEach(item => {
                     const dateStr = item.date_time ? item.date_time.substring(0, 10) : "Unknown Date";
-                    if(!grouped[dateStr]) grouped[dateStr] = { items: [], totalInc:0, totalExp:0 };
-                    
+                    if (!grouped[dateStr]) grouped[dateStr] = { items: [], totalInc: 0, totalExp: 0 };
+
                     const val = Number(item.amount) || 0;
                     grouped[dateStr].items.push(item);
 
-                    if(item.type === "Income") {
+                    if (item.type === "Income") {
                         grouped[dateStr].totalInc += val;
                     } else {
                         grouped[dateStr].totalExp += val;
@@ -170,8 +403,8 @@
 
                     // For the top summary, we only show current month's total
                     const tDate = parseDateTime(item.date_time);
-                    if(tDate.getMonth() === currMonth && tDate.getFullYear() === currYear) {
-                        if(item.type === "Income") monthInc += val;
+                    if (tDate.getMonth() === currMonth && tDate.getFullYear() === currYear) {
+                        if (item.type === "Income") monthInc += val;
                         else monthExp += val;
                     }
                 });
@@ -186,7 +419,7 @@
 
                 orderedDates.forEach(dateStr => {
                     const group = grouped[dateStr];
-                    
+
                     html += `<div class="day-group">
                         <div class="day-header">
                             <div class="day-date">${formatDayDate(dateStr)}</div>
@@ -205,24 +438,17 @@
                         const val = Number(item.amount) || 0;
                         const timeStr = item.date_time ? item.date_time.substring(11, 16) : "";
 
+                        const itemDataStr = encodeURIComponent(JSON.stringify(item)).replace(/'/g, "%27");
                         html += `
-                            <div class="swipe-container">
-                                <div class="swipe-background" onclick="deleteRecord('${item._id}')">
-                                    <span>🗑️</span>Del
-                                </div>
-                                <div class="swipe-foreground transaction-item" 
-                                     ontouchstart="handleTouchStart(event)" 
-                                     ontouchmove="handleTouchMove(event)" 
-                                     ontouchend="handleTouchEnd(event)">
-                                    <div class="t-info">
-                                        <div class="t-icon ${iconClass}">${icon}</div>
-                                        <div class="t-details">
-                                            <span class="t-desc">${item.description || item.type}</span>
-                                            <span class="t-time">${timeStr}</span>
-                                        </div>
+                            <div class="transaction-item" onclick="showActionDialog('${itemDataStr}')">
+                                <div class="t-info">
+                                    <div class="t-icon ${iconClass}">${icon}</div>
+                                    <div class="t-details">
+                                        <span class="t-desc">${item.description || item.type}</span>
+                                        <span class="t-time">${timeStr}</span>
                                     </div>
-                                    <div class="t-amount ${amtClass}">${isInc ? '+' : '-'}₹${val}</div>
                                 </div>
+                                <div class="t-amount ${amtClass}">${isInc ? '+' : '-'}₹${val}</div>
                             </div>`;
                     });
 
@@ -237,89 +463,92 @@
             }
         }
 
-        // --- Swipe to Delete Logic ---
-        let activeSwipeEl = null;
-        let startX = 0;
-        let currentX = 0;
-        let swipeDiff = 0;
-        let isSwiping = false;
+        // --- Action Dialog Logic ---
+        let selectedRecordData = null;
 
-        window.handleTouchStart = function(e) {
-            const el = e.currentTarget;
-            if (activeSwipeEl && activeSwipeEl !== el) {
-                activeSwipeEl.style.transform = "translateX(0px)";
-            }
-            activeSwipeEl = el;
-            startX = e.touches[0].clientX;
-            currentX = startX;
-            isSwiping = false;
-            el.style.transition = 'none';
-        };
-
-        window.handleTouchMove = function(e) {
-            if (!activeSwipeEl) return;
-            currentX = e.touches[0].clientX;
-            swipeDiff = currentX - startX;
-
-            if (Math.abs(swipeDiff) > 10) {
-                isSwiping = true;
-            }
-
-            if (swipeDiff > 0) swipeDiff = 0; // Prevent right swipe
-            if (swipeDiff < -100) swipeDiff = -100; // Cap left swipe
-
-            if(isSwiping && swipeDiff < 0) {
-                activeSwipeEl.style.transform = `translateX(${swipeDiff}px)`;
+        window.showActionDialog = function (itemStr) {
+            try {
+                selectedRecordData = JSON.parse(decodeURIComponent(itemStr));
+                document.getElementById('actionModal').style.display = 'flex';
+            } catch (e) {
+                console.error(e);
             }
         };
 
-        window.handleTouchEnd = function(e) {
-            if (!activeSwipeEl) return;
-            activeSwipeEl.style.transition = 'transform 0.3s ease-out';
-            if (swipeDiff < -40) {
-                // Snap to show delete button
-                activeSwipeEl.style.transform = "translateX(-80px)";
-            } else {
-                // Return to original
-                activeSwipeEl.style.transform = "translateX(0px)";
-                activeSwipeEl = null;
-            }
+        window.closeModal = function () {
+            document.getElementById('actionModal').style.display = 'none';
+            selectedRecordData = null;
         };
 
-        // Close swipe if tapped outside
-        document.addEventListener('touchstart', function(e) {
-            if (activeSwipeEl && !activeSwipeEl.contains(e.target) && !e.target.closest('.swipe-background')) {
-                activeSwipeEl.style.transform = "translateX(0px)";
-                activeSwipeEl = null;
-            }
-        });
-
-        window.deleteRecord = async function(id) {
+        window.confirmDelete = async function () {
+            if (!selectedRecordData) return;
             if (!confirm("Intha record-ah neenga nijama delete panna virumburingala?")) {
-                if(activeSwipeEl) {
-                    activeSwipeEl.style.transform = "translateX(0px)";
-                    activeSwipeEl = null;
-                }
                 return;
             }
 
             try {
+                const id = selectedRecordData._id;
                 const url = `https://expense-902db-default-rtdb.firebaseio.com/expenses/${id}.json`;
                 const res = await fetch(url, { method: 'DELETE' });
-                
-                if(res.ok) {
+
+                if (res.ok) {
                     alert("Record deleted!");
+                    closeModal();
                     loadData();
                 } else {
                     alert("Delete failed.");
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error(e);
                 alert("Error during delete.");
+            }
+        };
+
+        window.editRecord = async function () {
+            if (!selectedRecordData) return;
+            
+            const newDesc = prompt("Edit Description:", selectedRecordData.description || "");
+            if (newDesc === null) return; // user cancelled
+
+            const newAmt = prompt("Edit Amount (₹):", selectedRecordData.amount);
+            if (newAmt === null) return; // user cancelled
+
+            if (isNaN(newAmt) || newAmt === "") {
+                alert("Invalid amount!");
+                return;
+            }
+
+            try {
+                const id = selectedRecordData._id;
+                const updated = {
+                    ...selectedRecordData,
+                    description: newDesc,
+                    amount: Number(newAmt)
+                };
+                delete updated._id; // Remove _id before sending to firebase
+
+                const url = `https://expense-902db-default-rtdb.firebaseio.com/expenses/${id}.json`;
+                const res = await fetch(url, { 
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updated)
+                });
+
+                if (res.ok) {
+                    alert("Record updated!");
+                    closeModal();
+                    loadData();
+                } else {
+                    alert("Edit failed.");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error during edit.");
             }
         };
 
         window.onload = loadData;
     </script>
 </body>
+
 </html>
