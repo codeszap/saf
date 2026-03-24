@@ -140,7 +140,7 @@
             align-items: center;
             z-index: 100;
         }
-        .action-dialog {
+        .action-dialog, .edit-dialog {
             background: white;
             border-radius: 12px;
             width: 80%;
@@ -154,7 +154,7 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .action-dialog h4 {
+        .action-dialog h4, .edit-dialog h4 {
             margin: 0 0 15px 0;
             color: #333;
             font-size: 18px;
@@ -163,6 +163,12 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+        }
+        .btn-group.row {
+            flex-direction: row;
+        }
+        .btn-group.row .btn {
+            flex: 1;
         }
         .btn {
             border: none;
@@ -176,6 +182,30 @@
         .btn.edit { background: #3498db; }
         .btn.delete { background: #e74c3c; }
         .btn.cancel { background: #95a5a6; }
+        .btn.save { background: #2ecc71; }
+        
+        /* Edit Form Styles */
+        .edit-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .edit-form label {
+            font-size: 13px;
+            color: #555;
+            font-weight: 600;
+        }
+        .edit-form input, .edit-form select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
 
         /* Transaction Item */
         .transaction-item {
@@ -317,9 +347,37 @@
         <div class="action-dialog">
             <h4>Options</h4>
             <div class="btn-group">
-                <button class="btn edit" onclick="editRecord()">Edit</button>
+                <button class="btn edit" onclick="openEditForm()">Edit</button>
                 <button class="btn delete" onclick="confirmDelete()">Delete</button>
                 <button class="btn cancel" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="edit-dialog">
+            <h4>Edit Transaction</h4>
+            <div class="edit-form">
+                <div>
+                    <label>Type</label>
+                    <select id="editType">
+                        <option value="Income">Income</option>
+                        <option value="Expense">Expense</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Amount (₹)</label>
+                    <input type="number" id="editAmount" placeholder="Amount">
+                </div>
+                <div>
+                    <label>Description</label>
+                    <input type="text" id="editDesc" placeholder="Description">
+                </div>
+            </div>
+            <div class="btn-group row">
+                <button class="btn cancel" onclick="closeEditModal()">Cancel</button>
+                <button class="btn save" onclick="saveEdit()">Save</button>
             </div>
         </div>
     </div>
@@ -505,13 +563,32 @@
         };
 
         window.editRecord = async function () {
+            // Deprecated logic, overridden by openEditForm
+        };
+
+        // --- Edit Modal Logic ---
+        window.openEditForm = function () {
+            if (!selectedRecordData) return;
+            document.getElementById('actionModal').style.display = 'none';
+            
+            document.getElementById('editType').value = selectedRecordData.type;
+            document.getElementById('editAmount').value = selectedRecordData.amount;
+            document.getElementById('editDesc').value = selectedRecordData.description || "";
+            
+            document.getElementById('editModal').style.display = 'flex';
+        };
+
+        window.closeEditModal = function () {
+            document.getElementById('editModal').style.display = 'none';
+            selectedRecordData = null;
+        };
+
+        window.saveEdit = async function () {
             if (!selectedRecordData) return;
             
-            const newDesc = prompt("Edit Description:", selectedRecordData.description || "");
-            if (newDesc === null) return; // user cancelled
-
-            const newAmt = prompt("Edit Amount (₹):", selectedRecordData.amount);
-            if (newAmt === null) return; // user cancelled
+            const newType = document.getElementById('editType').value;
+            const newAmt = document.getElementById('editAmount').value;
+            const newDesc = document.getElementById('editDesc').value;
 
             if (isNaN(newAmt) || newAmt === "") {
                 alert("Invalid amount!");
@@ -522,6 +599,7 @@
                 const id = selectedRecordData._id;
                 const updated = {
                     ...selectedRecordData,
+                    type: newType,
                     description: newDesc,
                     amount: Number(newAmt)
                 };
@@ -536,7 +614,7 @@
 
                 if (res.ok) {
                     alert("Record updated!");
-                    closeModal();
+                    closeEditModal();
                     loadData();
                 } else {
                     alert("Edit failed.");
