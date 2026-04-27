@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapido Daily Log</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f0f2f5;
+            padding: 15px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-top: 0;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-wrapper {
+            flex: 1;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .button-group button {
+            margin-top: 0;
+            flex: 1;
+        }
+
+        .send-btn {
+            background: #25D366;
+            color: white;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #f7d117;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .history-section {
+            margin-top: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background: #f8f8f8;
+        }
+
+        .delete-btn {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .edit-btn {
+            background: #4A90E2;
+            color: white;
+            border: none;
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .total-info {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+            color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Rapido Trip Log</h2>
+
+        <div class="input-group input-row">
+            <div class="input-wrapper">
+                <label>Start KM</label>
+                <input type="number" id="startKm" placeholder="0.0" step="0.1">
+            </div>
+            <div class="input-wrapper">
+                <label>Start Time</label>
+                <input type="time" id="startTime">
+            </div>
+        </div>
+        <div class="input-group input-row">
+            <div class="input-wrapper">
+                <label>End KM</label>
+                <input type="number" id="endKm" placeholder="0.0" step="0.1">
+            </div>
+            <div class="input-wrapper">
+                <label>End Time</label>
+                <input type="time" id="endTime">
+            </div>
+        </div>
+        <div class="input-group">
+            <label>Amount (₹)</label>
+            <input type="number" id="rideAmt" placeholder="0">
+        </div>
+
+        <div class="button-group">
+            <button id="addBtn" onclick="addEntry()">ADD ENTRY</button>
+            <button onclick="sendData()" class="send-btn">SEND</button>
+        </div>
+
+        <div class="history-section">
+            <h3>Today's Rides</h3>
+            <table id="logTable">
+                <thead>
+                    <tr>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>KM</th>
+                        <th>Amt</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="logBody"></tbody>
+            </table>
+            <div id="totalSummary" class="total-info">Total KM: 0 | Total ₹: 0</div>
+            <button onclick="clearAll()"
+                style="background: #ddd; color: #333; margin-top: 20px; font-size: 13px; padding: 8px;">Clear All
+                Data</button>
+        </div>
+    </div>
+
+    <script>
+        // Current time format in 24h for input type="time"
+        function getCurrentTime24() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        // Convert 24h time format to 12h format AM/PM for display
+        function formatTo12Hour(time) {
+            if (!time) return "";
+            let [hours, minutes] = time.split(':');
+            hours = parseInt(hours, 10);
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12; // Convert '0' to '12'
+            return `${hours}:${minutes} ${ampm}`;
+        }
+
+        function getDurationInMinutes(startTime, endTime) {
+            if (!startTime || !endTime) return 0;
+            let [sH, sM] = startTime.split(':').map(Number);
+            let [eH, eM] = endTime.split(':').map(Number);
+            let diff = (eH * 60 + eM) - (sH * 60 + sM);
+            if (diff < 0) diff += 24 * 60; // handle overnight trips
+            return diff;
+        }
+
+        function formatMinutesToHours(minutes) {
+            if (minutes === 0) return "0m";
+            let h = Math.floor(minutes / 60);
+            let m = minutes % 60;
+            if (h > 0 && m > 0) return `${h}h ${m}m`;
+            if (h > 0) return `${h}h`;
+            return `${m}m`;
+        }
+
+        let currentEditId = null;
+
+        // Page load aagum podhu pazhaya data-va yedukkum
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('startTime').value = getCurrentTime24();
+            document.getElementById('endTime').value = getCurrentTime24();
+            
+            // Auto-sort existing data on load
+            let logs = JSON.parse(localStorage.getItem('rapidoLogs')) || [];
+            if (logs.length > 0) {
+                logs.sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
+                localStorage.setItem('rapidoLogs', JSON.stringify(logs));
+            }
+
+            displayLogs();
+        });
+
+        function sendData() {
+            let logs = JSON.parse(localStorage.getItem('rapidoLogs')) || [];
+
+            if (logs.length === 0) {
+                alert("Data yedhuvum illaye! First entry add pannunga.");
+                return;
+            }
+
+            const today = new Date();
+            const dateString = today.toLocaleDateString('en-GB');
+
+            let msg = `*Rapido Daily Log - ${dateString}*\n`;
+            msg += `------------------------------\n`;
+
+            let totalKm = 0;
+            let totalAmt = 0;
+            let totalMins = 0;
+
+            logs.forEach((entry, index) => {
+                const sTime = formatTo12Hour(entry.startTime) || "N/A";
+                const eTime = entry.endTime ? formatTo12Hour(entry.endTime) : "Ongoing";
+                const end = entry.end ? `${entry.end} km` : "Ongoing";
+                const diff = (entry.diff && entry.diff !== "-") ? entry.diff : "Ongoing";
+                const amt = entry.amt || 0;
+
+                let durationStr = "";
+                if (entry.startTime && entry.endTime && diff !== "Ongoing") {
+                    let mins = getDurationInMinutes(entry.startTime, entry.endTime);
+                    totalMins += mins;
+                    durationStr = ` | ⏳ *Time:* ${formatMinutesToHours(mins)}`;
+                }
+
+                msg += `${index + 1}) 🟢 *Start:* ${entry.start} km (${sTime}) | 🔴 *End:* ${end} (${eTime})\n`;
+                msg += `     🛣️ *KM:* ${diff} | 💰 *Amt:* ₹${amt}${durationStr}\n\n`;
+
+                if (diff !== "Ongoing") {
+                    totalKm += parseFloat(diff);
+                }
+                totalAmt += parseFloat(amt);
+            });
+
+            msg += `------------------------------\n`;
+            msg += `🏍️ *Total KM:* ${totalKm.toFixed(2)}\n`;
+            msg += `⏳ *Total Time:* ${formatMinutesToHours(totalMins)}\n`;
+            msg += `💵 *Total Earnings:* ₹${totalAmt}`;
+
+            const groupLink = "https://chat.whatsapp.com/FS8OyJCIm886sXl9mn7911";
+
+            // Fallback copy function for older browsers / local files
+            function fallbackCopyTextToClipboard(text) {
+                var textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                textArea.style.position = "fixed";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                } catch (err) { }
+                document.body.removeChild(textArea);
+            }
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(msg).then(() => {
+                    alert("Report details copy aagiruchu! \nWhatsApp group open aanathum 'Paste' panni Send pannunga.");
+                    window.open(groupLink, "_blank");
+                }).catch(err => {
+                    fallbackCopyTextToClipboard(msg);
+                    alert("Report details copy aagiruchu! \nWhatsApp group open aanathum 'Paste' panni Send pannunga.");
+                    window.open(groupLink, "_blank");
+                });
+            } else {
+                fallbackCopyTextToClipboard(msg);
+                alert("Report details copy aagiruchu! \nWhatsApp group open aanathum 'Paste' panni Send pannunga.");
+                window.open(groupLink, "_blank");
+            }
+        }
+
+        function addEntry() {
+            const startStr = document.getElementById('startKm').value;
+            const endStr = document.getElementById('endKm').value;
+            const amtStr = document.getElementById('rideAmt').value;
+
+            const start = parseFloat(startStr);
+            const end = parseFloat(endStr);
+            const amt = parseFloat(amtStr);
+
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+
+            if (isNaN(start)) {
+                alert("Start KM mattum kandippa podunga!");
+                return;
+            }
+
+            const isEndGiven = !isNaN(end);
+            
+            if (isEndGiven && end < start) {
+                alert("End KM kandippa Start KM-ai vida adhigama irukkanum!");
+                return;
+            }
+
+            const diff = isEndGiven ? (end - start).toFixed(2) : "-";
+            const finalAmt = isNaN(amt) ? 0 : amt;
+
+            let logs = JSON.parse(localStorage.getItem('rapidoLogs')) || [];
+
+            if (currentEditId) {
+                const idx = logs.findIndex(e => e.id === currentEditId);
+                if (idx > -1) {
+                    logs[idx].start = start;
+                    logs[idx].end = isEndGiven ? end : "";
+                    logs[idx].startTime = startTime;
+                    logs[idx].endTime = isEndGiven ? endTime : "";
+                    logs[idx].diff = diff;
+                    logs[idx].amt = finalAmt;
+                }
+                currentEditId = null;
+                document.getElementById('addBtn').innerText = "ADD ENTRY";
+            } else {
+                const newEntry = {
+                    start,
+                    end: isEndGiven ? end : "",
+                    startTime,
+                    endTime: isEndGiven ? endTime : "",
+                    diff,
+                    amt: finalAmt,
+                    id: Date.now()
+                };
+                logs.push(newEntry);
+            }
+
+            // Sort before saving
+            logs.sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
+            localStorage.setItem('rapidoLogs', JSON.stringify(logs));
+
+            // Input-ah clear pannudhu (Time-ah current time aakidu)
+            document.getElementById('startKm').value = '';
+            document.getElementById('endKm').value = '';
+            document.getElementById('rideAmt').value = '';
+            document.getElementById('startTime').value = getCurrentTime24();
+            document.getElementById('endTime').value = getCurrentTime24();
+
+            displayLogs();
+        }
+
+        function editEntry(id) {
+            let logs = JSON.parse(localStorage.getItem('rapidoLogs')) || [];
+            let entry = logs.find(e => e.id === id);
+
+            if (entry) {
+                document.getElementById('startKm').value = entry.start;
+                document.getElementById('startTime').value = entry.startTime || getCurrentTime24();
+                document.getElementById('endKm').value = entry.end || '';
+                document.getElementById('endTime').value = entry.endTime || getCurrentTime24();
+                document.getElementById('rideAmt').value = entry.amt || '';
+
+                currentEditId = id;
+                document.getElementById('addBtn').innerText = "UPDATE ENTRY";
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function displayLogs() {
+            const logs = JSON.parse(localStorage.getItem('rapidoLogs')) || [];
+            const logBody = document.getElementById('logBody');
+            logBody.innerHTML = '';
+
+            let totalKm = 0;
+            let totalAmt = 0;
+            let totalMins = 0;
+
+            logs.forEach(entry => {
+                if (entry.diff && entry.diff !== "-" && entry.diff !== "Ongoing") {
+                    totalKm += parseFloat(entry.diff);
+                    if (entry.startTime && entry.endTime) {
+                        totalMins += getDurationInMinutes(entry.startTime, entry.endTime);
+                    }
+                }
+                totalAmt += parseFloat(entry.amt) || 0;
+
+                const startDisplay = entry.startTime ? `${entry.start} km<br><small>${formatTo12Hour(entry.startTime)}</small>` : `${entry.start} km`;
+
+                let endDisplay = "Ongoing";
+                if (entry.end) {
+                    endDisplay = entry.endTime ? `${entry.end} km<br><small>${formatTo12Hour(entry.endTime)}</small>` : `${entry.end} km`;
+                }
+
+                const diffDisplay = (entry.diff && entry.diff !== "-") ? entry.diff : "Ongoing";
+
+                logBody.innerHTML += `
+                <tr>
+                    <td>${startDisplay}</td>
+                    <td>${endDisplay}</td>
+                    <td>${diffDisplay}</td>
+                    <td>₹${entry.amt || 0}</td>
+                    <td>
+                        <div style="display:flex; justify-content:center; gap:5px;">
+                            <button class="edit-btn" onclick="editEntry(${entry.id})">✎</button>
+                            <button class="delete-btn" onclick="deleteEntry(${entry.id})">X</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            });
+
+            document.getElementById('totalSummary').innerText = `Total KM: ${totalKm.toFixed(2)} | Total Time: ${formatMinutesToHours(totalMins)} | Total ₹: ${totalAmt}`;
+        }
+
+        function deleteEntry(id) {
+            let logs = JSON.parse(localStorage.getItem('rapidoLogs')) || [];
+            logs = logs.filter(entry => entry.id !== id);
+            localStorage.setItem('rapidoLogs', JSON.stringify(logs));
+            displayLogs();
+        }
+
+        function clearAll() {
+            if (confirm("Full data-vaiyum delete pannatuma?")) {
+                localStorage.removeItem('rapidoLogs');
+                displayLogs();
+            }
+        }
+    </script>
+
+</body>
+
+</html>
