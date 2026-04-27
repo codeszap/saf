@@ -136,6 +136,52 @@
             text-align: center;
             color: #0056b3;
         }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            margin: 0;
+        }
+
+        .edit-btn-modal {
+            background: #4A90E2; color: white;
+        }
+
+        .delete-btn-modal {
+            background: #ff4d4d; color: white;
+        }
+
+        .cancel-btn-modal {
+            background: #ccc; color: #333;
+        }
+
+        .clickable-row:active {
+            background-color: #e0e0e0;
+        }
     </style>
 </head>
 
@@ -183,7 +229,6 @@
                         <th>End</th>
                         <th>KM</th>
                         <th>Amt</th>
-                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="logBody"></tbody>
@@ -192,6 +237,19 @@
             <button onclick="clearAll()"
                 style="background: #ddd; color: #333; margin-top: 20px; font-size: 13px; padding: 8px;">Clear All
                 Data</button>
+        </div>
+    </div>
+
+    <!-- Action Modal -->
+    <div id="actionModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top:0; margin-bottom: 5px;">Trip Options</h3>
+            <p style="font-size: 14px; margin-top: 0;">What do you want to do?</p>
+            <div class="modal-buttons">
+                <button class="edit-btn-modal" onclick="confirmEdit()">UPDATE</button>
+                <button class="delete-btn-modal" onclick="confirmDelete()">DELETE</button>
+                <button class="cancel-btn-modal" onclick="closeActionModal()">CANCEL</button>
+            </div>
         </div>
     </div>
 
@@ -439,20 +497,18 @@
                     endDisplay = entry.endTime ? `${entry.end} km<br><small>${formatTo12Hour(entry.endTime)}</small>` : `${entry.end} km`;
                 }
 
-                const diffDisplay = (entry.diff && entry.diff !== "-") ? entry.diff : "Ongoing";
+                let diffDisplay = (entry.diff && entry.diff !== "-") ? entry.diff : "Ongoing";
+                if (entry.startTime && entry.endTime && entry.diff && entry.diff !== "-" && entry.diff !== "Ongoing") {
+                    let mins = getDurationInMinutes(entry.startTime, entry.endTime);
+                    diffDisplay += `<br><small>⏳ ${formatMinutesToHours(mins)}</small>`;
+                }
 
                 logBody.innerHTML += `
-                <tr>
+                <tr class="clickable-row" onclick="openActionModal(${entry.id})" style="cursor: pointer;">
                     <td>${startDisplay}</td>
                     <td>${endDisplay}</td>
                     <td>${diffDisplay}</td>
                     <td>₹${entry.amt || 0}</td>
-                    <td>
-                        <div style="display:flex; justify-content:center; gap:5px;">
-                            <button class="edit-btn" onclick="editEntry(${entry.id})">✎</button>
-                            <button class="delete-btn" onclick="deleteEntry(${entry.id})">X</button>
-                        </div>
-                    </td>
                 </tr>
             `;
             });
@@ -461,10 +517,46 @@
         }
 
         function deleteEntry(id) {
-            let logs = JSON.parse(localStorage.getItem('rapidoLogs')) || [];
-            logs = logs.filter(entry => entry.id !== id);
-            localStorage.setItem('rapidoLogs', JSON.stringify(logs));
-            displayLogs();
+            if(confirm("Idha delete pannidava?")) {
+                let logs = JSON.parse(localStorage.getItem('rapidoLogs')) || [];
+                logs = logs.filter(entry => entry.id !== id);
+                localStorage.setItem('rapidoLogs', JSON.stringify(logs));
+                displayLogs();
+            }
+        }
+
+        let activeModalId = null;
+
+        function openActionModal(id) {
+            activeModalId = id;
+            document.getElementById('actionModal').style.display = 'flex';
+        }
+
+        function closeActionModal() {
+            activeModalId = null;
+            document.getElementById('actionModal').style.display = 'none';
+        }
+
+        function confirmEdit() {
+            if (activeModalId) {
+                editEntry(activeModalId);
+                closeActionModal();
+            }
+        }
+
+        function confirmDelete() {
+            if (activeModalId) {
+                deleteEntry(activeModalId);
+                closeActionModal();
+            }
+        }
+
+        // Close modal if clicked outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('actionModal');
+            if (event.target == modal) {
+                closeActionModal();
+            }
         }
 
         function clearAll() {
