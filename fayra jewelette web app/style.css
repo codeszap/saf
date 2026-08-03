@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+:root {
+  --bg-primary: #0b0c10;
+  --bg-secondary: #1f2833;
+  --color-gold: #c5a059;
+  --color-gold-hover: #e5c179;
+  --color-gold-light: rgba(197, 160, 89, 0.15);
+  --text-primary: #f5f5f7;
+  --text-secondary: #c5c6c7;
+  --text-muted: #667280;
+  --border-color: rgba(197, 160, 89, 0.2);
+  --font-serif: 'Playfair Display', serif;
+  --font-sans: 'Inter', sans-serif;
+  --transition-speed: 0.3s;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-gold: 0 8px 30px rgba(197, 160, 89, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Page Layout Shell */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 40px;
+  margin-left: 280px; /* Sidebar Width */
+  padding-bottom: 60px; /* Safe space on desktop */
+  transition: margin-left var(--transition-speed) ease;
+  min-height: 100vh;
+}
+
+/* Headings */
+h1, h2, h3, h4 {
+  font-family: var(--font-serif);
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+h1 {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+  position: relative;
+  display: inline-block;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 32px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 500;
+}
+
+/* Cards & Glassmorphism */
+.glass-card {
+  background: rgba(31, 40, 51, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-gold);
+  transition: transform var(--transition-speed) ease, border-color var(--transition-speed) ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-gold);
+}
+
+/* Standard Premium Inputs */
+.premium-input, .premium-select {
+  width: 100%;
+  background: rgba(11, 12, 16, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 12px 16px;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.premium-input:focus, .premium-select:focus {
+  outline: none;
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.2);
+}
+
+.premium-btn {
+  background: linear-gradient(135deg, var(--color-gold) 0%, #b38944 100%);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 24px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.premium-btn:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.premium-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive queries */
+@media (max-width: 992px) {
+  .app-container {
+    flex-direction: column;
+  }
+  .main-content {
+    margin-left: 0;
+    padding: 20px;
+    padding-bottom: 100px; /* Padding for bottom navbar */
+  }
+}
+
+@media (max-width: 576px) {
+  h1 {
+    font-size: 1.8rem;
+  }
+  .subtitle {
+    font-size: 0.8rem;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+  }
+  .main-content {
+    padding: 16px;
+    padding-bottom: 90px;
+  }
+  .glass-card {
+    padding: 16px;
+  }
+  /* Force side-by-side small inputs to wrap if space is constrained */
+  div[style*="display: flex"] {
+    flex-wrap: wrap !important;
+  }
+}
+

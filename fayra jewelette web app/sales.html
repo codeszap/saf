@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fayra Jewelette - Luxury Sales Invoice</title>
+  <!-- Bootstrap 5.3 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="navigation.css">
+  <style>
+    .invoice-preview-container {
+      background: rgba(31, 40, 51, 0.8);
+      border: 1px solid var(--color-gold);
+      border-radius: var(--radius-md);
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      font-family: var(--font-sans);
+    }
+    @media (max-width: 576px) {
+      .invoice-preview-container {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <main class="main-content container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <h1>Sales Registry</h1>
+          <div class="subtitle">Bespoke Invoicing & Billing Engine</div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Billing Form Card -->
+        <div class="col-12 col-lg-5">
+          <section class="glass-card">
+            <h3 style="margin-bottom: 20px; color: var(--color-gold);">Invoice Settings</h3>
+            
+            <form id="billingForm" class="d-flex flex-column gap-3">
+              <div>
+                <label class="form-label" style="font-size: 0.85rem; color: var(--text-secondary);">Select Customer</label>
+                <select id="invoiceCustomer" class="premium-select">
+                  <!-- Loaded from local storage or defaults -->
+                </select>
+              </div>
+              
+              <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+                <h4 style="margin-bottom: 12px; font-size: 1rem; color: var(--color-gold);">Add Line Item</h4>
+                <div class="d-flex flex-column gap-2">
+                  <input type="text" id="itemName" class="premium-input" placeholder="Item Name (e.g. Sapphire Pendant)" required>
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <input type="number" step="0.01" id="itemWeight" class="premium-input" placeholder="Weight (g)" required>
+                    </div>
+                    <div class="col-6">
+                      <input type="number" id="itemRate" class="premium-input" placeholder="Rate ($/g)" required>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="premium-btn w-100 justify-content-center">Add to Invoice</button>
+            </form>
+          </section>
+        </div>
+
+        <!-- Live Preview -->
+        <div class="col-12 col-lg-7">
+          <section class="invoice-preview-container">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 pb-3 mb-4" style="border-bottom: 1px solid var(--border-color);">
+              <div>
+                <h2 style="font-size: 1.5rem; color: var(--color-gold);" class="mb-0">FAYRA JEWELETTE</h2>
+                <p style="font-size: 0.75rem; color: var(--text-muted);" class="mb-0">Luxury Fine Jewelry Atelier</p>
+              </div>
+              <div class="text-sm-end">
+                <p style="font-size: 0.8rem; color: var(--text-muted);" class="mb-0">INVOICE NO.</p>
+                <p style="font-weight: 600; color: var(--text-primary);" id="invoiceNum" class="mb-0">#INV-0000</p>
+              </div>
+            </div>
+
+            <div class="mb-4" style="font-size: 0.85rem;">
+              <p style="color: var(--text-muted);" class="mb-1">BILLED TO:</p>
+              <p id="previewCustomer" style="font-weight: 500; font-size: 1rem; color: var(--text-primary);" class="mb-0">Select a customer</p>
+            </div>
+
+            <!-- Items Table -->
+            <div class="table-responsive mb-4">
+              <table class="table table-dark table-borderless align-middle mb-0" style="background: transparent; font-size: 0.9rem;">
+                <thead>
+                  <tr style="border-bottom: 1px solid var(--border-color); color: var(--color-gold);">
+                    <th style="padding: 10px 0; background: transparent;">Item Description</th>
+                    <th style="padding: 10px 0; text-align: right; background: transparent;">Weight</th>
+                    <th style="padding: 10px 0; text-align: right; background: transparent;">Rate</th>
+                    <th style="padding: 10px 0; text-align: right; background: transparent;">Total</th>
+                  </tr>
+                </thead>
+                <tbody id="invoiceTableBody" style="background: transparent;">
+                  <!-- Dynamically populated rows -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Subtotal / Discounts / Tax -->
+            <div style="border-top: 1px solid var(--border-color); padding-top: 15px;" class="d-flex flex-column align-items-end gap-2 font-sm-9">
+              <div class="d-flex justify-content-between style-row-width" style="width: 240px; max-width: 100%; color: var(--text-secondary);">
+                <span>Subtotal:</span>
+                <span id="invoiceSubtotal">$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between style-row-width" style="width: 240px; max-width: 100%; color: var(--text-secondary);">
+                <span>VAT / Tax (5%):</span>
+                <span id="invoiceTax">$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between style-row-width" style="width: 240px; max-width: 100%; color: var(--color-gold); font-weight: 600; font-size: 1.1rem; border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 4px;">
+                <span>Grand Total:</span>
+                <span id="invoiceGrandTotal">$0.00</span>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-3 mt-4 flex-wrap">
+              <button class="premium-btn" onclick="window.print()">Print Invoice</button>
+              <button class="premium-btn" style="background: transparent; border: 1px solid var(--color-gold); color: var(--color-gold);" onclick="clearInvoice()">Clear</button>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="navigation.js"></script>
+  <script src="sales.js"></script>
+</body>
+</html>
