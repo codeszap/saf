@@ -23,9 +23,15 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 97;
+      z-index: 1005; /* raised to be above other UI layers */
       cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s;
+    }
+    @media (max-width: 992px) {
+      .fab-btn {
+        bottom: 100px; /* ensure above bottom nav */
+        z-index: 1005;
+      }
     }
     @media (min-width: 992px) {
       .fab-btn {
@@ -73,6 +79,19 @@
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
       </button>
+      <script>
+        // Fallback modal toggle in case master.js encounters errors (e.g., missing Firebase config)
+        window.toggleMasterModal = window.toggleMasterModal || function(show) {
+          const modal = document.getElementById('masterModal');
+          if (modal) {
+            modal.style.display = show ? 'flex' : 'none';
+            if (!show) {
+              const catNameInput = document.getElementById('catName');
+              if (catNameInput) catNameInput.value = '';
+            }
+          }
+        };
+      </script>
 
       <!-- Custom Create Data Modal -->
       <div id="masterModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1050; justify-content: center; align-items: center;">
@@ -97,7 +116,10 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-  <script src="navigation.js"></script>
-  <script src="master.js"></script>
+      <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+      <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+      <script src="firebase.js"></script>
+      <script src="navigation.js"></script>
+      <script src="master.js"></script>
 </body>
 </html>

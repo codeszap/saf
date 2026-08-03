@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const stockTableBody = document.getElementById('stockTableBody');
   const searchStockInput = document.getElementById('searchStock');
   const filterCategoryInput = document.getElementById('filterCategory');
@@ -6,158 +6,156 @@ document.addEventListener('DOMContentLoaded', () => {
   const addStockForm = document.getElementById('addStockForm');
   const submitStockBtn = document.getElementById('submitStockBtn');
   const stockModal = document.getElementById('stockModal');
-  
+
   const newStockName = document.getElementById('newStockName');
   const newStockCat = document.getElementById('newStockCat');
   const newStockCatList = document.getElementById('newStockCatList');
   const newStockQty = document.getElementById('newStockQty');
   const newStockAmount = document.getElementById('newStockAmount');
 
-  // Load Categories (linked to master data)
-  const categories = JSON.parse(localStorage.getItem('jewelette_categories')) || [
-    { name: 'Solitaire Rings', markup: 18 },
-    { name: 'Gold Necklaces', markup: 12 },
-    { name: 'Diamond Tennis Bracelets', markup: 22 }
-  ];
+  // Firestore references
+  const stocksRef = db.collection('stocks');
+  const categoriesRef = db.collection('categories');
 
-  let editingCode = null;
+  let stockItems = [];
+  let categories = [];
+  let editingDocId = null;
 
-  // Set default stock list
-  let stockItems = JSON.parse(localStorage.getItem('jewelette_stocks')) || [
-    { code: 'FY-SR-101', name: 'Aurora Solitaire Ring', category: 'Solitaire Rings', qty: 15, amount: 25000 },
-    { code: 'FY-GN-205', name: 'Imperial Gold Rope Chain', category: 'Gold Necklaces', qty: 8, amount: 45000 },
-    { code: 'FY-TB-309', name: 'Eternity Diamond Tennis Bracelet', category: 'Diamond Tennis Bracelets', qty: 4, amount: 65000 }
-  ];
+  // ── Load categories from Firestore ──
+  async function loadCategories() {
+    const snap = await categoriesRef.get();
+    categories = snap.empty
+      ? [{ name: 'Solitaire Rings' }, { name: 'Gold Necklaces' }, { name: 'Diamond Tennis Bracelets' }]
+      : snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    populateCategories();
+  }
 
-  // Populate Categories Filters & Modal Select Options
   function populateCategories() {
-    // Populate filter category select list
-    filterCategoryList.innerHTML = '<option value="All">All Categories</option>';
+    filterCategoryList.innerHTML = '<option value="">All Categories</option>';
     newStockCatList.innerHTML = '';
-    
     categories.forEach(cat => {
-      // Filter list options
-      const optFilter = document.createElement('option');
-      optFilter.value = cat.name;
-      optFilter.textContent = cat.name;
-      filterCategoryList.appendChild(optFilter);
+      const o1 = document.createElement('option');
+      o1.value = cat.name;
+      filterCategoryList.appendChild(o1);
 
-      // Add Modal form options
-      const optModal = document.createElement('option');
-      optModal.value = cat.name;
-      optModal.textContent = cat.name;
-      newStockCatList.appendChild(optModal);
+      const o2 = document.createElement('option');
+      o2.value = cat.name;
+      newStockCatList.appendChild(o2);
     });
   }
 
-  // Render Table content with filters
+  // ── Load stocks from Firestore ──
+  async function loadStocks() {
+    const snap = await stocksRef.orderBy('createdAt', 'desc').get();
+    stockItems = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+    renderStockTable();
+  }
+
+  // ── Render Table ──
   function renderStockTable() {
     const query = searchStockInput.value.toLowerCase();
     const filterCat = filterCategoryInput.value;
 
     stockTableBody.innerHTML = '';
 
-    const filteredItems = stockItems.filter(item => {
-      const nameVal = item.name || item.desc || '';
-      const matchSearch = nameVal.toLowerCase().includes(query) || 
-                          item.code.toLowerCase().includes(query);
-      const matchCat = filterCat === 'All' || filterCat.trim() === '' || item.category.toLowerCase().includes(filterCat.toLowerCase());
+    const filtered = stockItems.filter(item => {
+      const nameVal = item.name || '';
+      const matchSearch = nameVal.toLowerCase().includes(query) || item.code.toLowerCase().includes(query);
+      const matchCat = !filterCat || filterCat === '' || item.category.toLowerCase().includes(filterCat.toLowerCase());
       return matchSearch && matchCat;
     });
 
-    if (filteredItems.length === 0) {
-      stockTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">No stock items found matching your filters.</td></tr>`;
+    if (filtered.length === 0) {
+      stockTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No stock items found.</td></tr>`;
       return;
     }
 
-    filteredItems.forEach((item) => {
+    filtered.forEach(item => {
       const tr = document.createElement('tr');
-      tr.style.cssText = 'border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-secondary);';
-      const nameVal = item.name || item.desc || '';
-      const amountVal = item.amount || 0;
+      tr.style.cssText = 'border-bottom:1px solid rgba(255,255,255,0.04); transition: background 0.2s;';
       tr.innerHTML = `
-        <td style="padding: 14px; font-family: monospace; color: var(--color-gold);">${item.code}</td>
-        <td style="padding: 14px; font-weight: 500;">${nameVal}</td>
-        <td style="padding: 14px;">${item.category}</td>
-        <td style="padding: 14px; text-align: right; font-weight: 600;">${item.qty} Pcs</td>
-        <td style="padding: 14px; text-align: right; color: var(--color-gold);">₹${parseFloat(amountVal).toFixed(2)}</td>
-        <td style="padding: 14px; text-align: center;">
-          <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: nowrap;">
-            <button onclick="editStock('${item.code}')" style="padding: 4px 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 4px; color: #fff; cursor: pointer; font-size: 0.9rem;" title="Edit">&#9998;</button>
-            <button onclick="deleteStock('${item.code}')" style="padding: 4px 8px; background: rgba(255, 82, 82, 0.1); border: 1px solid rgba(255, 82, 82, 0.3); border-radius: 4px; color: #ff5252; cursor: pointer; font-size: 0.9rem;" title="Delete">&#128465;</button>
+        <td style="padding:14px;font-family:monospace;color:var(--color-gold);">${item.code}</td>
+        <td style="padding:14px;font-weight:500;">${item.name}</td>
+        <td style="padding:14px;">${item.category}</td>
+        <td style="padding:14px;text-align:right;font-weight:600;">${item.qty} Pcs</td>
+        <td style="padding:14px;text-align:right;color:var(--color-gold);">&#8377;${parseFloat(item.amount).toFixed(2)}</td>
+        <td style="padding:14px;text-align:center;">
+          <div style="display:flex;gap:6px;justify-content:center;flex-wrap:nowrap;">
+            <button onclick="editStock('${item.docId}')" style="padding:4px 8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.3);border-radius:4px;color:#fff;cursor:pointer;font-size:0.9rem;" title="Edit">&#9998;</button>
+            <button onclick="deleteStock('${item.docId}')" style="padding:4px 8px;background:rgba(255,82,82,0.1);border:1px solid rgba(255,82,82,0.3);border-radius:4px;color:#ff5252;cursor:pointer;font-size:0.9rem;" title="Delete">&#128465;</button>
           </div>
         </td>
       `;
       stockTableBody.appendChild(tr);
     });
 
+    // persist to localStorage as cache for other pages (sales, reports)
     localStorage.setItem('jewelette_stocks', JSON.stringify(stockItems));
   }
 
-
-
+  // ── Modal Toggle ──
   window.toggleStockModal = (show) => {
     stockModal.style.display = show ? 'flex' : 'none';
     if (!show) {
-      editingCode = null;
+      editingDocId = null;
       addStockForm.reset();
       submitStockBtn.textContent = 'Add Stock';
     }
   };
 
-  window.editStock = (code) => {
-    const item = stockItems.find(i => i.code === code);
+  // ── Edit Stock ──
+  window.editStock = (docId) => {
+    const item = stockItems.find(i => i.docId === docId);
     if (item) {
-      editingCode = code;
-      newStockName.value = item.name || item.desc || '';
+      editingDocId = docId;
+      newStockName.value = item.name;
       newStockCat.value = item.category;
       newStockQty.value = item.qty;
-      newStockAmount.value = item.amount || 0;
+      newStockAmount.value = item.amount;
       submitStockBtn.textContent = 'Update Stock';
       toggleStockModal(true);
     }
   };
 
-  window.deleteStock = (code) => {
+  // ── Delete Stock ──
+  window.deleteStock = async (docId) => {
     if (confirm('Are you sure you want to delete this item?')) {
-      stockItems = stockItems.filter(i => i.code !== code);
-      renderStockTable();
+      await stocksRef.doc(docId).delete();
+      await loadStocks();
     }
   };
 
-  addStockForm.addEventListener('submit', (e) => {
+  // ── Add / Update Stock ──
+  addStockForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = newStockName.value.trim();
-    const category = newStockCat.value;
+    const category = newStockCat.value.trim();
     const qty = parseInt(newStockQty.value);
     const amount = parseFloat(newStockAmount.value);
 
-    if (name && category && !isNaN(qty) && !isNaN(amount)) {
-      if (editingCode) {
-        const item = stockItems.find(i => i.code === editingCode);
-        if (item) {
-          item.name = name;
-          item.category = category;
-          item.qty = qty;
-          item.amount = amount;
-        }
-        editingCode = null;
-        submitStockBtn.textContent = 'Add Stock';
-      } else {
-        const code = `FY-LP-${Math.floor(100 + Math.random() * 900)}`;
-        stockItems.push({ code, name, category, qty, amount });
-      }
-      
-      // close modal
-      toggleStockModal(false);
-      renderStockTable();
+    if (!name || !category || isNaN(qty) || isNaN(amount)) return;
+
+    submitStockBtn.textContent = 'Saving...';
+    submitStockBtn.disabled = true;
+
+    if (editingDocId) {
+      await stocksRef.doc(editingDocId).update({ name, category, qty, amount });
+    } else {
+      const code = `FY-${Math.floor(100 + Math.random() * 900)}`;
+      await stocksRef.add({ code, name, category, qty, amount, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
     }
+
+    submitStockBtn.disabled = false;
+    toggleStockModal(false);
+    await loadStocks();
   });
 
+  // ── Search & Filter ──
   searchStockInput.addEventListener('input', renderStockTable);
   filterCategoryInput.addEventListener('input', renderStockTable);
   filterCategoryInput.addEventListener('change', renderStockTable);
 
-  populateCategories();
-  renderStockTable();
+  // ── Init ──
+  await loadCategories();
+  await loadStocks();
 });
