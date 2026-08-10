@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Number to Code Converter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: #f4f6f9;
+    }
+    .card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    h3 { margin-top: 0; color: #2c3e50; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    
+    /* Table Styling */
+    .result-table {
+      width: 100%;
+      margin-top: 15px;
+      border-collapse: collapse;
+      background: #ffffff;
+    }
+    .result-table th, .result-table td {
+      border: 1px solid #dddddd;
+      padding: 10px;
+      text-align: left;
+      font-size: 16px;
+    }
+    .result-table th {
+      background-color: #2c3e50;
+      color: white;
+    }
+    .sp-val {
+      color: #2980b9;
+      font-weight: bold;
+    }
+    .code-val {
+      color: #27ae60;
+      font-weight: bold;
+    }
+    .btn {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+      margin-right: 5px;
+    }
+    .btn-toggle {
+      background-color: #3498db;
+      color: white;
+      margin-bottom: 15px;
+    }
+    .btn-save {
+      background-color: #2ecc71;
+      color: white;
+      width: 100%;
+    }
+    .btn-clear {
+      background-color: #e74c3c;
+      color: white;
+      width: 100%;
+    }
+    .btn:hover { opacity: 0.9; }
+    #keySection { display: none; }
+    .status-msg {
+      color: #27ae60;
+      font-size: 14px;
+      margin-top: 5px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toggle Button for Key Settings -->
+  <button class="btn btn-toggle" onclick="toggleKeySettings()">⚙️ Show / Edit Key Settings</button>
+
+  <!-- Feature 1: Key Settings + Prefix, Suffix, Percentage + Save -->
+  <div class="card" id="keySection">
+    <h3>Change Key & Formats</h3>
+    
+    <label for="keyInput">10-Letter Key (1 to 0):</label>
+    <input type="text" id="keyInput" value="VITAKCSDRB" maxlength="10" oninput="convertNumber()">
+
+    <label for="prefixInput">Prefix (Text before code):</label>
+    <input type="text" id="prefixInput" value="Z" oninput="convertNumber()">
+
+    <label for="suffixInput">Suffix (Text after code):</label>
+    <input type="text" id="suffixInput" value="Q" oninput="convertNumber()">
+
+    <label for="percentInput">Default Percentage (%):</label>
+    <input type="number" id="percentInput" placeholder="e.g. 10" oninput="convertNumber()">
+
+    <!-- Save Settings Button -->
+    <button class="btn btn-save" onclick="saveSettings()">💾 Save Settings to Memory</button>
+    <div id="saveMsg" class="status-msg">Settings saved successfully!</div>
+  </div>
+
+  <!-- Feature 2: Converter -->
+  <div class="card">
+    <h3>Number to Code Converter</h3>
+
+    <!-- Cost Price input field -->
+    <label for="numInput">Enter Cost Price:</label>
+    <input type="number" id="numInput" placeholder="e.g. 100" oninput="convertNumber()">
+
+    <!-- Output Table -->
+    <table class="result-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Calculated Selling Price</td>
+          <td id="spResult" class="sp-val">-</td>
+        </tr>
+        <tr>
+          <td>Converted Code (Cost Price)</td>
+          <td id="outputResult" class="code-val">-</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <br>
+    <!-- Clear Button -->
+    <button class="btn btn-clear" onclick="clearConverter()">🗑️ Clear Inputs & Refresh</button>
+  </div>
+
+  <script>
+    // Load saved settings automatically when page opens
+    window.onload = function() {
+      if (localStorage.getItem('savedKey')) {
+        document.getElementById('keyInput').value = localStorage.getItem('savedKey');
+      }
+      if (localStorage.getItem('savedPrefix') !== null) {
+        document.getElementById('prefixInput').value = localStorage.getItem('savedPrefix');
+      }
+      if (localStorage.getItem('savedSuffix') !== null) {
+        document.getElementById('suffixInput').value = localStorage.getItem('savedSuffix');
+      }
+      if (localStorage.getItem('savedPercent') !== null) {
+        document.getElementById('percentInput').value = localStorage.getItem('savedPercent');
+      }
+      convertNumber();
+    };
+
+    function toggleKeySettings() {
+      const keySec = document.getElementById('keySection');
+      if (keySec.style.display === 'none' || keySec.style.display === '') {
+        keySec.style.display = 'block';
+      } else {
+        keySec.style.display = 'none';
+      }
+    }
+
+    // Save values into browser LocalStorage
+    function saveSettings() {
+      const key = document.getElementById('keyInput').value;
+      const prefix = document.getElementById('prefixInput').value;
+      const suffix = document.getElementById('suffixInput').value;
+      const percent = document.getElementById('percentInput').value;
+
+      localStorage.setItem('savedKey', key);
+      localStorage.setItem('savedPrefix', prefix);
+      localStorage.setItem('savedSuffix', suffix);
+      localStorage.setItem('savedPercent', percent);
+
+      const msg = document.getElementById('saveMsg');
+      msg.style.display = 'block';
+      setTimeout(() => { msg.style.display = 'none'; }, 2000);
+    }
+
+    function convertNumber() {
+      const key = document.getElementById('keyInput').value.toUpperCase();
+      const prefix = document.getElementById('prefixInput').value;
+      const suffix = document.getElementById('suffixInput').value;
+      const numStr = document.getElementById('numInput').value;
+      const percentStr = document.getElementById('percentInput').value;
+
+      if (key.length !== 10) {
+        document.getElementById('outputResult').innerText = "Please enter exactly 10 letters in key settings!";
+        document.getElementById('spResult').innerText = "-";
+        return;
+      }
+
+      if (numStr === '') {
+        document.getElementById('spResult').innerText = "-";
+        document.getElementById('outputResult').innerText = "-";
+        return;
+      }
+
+      let costPrice = parseFloat(numStr);
+      let percentage = percentStr !== '' ? parseFloat(percentStr) : 0;
+      
+      // Calculate Selling Price
+      let sellingPrice = costPrice + (costPrice * (percentage / 100));
+
+      // Convert COST PRICE directly into secret code
+      let convertedCode = '';
+      for (let char of numStr) {
+        if (char >= '1' && char <= '9') {
+          convertedCode += key[parseInt(char) - 1];
+        } else if (char === '0') {
+          convertedCode += key[9];
+        } else {
+          convertedCode += char;
+        }
+      }
+
+      document.getElementById('spResult').innerText = sellingPrice;
+      document.getElementById('outputResult').innerText = prefix + convertedCode + suffix;
+    }
+
+    // Clear inputs and refresh page (keeps saved browser memory)
+    function clearConverter() {
+      document.getElementById('numInput').value = '';
+      location.reload();
+    }
+  </script>
+</body>
+</html>
