@@ -1215,7 +1215,7 @@
 						numberLink.textContent = value;
 						fieldValue.classList.add("phone-field");
 						fieldValue.append(callLink, numberLink);
-					} else if (!/^(name|number|date)$/i.test(field.label.trim())) {
+					} else if (!/^(name|date)$/i.test(field.label.trim())) {
 						const fieldLabel = document.createElement("span");
 						fieldLabel.className = "field-label-avatar";
 						fieldLabel.textContent = Array.from(field.label.trim()).slice(0, 2).join("").toLocaleUpperCase();
