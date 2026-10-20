@@ -1,0 +1,20 @@
+
+<!DOCTYPE html>
+<html>
+<body>
+  <button onclick="readClipboard()">Read Clipboard</button>
+  <p id="output"></p>
+
+  <script>
+    async function readClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById("output").textContent = text;
+      } catch (err) {
+        document.getElementById("output").textContent =
+          "Clipboard access denied: " + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
