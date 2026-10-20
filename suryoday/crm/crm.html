@@ -695,31 +695,9 @@
 
 	<div class="menu-panel" id="menu-panel" role="menu" aria-label="Entry actions" hidden>
 		<button class="menu-action" id="create-field-button" type="button" role="menuitem">Create field</button>
-		<button class="menu-action" id="cloud-sync-button" type="button" role="menuitem">Cloud sync</button>
 		<button class="menu-action" id="export-button" type="button" role="menuitem">Export entries</button>
 		<button class="menu-action danger" id="clear-button" type="button" role="menuitem">Clear all entries</button>
 	</div>
-
-	<dialog class="field-dialog" id="cloud-dialog" aria-labelledby="cloud-dialog-title">
-		<h2 class="dialog-heading" id="cloud-dialog-title">Cloud sync</h2>
-		<p class="field-hint" id="cloud-status" aria-live="polite">Connect this device to sync records.</p>
-		<div id="cloud-connect-panel">
-			<p class="field-hint">No phone number or password needed. This creates a private temporary account for this browser only. Clearing browser data may remove access to that account.</p>
-			<p class="field-hint">Before connecting, enable Anonymous sign-in in Firebase Console under Authentication → Sign-in method.</p>
-			<button class="submit-button" id="cloud-connect-anonymous" type="button">Connect this device</button>
-		</div>
-		<div id="cloud-account-panel" hidden>
-			<p class="field-hint" id="cloud-account-phone"></p>
-			<div class="field-list" id="cloud-import-options" hidden>
-				<p class="field-hint" id="cloud-import-message">Choose how to handle records saved in this browser.</p>
-				<button class="submit-button" id="import-local-data" type="button">Import local records</button>
-				<button class="dialog-cancel" id="use-cloud-data" type="button">Use cloud data</button>
-			</div>
-		</div>
-		<div class="dialog-actions">
-			<button class="dialog-cancel" id="close-cloud-dialog" type="button">Close</button>
-		</div>
-	</dialog>
 
 	<nav class="bottom-nav" aria-label="Main navigation">
 		<button class="nav-button" id="view-button" type="button" aria-current="page">
@@ -736,19 +714,25 @@
 		</button>
 	</nav>
 
-	<script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+  // Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDeamXezlBYQUCwiguJfdNPWxLRm0oNOeU",
+    authDomain: "suryoday-crm.firebaseapp.com",
+    projectId: "suryoday-crm",
+    storageBucket: "suryoday-crm.firebasestorage.app",
+    messagingSenderId: "142211313999",
+    appId: "1:142211313999:web:a5d3359b9876f36539d53a"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+<script>
 		const storageKey = "suryoday-crm-entries";
 		const fieldsStorageKey = "suryoday-crm-custom-fields";
 		const savedFiltersStorageKey = "suryoday-crm-saved-filters";
-		const cloudOwnerStorageKey = "suryoday-crm-cloud-owner";
-		const firebaseConfig = {
-			apiKey: "AIzaSyDeamXezlBYQUCwiguJfdNPWxLRm0oNOeU",
-			authDomain: "suryoday-crm.firebaseapp.com",
-			projectId: "suryoday-crm",
-			storageBucket: "suryoday-crm.firebasestorage.app",
-			messagingSenderId: "142211313999",
-			appId: "1:142211313999:web:a5d3359b9876f36539d53a"
-		};
 		const listView = document.getElementById("list-view");
 		const formView = document.getElementById("form-view");
 		const builderView = document.getElementById("builder-view");
@@ -769,11 +753,6 @@
 		const deleteFilterButton = document.getElementById("delete-filter-button");
 		const saveFilterDialog = document.getElementById("save-filter-dialog");
 		const saveFilterForm = document.getElementById("save-filter-form");
-		const cloudDialog = document.getElementById("cloud-dialog");
-		const cloudStatus = document.getElementById("cloud-status");
-		const cloudConnectPanel = document.getElementById("cloud-connect-panel");
-		const cloudAccountPanel = document.getElementById("cloud-account-panel");
-		const cloudImportOptions = document.getElementById("cloud-import-options");
 		const addButton = document.getElementById("add-button");
 		const viewButton = document.getElementById("view-button");
 		const menuButton = document.getElementById("menu-button");
@@ -788,13 +767,6 @@
 		const detailsList = document.getElementById("details-list");
 		let editingFieldId = null;
 		let editingEntryIndex = null;
-		let firebaseApi = null;
-		let firebaseAuth = null;
-		let firestore = null;
-		let firebaseUser = null;
-		let cloudListeners = [];
-		let cloudCollectionsLoaded = false;
-		let pendingCloudData = { entries: [], fields: [] };
 
 		function setActiveNavigation(activeButton) {
 			[viewButton, addButton, menuButton].forEach((button) => {
@@ -821,164 +793,13 @@
 			}
 		}
 
-		function setCloudStatus(message, isError = false) {
-			cloudStatus.textContent = message;
-			cloudStatus.style.color = isError ? "#B91C1C" : "";
-		}
-
 		function createLocalId() {
 			return crypto.randomUUID ? crypto.randomUUID() : `local_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 		}
 
-		function writeLocalData(storageKeyToWrite, data, collectionName = null) {
+		function writeLocalData(storageKeyToWrite, data) {
 			localStorage.setItem(storageKeyToWrite, JSON.stringify(data));
-			if (!firebaseUser || !cloudCollectionsLoaded || !collectionName) return;
-			cloudWriteQueues[collectionName] = (cloudWriteQueues[collectionName] || Promise.resolve())
-				.then(() => syncCloudCollection(collectionName, data))
-				.catch((error) => setCloudStatus(`Saved locally. Cloud sync failed: ${error.message}`, true));
 		}
-
-		function stopCloudListeners() {
-			cloudListeners.forEach((unsubscribe) => unsubscribe());
-			cloudListeners = [];
-			cloudCollectionsLoaded = false;
-		}
-
-		function userCollection(name, user = firebaseUser) {
-			return firebaseApi.collection(firestore, "users", user.uid, name);
-		}
-
-		async function syncCloudCollection(name, rows) {
-			if (!firebaseUser) return;
-			const collectionRef = userCollection(name);
-			const existing = await firebaseApi.getDocs(collectionRef);
-			const normalizedRows = rows.map((row) => ({ ...row, id: row.id || createLocalId() }));
-			const nextIds = new Set(normalizedRows.map((row) => row.id));
-			const operations = [
-				...existing.docs.filter((item) => !nextIds.has(item.id)).map((item) => ({ type: "delete", ref: item.ref })),
-				...normalizedRows.map((row) => ({ type: "set", ref: firebaseApi.doc(collectionRef, row.id), data: row }))
-			];
-			for (let index = 0; index < operations.length; index += 400) {
-				const batch = firebaseApi.writeBatch(firestore);
-				operations.slice(index, index + 400).forEach((operation) => {
-					if (operation.type === "delete") batch.delete(operation.ref);
-					else batch.set(operation.ref, operation.data);
-				});
-				await batch.commit();
-			}
-		}
-
-		function applyCloudSnapshot(name, snapshot) {
-			const rows = snapshot.docs.map((item) => ({ ...item.data(), id: item.id }));
-			const key = name === "entries" ? storageKey : name === "fields" ? fieldsStorageKey : savedFiltersStorageKey;
-			localStorage.setItem(key, JSON.stringify(rows));
-			if (name === "entries") {
-				if (!listView.hidden) renderEntries();
-			} else if (name === "fields") {
-				renderFilterFields();
-				if (!builderView.hidden) renderFieldDefinitions();
-				if (!formView.hidden) renderCustomEntryFields();
-			} else {
-				renderSavedFilters();
-			}
-		}
-
-		function listenToCloudCollections() {
-			stopCloudListeners();
-			cloudCollectionsLoaded = true;
-			localStorage.setItem(cloudOwnerStorageKey, firebaseUser.uid);
-			["entries", "fields", "savedFilters"].forEach((name) => {
-				const unsubscribe = firebaseApi.onSnapshot(userCollection(name), (snapshot) => {
-					applyCloudSnapshot(name, snapshot);
-				}, (error) => setCloudStatus(`Cloud sync error: ${error.message}`, true));
-				cloudListeners.push(unsubscribe);
-			});
-			setCloudStatus("Cloud sync is active for this device.");
-		}
-
-		async function loadCloudData(user) {
-			stopCloudListeners();
-			cloudCollectionsLoaded = false;
-			setCloudStatus("Checking cloud records…");
-			const [entrySnapshot, fieldSnapshot, filterSnapshot] = await Promise.all([
-				firebaseApi.getDocs(userCollection("entries", user)),
-				firebaseApi.getDocs(userCollection("fields", user)),
-				firebaseApi.getDocs(userCollection("savedFilters", user))
-			]);
-			const cloudEntries = entrySnapshot.docs.map((item) => ({ ...item.data(), id: item.id }));
-			const cloudFields = fieldSnapshot.docs.map((item) => ({ ...item.data(), id: item.id }));
-			const cloudFilters = filterSnapshot.docs.map((item) => ({ ...item.data(), id: item.id }));
-			pendingCloudData = { entries: cloudEntries, fields: cloudFields, savedFilters: cloudFilters };
-			const owner = localStorage.getItem(cloudOwnerStorageKey);
-			if (owner && owner !== user.uid) {
-				localStorage.removeItem(storageKey);
-				localStorage.removeItem(fieldsStorageKey);
-				localStorage.removeItem(savedFiltersStorageKey);
-			}
-			const localEntries = readEntries();
-			const localFields = readCustomFields();
-			const localFilters = readSavedFilters();
-			const hasLocalData = localEntries.length > 0 || localFields.length > 0 || localFilters.length > 0;
-			const hasCloudData = cloudEntries.length > 0 || cloudFields.length > 0 || cloudFilters.length > 0;
-			cloudAccountPanel.hidden = false;
-			document.getElementById("cloud-account-phone").textContent = "Connected with a temporary account for this device.";
-			cloudImportOptions.hidden = !hasLocalData;
-			document.getElementById("cloud-import-message").textContent = hasCloudData
-				? "This account already has cloud records. Import merges this browser’s data; Use cloud data replaces the browser copy."
-				: "This account has no cloud records yet. Choose whether to import the records saved in this browser.";
-			document.getElementById("use-cloud-data").textContent = hasCloudData ? "Use cloud data" : "Start with an empty account";
-			if (!hasLocalData) {
-				localStorage.setItem(storageKey, JSON.stringify(cloudEntries));
-				localStorage.setItem(fieldsStorageKey, JSON.stringify(cloudFields));
-				localStorage.setItem(savedFiltersStorageKey, JSON.stringify(cloudFilters));
-				listenToCloudCollections();
-				renderFilterFields();
-				renderSavedFilters();
-				renderEntries();
-				return;
-			}
-			setCloudStatus(hasCloudData ? "Choose which records to keep before syncing." : "Choose whether to import this browser’s local records.");
-		}
-
-		async function initializeFirebase() {
-			if (firebaseApi) return;
-			const [appSdk, authSdk, firestoreSdk] = await Promise.all([
-				import("https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js"),
-				import("https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js"),
-				import("https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js")
-			]);
-			firebaseApi = { ...appSdk, ...authSdk, ...firestoreSdk };
-			const app = firebaseApi.initializeApp(firebaseConfig);
-			firebaseAuth = firebaseApi.getAuth(app);
-			firestore = firebaseApi.getFirestore(app);
-			firebaseApi.onAuthStateChanged(firebaseAuth, async (user) => {
-				const previousUser = firebaseUser;
-				firebaseUser = user;
-				cloudConnectPanel.hidden = Boolean(user);
-				cloudAccountPanel.hidden = !user;
-				if (!user) {
-					stopCloudListeners();
-					if (previousUser) {
-						localStorage.removeItem(cloudOwnerStorageKey);
-						localStorage.removeItem(storageKey);
-						localStorage.removeItem(fieldsStorageKey);
-						localStorage.removeItem(savedFiltersStorageKey);
-						renderSavedFilters("");
-						renderFilterFields("");
-						renderEntries();
-					}
-					setCloudStatus("Connect this device to sync with Firestore.");
-					return;
-				}
-				try {
-					await loadCloudData(user);
-				} catch (error) {
-					setCloudStatus(`Could not load cloud records: ${error.message}`, true);
-				}
-			});
-		}
-
-		const cloudWriteQueues = {};
 
 		function formatFieldValue(field, value) {
 			if (field.type !== "date" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
@@ -1585,77 +1406,6 @@
 			menuButton.setAttribute("aria-expanded", String(willOpen));
 			setActiveNavigation(willOpen ? menuButton : (formView.hidden ? viewButton : addButton));
 		});
-		document.getElementById("cloud-sync-button").addEventListener("click", async () => {
-			menuPanel.hidden = true;
-			menuButton.setAttribute("aria-expanded", "false");
-			cloudDialog.showModal();
-			try {
-				await initializeFirebase();
-			} catch (error) {
-				setCloudStatus(`Firebase could not connect: ${error.message}`, true);
-			}
-		});
-		document.getElementById("close-cloud-dialog").addEventListener("click", () => cloudDialog.close());
-		cloudDialog.addEventListener("click", (event) => {
-			if (event.target === cloudDialog) cloudDialog.close();
-		});
-		document.getElementById("cloud-connect-anonymous").addEventListener("click", async (event) => {
-			if (!firebaseAuth) return;
-			const button = event.currentTarget;
-			button.disabled = true;
-			setCloudStatus("Connecting this device…");
-			try {
-				await firebaseApi.signInAnonymously(firebaseAuth);
-			} catch (error) {
-				const messages = {
-					"auth/operation-not-allowed": "Enable Anonymous sign-in in Firebase Authentication settings.",
-					"auth/unauthorized-domain": `Add ${location.hostname} to Firebase Authentication authorized domains.`,
-					"auth/network-request-failed": "Could not reach Firebase. Check your internet connection."
-				};
-				setCloudStatus(messages[error.code] || `Could not connect: ${error.message}`, true);
-				button.disabled = false;
-			}
-		});
-		document.getElementById("import-local-data").addEventListener("click", async () => {
-			if (!firebaseUser) return;
-			const localEntries = readEntries().map((entry) => ({ ...entry, id: entry.id || createLocalId() }));
-			const localFields = readCustomFields().map((field) => ({ ...field, id: field.id || createLocalId() }));
-			const localFilters = readSavedFilters().map((filter) => ({ ...filter, id: filter.id || createLocalId() }));
-			const mergeById = (cloudRows, localRows) => [...new Map([...cloudRows, ...localRows].map((row) => [row.id, row])).values()];
-			const entries = mergeById(pendingCloudData.entries, localEntries);
-			const fields = mergeById(pendingCloudData.fields, localFields);
-			const savedFilters = mergeById(pendingCloudData.savedFilters, localFilters);
-			try {
-				localStorage.setItem(storageKey, JSON.stringify(entries));
-				localStorage.setItem(fieldsStorageKey, JSON.stringify(fields));
-				localStorage.setItem(savedFiltersStorageKey, JSON.stringify(savedFilters));
-				await Promise.all([
-					syncCloudCollection("entries", entries),
-					syncCloudCollection("fields", fields),
-					syncCloudCollection("savedFilters", savedFilters)
-				]);
-				pendingCloudData = { entries, fields, savedFilters };
-				listenToCloudCollections();
-				renderFilterFields();
-				renderSavedFilters();
-				renderEntries();
-				cloudImportOptions.hidden = true;
-				setCloudStatus("Local records imported and cloud sync is active.");
-			} catch (error) {
-				setCloudStatus(`Import failed: ${error.message}`, true);
-			}
-		});
-		document.getElementById("use-cloud-data").addEventListener("click", () => {
-			if (!firebaseUser) return;
-			localStorage.setItem(storageKey, JSON.stringify(pendingCloudData.entries));
-			localStorage.setItem(fieldsStorageKey, JSON.stringify(pendingCloudData.fields));
-			localStorage.setItem(savedFiltersStorageKey, JSON.stringify(pendingCloudData.savedFilters));
-			listenToCloudCollections();
-			renderFilterFields();
-			renderSavedFilters();
-			renderEntries();
-			cloudImportOptions.hidden = true;
-		});
 		document.getElementById("create-field-button").addEventListener("click", showFieldBuilder);
 		document.addEventListener("click", (event) => {
 			if (!menuPanel.hidden && !menuPanel.contains(event.target) && !menuButton.contains(event.target)) {
@@ -1792,7 +1542,17 @@
 				? fields.map((field) => field.id === editingFieldId ? { ...field, label, type, width, options } : field)
 				: [...fields, { id: createLocalId(), label, type, width, options }];
 			try {
+				// Save locally
 				writeLocalData(fieldsStorageKey, updatedFields, "fields");
+				// Sync each field to Firestore
+				updatedFields.forEach(f => {
+					db.collection('fields').doc(f.id).set({
+						label: f.label,
+						type: f.type,
+						width: f.width,
+						options: f.options || []
+					});
+				});
 			} catch {
 				alert("This field could not be saved in this browser.");
 				return;
@@ -1920,9 +1680,13 @@
 			if (editingEntryIndex === null) entries.unshift(entry);
 			else entries[editingEntryIndex] = entry;
 			try {
+				// Save locally
 				writeLocalData(storageKey, entries, "entries");
-			} catch {
-				alert("This entry could not be saved in this browser.");
+				// Save to Firebase Realtime Database
+				db.collection('entries').add(entry);
+			} catch (e) {
+				console.error('Failed to save entry', e);
+				alert("This entry could not be saved.");
 				return;
 			}
 			entryForm.reset();
@@ -1936,6 +1700,25 @@
 		if ("serviceWorker" in navigator && location.protocol !== "file:") {
 			navigator.serviceWorker.register("./service-worker.js").catch(() => {});
 		}
+
+		// ── Firestore: load custom fields ──────────────────────────────────
+		function loadFieldsFromFirestore() {
+			db.collection('fields').get().then(snapshot => {
+				if (snapshot.empty) return;
+				const fields = [];
+				snapshot.forEach(doc => {
+					const data = doc.data();
+					fields.push({ id: doc.id, label: data.label, type: data.type, width: data.width, options: data.options || [] });
+				});
+				console.log('🔎 Fields loaded from Firestore:', fields);
+				writeLocalData(fieldsStorageKey, fields, "fields");
+				renderFieldDefinitions();
+				renderFilterFields();
+			}).catch(e => {
+				console.error('Failed to load fields from Firestore:', e);
+			});
+		}
+		loadFieldsFromFirestore();
 	</script>
 </body>
 </html>

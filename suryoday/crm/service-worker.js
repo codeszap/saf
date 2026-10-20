@@ -1,4 +1,4 @@
-const CACHE_NAME = "customer-records-v5";
+const CACHE_NAME = "customer-records-v6";
 const APP_FILES = ["./crm.html", "./manifest.webmanifest", "./app-icon.svg"];
 
 self.addEventListener("install", (event) => {
