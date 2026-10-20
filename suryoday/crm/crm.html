@@ -928,6 +928,7 @@
 			fields.splice(adjustedTargetIndex + (insertAfter ? 1 : 0), 0, field);
 			try {
 				writeLocalData(fieldsStorageKey, fields, "fields");
+				saveFieldOrderToFirestore(fields);  // ← sync drag-drop order to Firestore
 			} catch {
 				alert("The field order could not be saved in this browser.");
 				return;
@@ -1544,13 +1545,14 @@
 			try {
 				// Save locally
 				writeLocalData(fieldsStorageKey, updatedFields, "fields");
-				// Sync each field to Firestore
-				updatedFields.forEach(f => {
+				// Sync each field to Firestore with order index
+				updatedFields.forEach((f, index) => {
 					db.collection('fields').doc(f.id).set({
 						label: f.label,
 						type: f.type,
 						width: f.width,
-						options: f.options || []
+						options: f.options || [],
+						order: index
 					});
 				});
 			} catch {
@@ -1704,15 +1706,28 @@
 			navigator.serviceWorker.register("./service-worker.js").catch(() => {});
 		}
 
-		// ── Firestore: load custom fields ──────────────────────────────────
+		// ── Firestore: save field order ─────────────────────────────────────
+		function saveFieldOrderToFirestore(fields) {
+			fields.forEach((f, index) => {
+				db.collection('fields').doc(f.id).update({ order: index })
+					.catch(() => {
+						// doc may not exist yet – use set with merge
+						db.collection('fields').doc(f.id).set({ order: index }, { merge: true });
+					});
+			});
+		}
+
+		// ── Firestore: load custom fields (sorted by order) ─────────────────
 		function loadFieldsFromFirestore() {
 			db.collection('fields').get().then(snapshot => {
 				if (snapshot.empty) return;
 				const fields = [];
 				snapshot.forEach(doc => {
 					const data = doc.data();
-					fields.push({ id: doc.id, label: data.label, type: data.type, width: data.width, options: data.options || [] });
+					fields.push({ id: doc.id, label: data.label, type: data.type, width: data.width, options: data.options || [], order: data.order ?? 9999 });
 				});
+				// Sort by saved order index
+				fields.sort((a, b) => a.order - b.order);
 				console.log('🔎 Fields loaded from Firestore:', fields);
 				writeLocalData(fieldsStorageKey, fields, "fields");
 				renderFieldDefinitions();
