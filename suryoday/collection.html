@@ -8,12 +8,18 @@
     :root {
       --bg-light: #F8FAFC;
       --card-bg: #FFFFFF;
-      --header-bg: #0F172A;
+      --header-bg: #0F172A; /* Deep Dark Navy Header */
+      --header-text: #F8FAFC;
       --accent-blue: #2563EB;
+      --badge-total-bg: #0D9488; /* High-Contrast Emerald Teal */
+      --badge-total-text: #FFFFFF;
       --accent-green: #059669;
+      --accent-purple: #7C3AED;
+      --accent-red: #DC2626;
       --text-primary: #0F172A;
       --text-secondary: #64748B;
       --border-color: #E2E8F0;
+      --nav-bg: #FFFFFF;
     }
 
     * {
@@ -21,14 +27,16 @@
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
       background-color: var(--bg-light);
       color: var(--text-primary);
       padding: 16px;
-      padding-bottom: 95px;
+      padding-bottom: 80px;
       min-height: 100vh;
+      user-select: none;
     }
 
     .view-screen {
@@ -36,85 +44,211 @@
       margin: 0 auto;
     }
 
-    /* Group Card with subtle corners (6px) */
+    /* Refined Group Card */
     .date-group-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
-      border-radius: 6px;
+      border-radius: 8px;
       margin-bottom: 16px;
       overflow: hidden;
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
     }
 
-    /* Dark Slate Header */
+    /* Dark Header Bar */
     .date-header {
       background-color: var(--header-bg);
-      padding: 10px 14px;
+      padding: 12px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     .date-header .date-title {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 800;
-      color: #94A3B8;
+      color: #E2E8F0;
       text-transform: uppercase;
       letter-spacing: 0.8px;
     }
 
+    /* Total Amount Badge */
     .date-header .total-amount {
-      font-size: 13px;
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--badge-total-text);
+      background-color: var(--badge-total-bg);
+      padding: 5px 12px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Bulk Action Header Bar */
+    .bulk-actions-bar {
+      display: none;
+      background-color: #F1F5F9;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border-color);
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .bulk-actions-bar.active {
+      display: flex;
+    }
+
+    .btn-bulk-action {
+      background: none;
+      border: none;
+      font-size: 11px;
       font-weight: 800;
-      color: var(--accent-green);
-      background: rgba(16, 185, 129, 0.12);
-      padding: 3px 8px;
-      border-radius: 4px;
-      border: 1px solid rgba(16, 185, 129, 0.25);
+      cursor: pointer;
+      text-transform: uppercase;
     }
 
-    /* List Container inside Single Card */
+    .btn-select-all {
+      color: var(--accent-blue);
+    }
+
+    .btn-delete-selected {
+      color: var(--accent-red);
+    }
+
+    .btn-cancel-select {
+      color: var(--text-secondary);
+    }
+
+    /* Entry List Container */
     .entry-list {
-      padding: 0 14px;
+      padding: 0 16px;
     }
 
-    /* Aligned Flat Row Entry */
+    /* Entry Row Item - Flexible & Protected Layout */
     .entry-item {
-      padding: 10px 0;
+      padding: 12px 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px; /* Space between left and right sections */
       border-bottom: 1px solid var(--border-color);
       text-transform: uppercase;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
     }
 
     .entry-item:last-child {
       border-bottom: none;
     }
 
+    .entry-item.selected {
+      background-color: #FEF2F2;
+    }
+
+    .entry-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0; /* Prevents text overflow from pushing right column out */
+      flex: 1;
+    }
+
+    .select-checkbox {
+      display: none;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--accent-red);
+      flex-shrink: 0;
+    }
+
+    .select-checkbox.show {
+      display: inline-block;
+    }
+
     .entry-info {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 4px;
+      min-width: 0;
+      flex: 1;
     }
 
     .entry-info h4 {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 800;
       color: var(--text-primary);
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis; /* Clean truncation for extremely long names */
     }
 
-    .entry-sub {
-      font-size: 11px;
-      font-weight: 700;
+    /* Wrap Long Descriptions inside Badge cleanly */
+    .type-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 800;
       color: var(--text-secondary);
-      letter-spacing: 0.4px;
+      background-color: #F1F5F9;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid #E2E8F0;
+      width: fit-content;
+      max-width: 100%;
+      word-break: break-word; /* Wraps continuous long string without hiding action icons */
+      white-space: normal;
+    }
+
+    /* Prevent right action column from shrinking or getting pushed out */
+    .entry-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0; /* Ensures amount and icons never hide */
     }
 
     .entry-amount {
       font-weight: 900;
-      font-size: 14px;
+      font-size: 15px;
       color: var(--accent-green);
+      white-space: nowrap;
+    }
+
+    .action-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      padding: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease;
+    }
+
+    .icon-btn:hover {
+      color: var(--accent-blue);
+    }
+
+    .icon-btn.delete-btn:hover {
+      color: var(--accent-red);
+    }
+
+    .icon-btn svg {
+      width: 17px;
+      height: 17px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .no-records {
@@ -127,31 +261,55 @@
       letter-spacing: 1px;
     }
 
-    /* Floating Action Button (FAB) */
-    .fab {
+    /* 3-Tab Bottom Navigation Bar */
+    .bottom-nav {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
-      width: 56px;
-      height: 56px;
-      background: var(--header-bg);
-      color: #FFFFFF;
-      border-radius: 50%;
-      border: none;
-      font-size: 28px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3);
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background-color: var(--nav-bg);
+      border-top: 1px solid var(--border-color);
       display: flex;
-      justify-content: center;
+      justify-content: space-around;
       align-items: center;
-      transition: transform 0.15s ease;
+      z-index: 900;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
     }
 
-    .fab:active {
-      transform: scale(0.92);
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      width: 33.33%;
+      height: 100%;
+      gap: 3px;
+      transition: color 0.15s ease;
     }
 
-    /* Modal Entry Screen */
+    .nav-item svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .nav-item.active {
+      color: var(--accent-blue);
+    }
+
+    /* Modal Overlay */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -171,7 +329,7 @@
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       padding: 20px;
-      border-radius: 8px;
+      border-radius: 12px;
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
       width: 100%;
       max-width: 420px;
@@ -186,7 +344,7 @@
       border: 1px solid var(--border-color);
       width: 28px;
       height: 28px;
-      border-radius: 4px;
+      border-radius: 6px;
       font-size: 16px;
       cursor: pointer;
       color: var(--text-secondary);
@@ -232,6 +390,16 @@
       transition: border-color 0.2s ease;
     }
 
+    /* FIX: Controlled resizing for Description Textarea to prevent modal breakout */
+    .form-group textarea {
+      resize: vertical;
+      min-height: 65px;
+      max-height: 180px;
+      max-width: 100%;
+      box-sizing: border-box;
+      word-break: break-word;
+    }
+
     .form-group input:focus,
     .form-group textarea:focus {
       border-color: var(--header-bg);
@@ -255,8 +423,52 @@
       box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
     }
 
-    .submit-btn:active {
-      transform: scale(0.98);
+    .menu-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .menu-btn {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background-color: var(--bg-light);
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background-color 0.15s ease;
+    }
+
+    .menu-btn:hover {
+      background-color: #F1F5F9;
+    }
+
+    .menu-btn.danger {
+      color: var(--accent-red);
+      border-color: rgba(220, 38, 38, 0.2);
+      background-color: #FEF2F2;
+    }
+
+    .menu-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    #jsonFileInput {
+      display: none;
     }
   </style>
 </head>
@@ -265,62 +477,123 @@
   <!-- VIEW SCREEN -->
   <div class="view-screen">
     <div id="recordsContainer">
-      <p class="no-records" id="emptyMessage">NO COLLECTION RECORDS YET. CLICK + TO ADD ONE.</p>
+      <p class="no-records" id="emptyMessage">NO COLLECTION RECORDS YET. TAP 'ADD ENTRY' TO START.</p>
     </div>
   </div>
 
-  <!-- FLOATING ACTION BUTTON -->
-  <button class="fab" onclick="openModal()" title="ADD NEW ENTRY">+</button>
+  <!-- BOTTOM NAVIGATION BAR (3 TABS) -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="navViewBtn" onclick="switchToViewTab()">
+      <svg viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7"></rect>
+        <rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect>
+        <rect x="3" y="14" width="7" height="7"></rect>
+      </svg>
+      <span>VIEW</span>
+    </button>
+    
+    <button class="nav-item" id="navAddBtn" onclick="openModalForNew()">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="16"></line>
+        <line x1="8" y1="12" x2="16" y2="12"></line>
+      </svg>
+      <span>ADD ENTRY</span>
+    </button>
 
-  <!-- MODAL ENTRY SCREEN -->
+    <button class="nav-item" id="navMenuBtn" onclick="openMenuModal()">
+      <svg viewBox="0 0 24 24">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+      <span>MENU</span>
+    </button>
+  </nav>
+
+  <!-- MODAL ENTRY / EDIT SCREEN -->
   <div class="modal-overlay" id="entryModal">
     <div class="form-card">
       <button class="close-btn" onclick="closeModal()">&times;</button>
-      <h2>ADD COLLECTION</h2>
+      <h2 id="modalTitle">ADD COLLECTION</h2>
       
       <form id="collectionForm" onsubmit="handleFormSubmit(event)">
-        
-        <!-- Collection Date -->
+        <input type="hidden" id="editIndex" value="-1">
+
         <div class="form-group">
           <label for="collectionDate">COLLECTION DATE</label>
           <input type="date" id="collectionDate" name="collectionDate" required>
         </div>
 
-        <!-- 1. Name -->
         <div class="form-group">
           <label for="name">NAME</label>
           <input type="text" id="name" name="name" placeholder="ENTER NAME" required oninput="this.value = this.value.toUpperCase()">
         </div>
 
-        <!-- 2. Amount -->
         <div class="form-group">
           <label for="amount">AMOUNT (₹)</label>
           <input type="number" id="amount" name="amount" step="0.01" placeholder="0.00" required>
         </div>
 
-        <!-- 3. Type Field -->
         <div class="form-group">
           <label for="type">TYPE</label>
           <input type="text" id="type" name="type" list="type-suggestions" placeholder="TYPE OR SELECT A TYPE" required autocomplete="off" oninput="this.value = this.value.toUpperCase()">
-          
           <datalist id="type-suggestions"></datalist>
         </div>
 
-        <!-- 4. Description -->
         <div class="form-group">
           <label for="description">DESCRIPTION</label>
           <textarea id="description" name="description" rows="2" placeholder="ENTER ADDITIONAL DETAILS..." oninput="this.value = this.value.toUpperCase()"></textarea>
         </div>
 
-        <!-- Submit Button -->
-        <button type="submit" class="submit-btn">SAVE ENTRY</button>
-
+        <button type="submit" class="submit-btn" id="saveBtn">SAVE ENTRY</button>
       </form>
+    </div>
+  </div>
+
+  <!-- MENU MODAL SCREEN -->
+  <div class="modal-overlay" id="menuModal">
+    <div class="form-card">
+      <button class="close-btn" onclick="closeMenuModal()">&times;</button>
+      <h2>OPTIONS MENU</h2>
+
+      <div class="menu-options">
+        
+        <button class="menu-btn" onclick="exportJSONBackup()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          DOWNLOAD JSON BACKUP
+        </button>
+
+        <label for="jsonFileInput" class="menu-btn">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          IMPORT JSON FILE
+        </label>
+        <input type="file" id="jsonFileInput" accept=".json" onchange="importJSONFile(event)">
+
+        <button class="menu-btn" onclick="shareCollectionText()">
+          <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          SHARE TEXT SUMMARY
+        </button>
+
+        <button class="menu-btn danger" onclick="clearAllData()">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          CLEAR ALL DATA
+        </button>
+
+      </div>
     </div>
   </div>
 
   <script>
     let collections = [];
+    let selectionModePerDate = {}; 
+    let pressTimer = null;
+
+    window.onload = function() {
+      setDefaultDate();
+      loadFromLocalStorage();
+    };
 
     function setDefaultDate() {
       const today = new Date().toISOString().split('T')[0];
@@ -332,23 +605,50 @@
       return `${day}-${month}-${year}`;
     }
 
-    window.onload = function() {
+    function openModalForNew() {
+      document.getElementById('editIndex').value = "-1";
+      document.getElementById('modalTitle').innerText = "ADD COLLECTION";
+      document.getElementById('saveBtn').innerText = "SAVE ENTRY";
+      document.getElementById('collectionForm').reset();
       setDefaultDate();
-    };
+      openModal();
+    }
 
     function openModal() {
       document.getElementById('entryModal').style.display = 'flex';
+      document.getElementById('navAddBtn').classList.add('active');
+      document.getElementById('navViewBtn').classList.remove('active');
+      document.getElementById('navMenuBtn').classList.remove('active');
     }
 
     function closeModal() {
       document.getElementById('entryModal').style.display = 'none';
+      switchToViewTab();
+    }
+
+    function openMenuModal() {
+      document.getElementById('menuModal').style.display = 'flex';
+      document.getElementById('navMenuBtn').classList.add('active');
+      document.getElementById('navViewBtn').classList.remove('active');
+      document.getElementById('navAddBtn').classList.remove('active');
+    }
+
+    function closeMenuModal() {
+      document.getElementById('menuModal').style.display = 'none';
+      switchToViewTab();
+    }
+
+    function switchToViewTab() {
+      document.getElementById('navViewBtn').classList.add('active');
+      document.getElementById('navAddBtn').classList.remove('active');
+      document.getElementById('navMenuBtn').classList.remove('active');
     }
 
     window.onclick = function(event) {
-      const modal = document.getElementById('entryModal');
-      if (event.target === modal) {
-        closeModal();
-      }
+      const entryModal = document.getElementById('entryModal');
+      const menuModal = document.getElementById('menuModal');
+      if (event.target === entryModal) closeModal();
+      if (event.target === menuModal) closeMenuModal();
     };
 
     function handleFormSubmit(event) {
@@ -359,9 +659,305 @@
       const amount = parseFloat(document.getElementById('amount').value);
       const type = document.getElementById('type').value.trim().toUpperCase();
       const description = document.getElementById('description').value.trim().toUpperCase();
+      const editIndex = parseInt(document.getElementById('editIndex').value);
 
-      collections.push({ date, name, amount, type, description });
+      const entry = { date, name, amount, type, description };
 
+      if (editIndex >= 0 && editIndex < collections.length) {
+        collections[editIndex] = entry;
+      } else {
+        collections.push(entry);
+      }
+
+      localStorage.setItem('daily_collections', JSON.stringify(collections));
+
+      updateDatalistSuggestions(type);
+      renderGroupedView();
+
+      document.getElementById('collectionForm').reset();
+      setDefaultDate();
+      closeModal();
+    }
+
+    function loadFromLocalStorage() {
+      const stored = localStorage.getItem('daily_collections');
+      if (stored) {
+        try {
+          collections = JSON.parse(stored);
+          collections.forEach(item => updateDatalistSuggestions(item.type));
+          renderGroupedView();
+        } catch (e) {
+          console.error("Error reading stored records:", e);
+        }
+      }
+    }
+
+    function editEntry(index) {
+      const item = collections[index];
+      if (!item) return;
+
+      document.getElementById('editIndex').value = index;
+      document.getElementById('collectionDate').value = item.date;
+      document.getElementById('name').value = item.name;
+      document.getElementById('amount').value = item.amount;
+      document.getElementById('type').value = item.type;
+      document.getElementById('description').value = item.description || '';
+
+      document.getElementById('modalTitle').innerText = "EDIT COLLECTION";
+      document.getElementById('saveBtn').innerText = "UPDATE ENTRY";
+
+      openModal();
+    }
+
+    function deleteSingleEntry(index) {
+      if (confirm("ARE YOU SURE YOU WANT TO DELETE THIS RECORD?")) {
+        collections.splice(index, 1);
+        localStorage.setItem('daily_collections', JSON.stringify(collections));
+        renderGroupedView();
+      }
+    }
+
+    /* Long Press Event Handlers */
+    function startLongPress(date, originalIndex) {
+      pressTimer = setTimeout(() => {
+        selectionModePerDate[date] = true;
+        renderGroupedView();
+        
+        setTimeout(() => {
+          const safeDateClass = date.replace(/-/g, '_');
+          const checkbox = document.querySelector(`.checkbox-date-${safeDateClass}[value="${originalIndex}"]`);
+          if (checkbox) {
+            checkbox.checked = true;
+            toggleRowHighlight(checkbox);
+          }
+        }, 50);
+      }, 500);
+    }
+
+    function cancelLongPress() {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    }
+
+    function disableSelectionMode(date) {
+      selectionModePerDate[date] = false;
+      renderGroupedView();
+    }
+
+    function toggleRowHighlight(checkbox) {
+      const row = checkbox.closest('.entry-item');
+      if (checkbox.checked) {
+        row.classList.add('selected');
+      } else {
+        row.classList.remove('selected');
+      }
+    }
+
+    function handleRowClick(event, date, originalIndex) {
+      if (selectionModePerDate[date]) {
+        const safeDateClass = date.replace(/-/g, '_');
+        const checkbox = document.querySelector(`.checkbox-date-${safeDateClass}[value="${originalIndex}"]`);
+        if (checkbox && event.target !== checkbox) {
+          checkbox.checked = !checkbox.checked;
+          toggleRowHighlight(checkbox);
+        }
+      }
+    }
+
+    function toggleSelectAllDate(date) {
+      const checkboxes = document.querySelectorAll(`.checkbox-date-${date}`);
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+      checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+        toggleRowHighlight(cb);
+      });
+    }
+
+    function deleteSelectedForDate(date) {
+      const checkboxes = document.querySelectorAll(`.checkbox-date-${date}:checked`);
+      if (checkboxes.length === 0) {
+        alert("NO ITEMS SELECTED TO DELETE.");
+        return;
+      }
+
+      if (confirm(`ARE YOU SURE YOU WANT TO DELETE ${checkboxes.length} SELECTED RECORD(S)?`)) {
+        const indicesToDelete = Array.from(checkboxes).map(cb => parseInt(cb.value));
+        collections = collections.filter((_, idx) => !indicesToDelete.includes(idx));
+
+        localStorage.setItem('daily_collections', JSON.stringify(collections));
+        selectionModePerDate[date] = false;
+        renderGroupedView();
+      }
+    }
+
+    function exportJSONBackup() {
+      if (collections.length === 0) {
+        alert("NO RECORDS TO EXPORT.");
+        return;
+      }
+
+      const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(collections, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", jsonString);
+      downloadAnchor.setAttribute("download", `collections_backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      closeMenuModal();
+    }
+
+    function importJSONFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (Array.isArray(importedData)) {
+            collections = importedData;
+            localStorage.setItem('daily_collections', JSON.stringify(collections));
+            collections.forEach(item => updateDatalistSuggestions(item.type));
+            renderGroupedView();
+            alert("COLLECTION DATA IMPORTED SUCCESSFULLY!");
+            closeMenuModal();
+          } else {
+            alert("INVALID JSON FORMAT.");
+          }
+        } catch (err) {
+          alert("ERROR READING JSON FILE.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function shareCollectionText() {
+      if (collections.length === 0) {
+        alert("NO RECORDS TO SHARE.");
+        return;
+      }
+
+      /* -------------------------------------------------------------------- */
+      /*  Build a **markdown‑formatted** collection report                  */
+      /* -------------------------------------------------------------------- */
+      let summaryText = "# 📊 DAILY COLLECTION REPORT\\n\\n";
+
+      // Group entries by date
+      const grouped = collections.reduce((acc, item) => {
+        (acc[item.date] = acc[item.date] || []).push(item);
+        return acc;
+      }, {});
+
+      // Sort dates newest → oldest
+      const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+
+      // Assemble the markdown report
+      sortedDates.forEach(date => {
+        const items = grouped[date];
+        const dayTotal = items.reduce((sum, i) => sum + i.amount, 0);
+        // Date header
+        summaryText += `## 📅 ${formatDateToDMY(date)}\\n`;
+        summaryText += `**Total:** ₹${dayTotal.toFixed(2)}\\n\\n`;
+        // Table header
+        summaryText += `| Name | Amount | Type | Description |\\n`;
+        summaryText += `| ---- | ------ | ---- | ----------- |\\n`;
+        items.forEach(item => {
+          const desc = item.description ? item.description.replace(/[|]/g, ' ') : '';
+          summaryText += `| ${item.name} | ₹${item.amount.toFixed(2)} | ${item.type} | ${desc} |\\n`;
+        });
+        summaryText += "\\n"; // blank line between dates
+      });
+
+      // Helper function to handle fallback hidden textarea copy
+      function fallbackCopyText(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        
+        // Ensure textarea is hidden and out of viewport
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+        document.body.appendChild(textArea);
+        
+        textArea.focus();
+        textArea.select();
+
+        let successful = false;
+        try {
+          successful = document.execCommand('copy');
+        } catch (err) {
+          console.error('Fallback copy failed:', err);
+        }
+
+        document.body.removeChild(textArea);
+        return successful;
+      }
+
+      // Multi-fallback Copy / Share flow
+      if (navigator.share) {
+        navigator.share({
+          title: 'Daily Collection Summary',
+          text: summaryText
+        }).then(() => {
+          closeMenuModal();
+        }).catch((err) => {
+          // If native share is rejected or unsupported by context, attempt clipboard standard/fallback copy
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(summaryText).then(() => {
+              alert("COPIED TO CLIPBOARD!");
+              closeMenuModal();
+            }).catch(() => {
+              if (fallbackCopyText(summaryText)) {
+                alert("COPIED TO CLIPBOARD!");
+              } else {
+                alert("FAILED TO COPY TEXT.");
+              }
+              closeMenuModal();
+            });
+          } else {
+            if (fallbackCopyText(summaryText)) {
+              alert("COPIED TO CLIPBOARD!");
+            } else {
+              alert("FAILED TO COPY TEXT.");
+            }
+            closeMenuModal();
+          }
+        });
+      } else if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(summaryText).then(() => {
+          alert("COPIED TO CLIPBOARD!");
+          closeMenuModal();
+        }).catch(() => {
+          if (fallbackCopyText(summaryText)) {
+            alert("COPIED TO CLIPBOARD!");
+          } else {
+            alert("FAILED TO COPY TEXT.");
+          }
+          closeMenuModal();
+        });
+      } else {
+        if (fallbackCopyText(summaryText)) {
+          alert("COPIED TO CLIPBOARD!");
+        } else {
+          alert("FAILED TO COPY TEXT.");
+        }
+        closeMenuModal();
+      }
+    }
+
+    function clearAllData() {
+      if (confirm("ARE YOU SURE YOU WANT TO CLEAR ALL SAVED DATA? THIS ACTION CANNOT BE UNDONE!")) {
+        collections = [];
+        localStorage.removeItem('daily_collections');
+        renderGroupedView();
+        closeMenuModal();
+      }
+    }
+
+    function updateDatalistSuggestions(type) {
       const dataList = document.getElementById('type-suggestions');
       if (type) {
         let exists = Array.from(dataList.options).some(
@@ -373,12 +969,6 @@
           dataList.appendChild(newOption);
         }
       }
-
-      renderGroupedView();
-
-      document.getElementById('collectionForm').reset();
-      setDefaultDate();
-      closeModal();
     }
 
     function renderGroupedView() {
@@ -386,40 +976,67 @@
       container.innerHTML = '';
 
       if (collections.length === 0) {
-        container.innerHTML = '<p class="no-records" id="emptyMessage">NO COLLECTION RECORDS YET. CLICK + TO ADD ONE.</p>';
+        container.innerHTML = '<p class="no-records" id="emptyMessage">NO COLLECTION RECORDS YET. TAP \'ADD ENTRY\' TO START.</p>';
         return;
       }
 
-      const grouped = collections.reduce((acc, item) => {
-        if (!acc[item.date]) {
-          acc[item.date] = {
+      const grouped = {};
+      collections.forEach((item, originalIndex) => {
+        if (!grouped[item.date]) {
+          grouped[item.date] = {
             items: [],
             total: 0
           };
         }
-        // Unshift adds new entries to the top of that date's list
-        acc[item.date].items.unshift(item);
-        acc[item.date].total += item.amount;
-        return acc;
-      }, {});
+        grouped[item.date].items.unshift({ ...item, originalIndex });
+        grouped[item.date].total += item.amount;
+      });
 
-      // Sort dates in descending order (newest date on top)
       const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
 
       sortedDates.forEach(date => {
         const group = grouped[date];
+        const isSelectMode = !!selectionModePerDate[date];
+        const safeDateClass = date.replace(/-/g, '_');
+
         const groupCard = document.createElement('div');
         groupCard.className = 'date-group-card';
 
         let entriesHTML = '';
         group.items.forEach(item => {
           entriesHTML += `
-            <div class="entry-item">
-              <div class="entry-info">
-                <h4>${item.name}</h4>
-                <div class="entry-sub">${item.type}${item.description ? ' • ' + item.description : ''}</div>
+            <div class="entry-item" 
+                 onmousedown="startLongPress('${date}', ${item.originalIndex})"
+                 onmouseup="cancelLongPress()"
+                 mouseleave="cancelLongPress()"
+                 ontouchstart="startLongPress('${date}', ${item.originalIndex})"
+                 ontouchend="cancelLongPress()"
+                 onclick="handleRowClick(event, '${date}', ${item.originalIndex})">
+              
+              <div class="entry-left">
+                <input type="checkbox" 
+                       class="select-checkbox checkbox-date-${safeDateClass} ${isSelectMode ? 'show' : ''}" 
+                       value="${item.originalIndex}" 
+                       onchange="toggleRowHighlight(this)">
+                <div class="entry-info">
+                  <h4>${item.name}</h4>
+                  <div class="type-badge">${item.type}${item.description ? ' • ' + item.description : ''}</div>
+                </div>
               </div>
-              <div class="entry-amount">₹${item.amount.toFixed(2)}</div>
+
+              <div class="entry-right">
+                <div class="entry-amount">₹${item.amount.toFixed(2)}</div>
+                ${!isSelectMode ? `
+                  <div class="action-icons">
+                    <button class="icon-btn" onclick="event.stopPropagation(); editEntry(${item.originalIndex})" title="EDIT">
+                      <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                    <button class="icon-btn delete-btn" onclick="event.stopPropagation(); deleteSingleEntry(${item.originalIndex})" title="DELETE">
+                      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </div>
+                ` : ''}
+              </div>
             </div>
           `;
         });
@@ -431,6 +1048,13 @@
             <span class="date-title">DATE: ${formattedDate}</span>
             <span class="total-amount">TOTAL: ₹${group.total.toFixed(2)}</span>
           </div>
+
+          <div class="bulk-actions-bar ${isSelectMode ? 'active' : ''}">
+            <button class="btn-bulk-action btn-cancel-select" onclick="disableSelectionMode('${date}')">CANCEL</button>
+            <button class="btn-bulk-action btn-select-all" onclick="toggleSelectAllDate('${safeDateClass}')">SELECT ALL</button>
+            <button class="btn-bulk-action btn-delete-selected" onclick="deleteSelectedForDate('${safeDateClass}')">DELETE SELECTED</button>
+          </div>
+
           <div class="entry-list">
             ${entriesHTML}
           </div>
