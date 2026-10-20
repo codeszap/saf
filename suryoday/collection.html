@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Today Collection</title>
+  <style>
+    :root {
+      --bg-light: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --header-bg: #0F172A;
+      --accent-blue: #2563EB;
+      --accent-green: #059669;
+      --text-primary: #0F172A;
+      --text-secondary: #64748B;
+      --border-color: #E2E8F0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-light);
+      color: var(--text-primary);
+      padding: 16px;
+      padding-bottom: 95px;
+      min-height: 100vh;
+    }
+
+    .view-screen {
+      max-width: 450px;
+      margin: 0 auto;
+    }
+
+    /* Group Card with subtle corners (6px) */
+    .date-group-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+    }
+
+    /* Dark Slate Header */
+    .date-header {
+      background-color: var(--header-bg);
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .date-header .date-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #94A3B8;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .date-header .total-amount {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--accent-green);
+      background: rgba(16, 185, 129, 0.12);
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    /* List Container inside Single Card */
+    .entry-list {
+      padding: 0 14px;
+    }
+
+    /* Aligned Flat Row Entry */
+    .entry-item {
+      padding: 10px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      text-transform: uppercase;
+    }
+
+    .entry-item:last-child {
+      border-bottom: none;
+    }
+
+    .entry-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .entry-info h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .entry-sub {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      letter-spacing: 0.4px;
+    }
+
+    .entry-amount {
+      font-weight: 900;
+      font-size: 14px;
+      color: var(--accent-green);
+    }
+
+    .no-records {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-top: 50px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Floating Action Button (FAB) */
+    .fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 56px;
+      height: 56px;
+      background: var(--header-bg);
+      color: #FFFFFF;
+      border-radius: 50%;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: transform 0.15s ease;
+    }
+
+    .fab:active {
+      transform: scale(0.92);
+    }
+
+    /* Modal Entry Screen */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      z-index: 1000;
+    }
+
+    .form-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: var(--bg-light);
+      border: 1px solid var(--border-color);
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .form-card h2 {
+      margin-bottom: 16px;
+      color: var(--text-primary);
+      text-align: center;
+      font-size: 15px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 800;
+      font-size: 10px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 14px;
+      background-color: var(--bg-light);
+      color: var(--text-primary);
+      text-transform: uppercase;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: var(--header-bg);
+      background-color: var(--card-bg);
+      outline: none;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--header-bg);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+    }
+
+    .submit-btn:active {
+      transform: scale(0.98);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- VIEW SCREEN -->
+  <div class="view-screen">
+    <div id="recordsContainer">
+      <p class="no-records" id="emptyMessage">NO COLLECTION RECORDS YET. CLICK + TO ADD ONE.</p>
+    </div>
+  </div>
+
+  <!-- FLOATING ACTION BUTTON -->
+  <button class="fab" onclick="openModal()" title="ADD NEW ENTRY">+</button>
+
+  <!-- MODAL ENTRY SCREEN -->
+  <div class="modal-overlay" id="entryModal">
+    <div class="form-card">
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+      <h2>ADD COLLECTION</h2>
+      
+      <form id="collectionForm" onsubmit="handleFormSubmit(event)">
+        
+        <!-- Collection Date -->
+        <div class="form-group">
+          <label for="collectionDate">COLLECTION DATE</label>
+          <input type="date" id="collectionDate" name="collectionDate" required>
+        </div>
+
+        <!-- 1. Name -->
+        <div class="form-group">
+          <label for="name">NAME</label>
+          <input type="text" id="name" name="name" placeholder="ENTER NAME" required oninput="this.value = this.value.toUpperCase()">
+        </div>
+
+        <!-- 2. Amount -->
+        <div class="form-group">
+          <label for="amount">AMOUNT (₹)</label>
+          <input type="number" id="amount" name="amount" step="0.01" placeholder="0.00" required>
+        </div>
+
+        <!-- 3. Type Field -->
+        <div class="form-group">
+          <label for="type">TYPE</label>
+          <input type="text" id="type" name="type" list="type-suggestions" placeholder="TYPE OR SELECT A TYPE" required autocomplete="off" oninput="this.value = this.value.toUpperCase()">
+          
+          <datalist id="type-suggestions"></datalist>
+        </div>
+
+        <!-- 4. Description -->
+        <div class="form-group">
+          <label for="description">DESCRIPTION</label>
+          <textarea id="description" name="description" rows="2" placeholder="ENTER ADDITIONAL DETAILS..." oninput="this.value = this.value.toUpperCase()"></textarea>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="submit-btn">SAVE ENTRY</button>
+
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let collections = [];
+
+    function setDefaultDate() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('collectionDate').value = today;
+    }
+
+    function formatDateToDMY(dateString) {
+      const [year, month, day] = dateString.split('-');
+      return `${day}-${month}-${year}`;
+    }
+
+    window.onload = function() {
+      setDefaultDate();
+    };
+
+    function openModal() {
+      document.getElementById('entryModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('entryModal').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('entryModal');
+      if (event.target === modal) {
+        closeModal();
+      }
+    };
+
+    function handleFormSubmit(event) {
+      event.preventDefault();
+
+      const date = document.getElementById('collectionDate').value;
+      const name = document.getElementById('name').value.trim().toUpperCase();
+      const amount = parseFloat(document.getElementById('amount').value);
+      const type = document.getElementById('type').value.trim().toUpperCase();
+      const description = document.getElementById('description').value.trim().toUpperCase();
+
+      collections.push({ date, name, amount, type, description });
+
+      const dataList = document.getElementById('type-suggestions');
+      if (type) {
+        let exists = Array.from(dataList.options).some(
+          option => option.value.toUpperCase() === type
+        );
+        if (!exists) {
+          const newOption = document.createElement('option');
+          newOption.value = type;
+          dataList.appendChild(newOption);
+        }
+      }
+
+      renderGroupedView();
+
+      document.getElementById('collectionForm').reset();
+      setDefaultDate();
+      closeModal();
+    }
+
+    function renderGroupedView() {
+      const container = document.getElementById('recordsContainer');
+      container.innerHTML = '';
+
+      if (collections.length === 0) {
+        container.innerHTML = '<p class="no-records" id="emptyMessage">NO COLLECTION RECORDS YET. CLICK + TO ADD ONE.</p>';
+        return;
+      }
+
+      const grouped = collections.reduce((acc, item) => {
+        if (!acc[item.date]) {
+          acc[item.date] = {
+            items: [],
+            total: 0
+          };
+        }
+        // Unshift adds new entries to the top of that date's list
+        acc[item.date].items.unshift(item);
+        acc[item.date].total += item.amount;
+        return acc;
+      }, {});
+
+      // Sort dates in descending order (newest date on top)
+      const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+
+      sortedDates.forEach(date => {
+        const group = grouped[date];
+        const groupCard = document.createElement('div');
+        groupCard.className = 'date-group-card';
+
+        let entriesHTML = '';
+        group.items.forEach(item => {
+          entriesHTML += `
+            <div class="entry-item">
+              <div class="entry-info">
+                <h4>${item.name}</h4>
+                <div class="entry-sub">${item.type}${item.description ? ' • ' + item.description : ''}</div>
+              </div>
+              <div class="entry-amount">₹${item.amount.toFixed(2)}</div>
+            </div>
+          `;
+        });
+
+        const formattedDate = formatDateToDMY(date);
+
+        groupCard.innerHTML = `
+          <div class="date-header">
+            <span class="date-title">DATE: ${formattedDate}</span>
+            <span class="total-amount">TOTAL: ₹${group.total.toFixed(2)}</span>
+          </div>
+          <div class="entry-list">
+            ${entriesHTML}
+          </div>
+        `;
+
+        container.appendChild(groupCard);
+      });
+    }
+  </script>
+
+</body>
+</html>
