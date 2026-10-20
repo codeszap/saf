@@ -442,6 +442,36 @@
 		.details-label { color: var(--muted); font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
 		.details-value { min-width: 0; color: var(--ink); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; white-space: pre-wrap; }
 		.details-value.phone-field { justify-content: flex-start; }
+
+		/* Notes / Follow-up Log */
+		.notes-section { margin-top: 18px; padding-top: 16px; border-top: 2px solid #E2E8F0; }
+		.notes-heading { display: flex; align-items: center; justify-content: space-between; margin: 0 0 14px; font-size: 14px; font-weight: 800; color: var(--ink); }
+		.notes-heading-label { display: flex; align-items: center; gap: 7px; }
+		.notes-heading-label svg { width: 16px; height: 16px; fill: none; stroke: var(--teal); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+		.notes-count-badge { padding: 2px 8px; border-radius: 10px; background: #CCFBF1; color: #115E59; font-size: 11px; font-weight: 800; }
+		.notes-timeline { display: grid; gap: 10px; margin-bottom: 14px; }
+		.note-item { position: relative; padding: 11px 13px 11px 38px; border: 1px solid #E2E8F0; border-radius: 8px; background: #F8FAFC; }
+		.note-item::before { content: ''; position: absolute; left: 15px; top: 15px; width: 8px; height: 8px; border-radius: 50%; background: var(--teal); }
+		.note-text { margin: 0 0 5px; font-size: 14px; line-height: 1.5; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+		.note-time { font-size: 11px; color: var(--muted); font-weight: 600; }
+		.note-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; }
+		.note-delete, .note-edit-btn { width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 4px; background: transparent; color: #94A3B8; cursor: pointer; }
+		.note-delete:hover { background: #FEE2E2; color: #B91C1C; }
+		.note-edit-btn:hover { background: #E0F2FE; color: #0369A1; }
+		.note-delete svg, .note-edit-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+		.note-item.editing { border-color: var(--teal); background: #F0FDFA; }
+		.add-note-cancel { min-height: 42px; padding: 0 14px; border: 1px solid #CBD5E1; border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+		.add-note-cancel:hover { background: #F1F5F9; }
+		.add-note-row { display: flex; gap: 8px; }
+		.notes-empty { padding: 12px 0 4px; color: var(--muted); font-size: 13px; text-align: center; }
+		.add-note-form { display: grid; gap: 8px; }
+		.add-note-textarea { width: 100%; min-height: 80px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 14px; resize: vertical; transition: border-color 0.15s, box-shadow 0.15s; }
+		.add-note-textarea:focus { border-color: var(--teal); outline: none; box-shadow: 0 0 0 3px var(--focus); }
+		.add-note-button { min-height: 42px; padding: 0 16px; border: 0; border-radius: 6px; background: var(--teal); color: #fff; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; transition: background 0.15s; }
+		.add-note-button:hover { background: #0F766E; }
+		.add-note-button:disabled { opacity: 0.6; cursor: not-allowed; }
+		.note-card-badge { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 3px 8px; border-radius: 10px; background: #F0FDFA; color: #0F766E; font-size: 11px; font-weight: 700; border: 1px solid #99F6E4; }
+		.note-card-badge svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 		.entry-card { cursor: pointer; }
 		.entry-card:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
 		.field-value { margin-top: 10px; color: #475569; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
@@ -691,6 +721,23 @@
 			<button class="details-close" id="close-details" type="button" aria-label="Close details">&times;</button>
 		</div>
 		<div class="details-list" id="details-list"></div>
+		<div class="notes-section" id="notes-section">
+			<p class="notes-heading">
+				<span class="notes-heading-label">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+					Follow-up Notes
+				</span>
+				<span class="notes-count-badge" id="notes-count-badge">0 notes</span>
+			</p>
+			<div class="notes-timeline" id="notes-timeline"></div>
+			<div class="add-note-form">
+				<textarea class="add-note-textarea" id="add-note-textarea" placeholder="Write a follow-up note… e.g. Called customer, interested in gold loan" rows="3"></textarea>
+				<div class="add-note-row">
+					<button class="add-note-cancel" id="cancel-note-edit" type="button" hidden>Cancel</button>
+					<button class="add-note-button" id="add-note-button" type="button">+ Add Note</button>
+				</div>
+			</div>
+		</div>
 	</dialog>
 
 	<div class="menu-panel" id="menu-panel" role="menu" aria-label="Entry actions" hidden>
@@ -1201,7 +1248,19 @@
 					fieldValue.style.gridRow = String(cardRow + 1);
 					if (field === titleField) {
 						fieldValue.classList.add("entry-card-title");
-						fieldValue.textContent = formatFieldValue(field, value);
+						fieldValue.style.display = 'flex';
+						fieldValue.style.alignItems = 'center';
+						fieldValue.style.gap = '6px';
+						const titleText = document.createTextNode(formatFieldValue(field, value));
+						fieldValue.append(titleText);
+						// Show note icon if notes exist
+						if (entry.id && readLocalNotes(entry.id).length > 0) {
+							const noteIcon = document.createElement('span');
+							noteIcon.setAttribute('aria-label', 'Has notes');
+							noteIcon.title = 'Has follow-up notes';
+							noteIcon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:13px;height:13px;flex:0 0 13px;fill:none;stroke:#0D9488;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>';
+							fieldValue.append(noteIcon);
+						}
 					} else if (isPhoneField(field)) {
 						const callLink = document.createElement("a");
 						callLink.className = "call-button";
@@ -1241,6 +1300,7 @@
 					legacy.textContent = [entry.mobile, entry.amount ? `₹${entry.amount}` : "", entry.description].filter(Boolean).join(" · ");
 					cardFieldList.append(legacyName, legacy);
 				}
+
 				card.append(cardFieldList);
 				swipeItem.append(card);
 				entryList.append(swipeItem);
@@ -1321,9 +1381,114 @@
 			item.classList.remove("open");
 			item.querySelector(".swipe-actions").inert = true;
 		}
+		// ── Notes helpers ─────────────────────────────────────────────
+		function notesStorageKey(entryId) { return `suryoday-crm-notes-${entryId}`; }
+
+		function readLocalNotes(entryId) {
+			try {
+				const notes = JSON.parse(localStorage.getItem(notesStorageKey(entryId)) || "[]");
+				return Array.isArray(notes) ? notes : [];
+			} catch { return []; }
+		}
+
+		function writeLocalNotes(entryId, notes) {
+			localStorage.setItem(notesStorageKey(entryId), JSON.stringify(notes));
+		}
+
+		function formatNoteTime(isoString) {
+			const d = new Date(isoString);
+			if (isNaN(d)) return isoString;
+			return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+		}
+
+		let currentDetailEntryId = null;
+		let currentEditingNoteId = null;
+
+		function renderNotesTimeline(entryId) {
+			const timeline = document.getElementById('notes-timeline');
+			const badge = document.getElementById('notes-count-badge');
+			const notes = readLocalNotes(entryId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+			timeline.replaceChildren();
+			badge.textContent = `${notes.length} ${notes.length === 1 ? 'note' : 'notes'}`;
+			if (notes.length === 0) {
+				const empty = document.createElement('p');
+				empty.className = 'notes-empty';
+				empty.textContent = 'No notes yet. Add your first follow-up note below.';
+				timeline.append(empty);
+				return;
+			}
+			notes.forEach((note) => {
+				const item = document.createElement('div');
+				item.className = 'note-item';
+				if (note.id === currentEditingNoteId) item.classList.add('editing');
+				item.dataset.noteId = note.id;
+				const text = document.createElement('p');
+				text.className = 'note-text';
+				text.textContent = note.text;
+				const time = document.createElement('span');
+				time.className = 'note-time';
+				time.textContent = formatNoteTime(note.createdAt);
+				// Actions row (edit + delete)
+				const noteActions = document.createElement('div');
+				noteActions.className = 'note-actions';
+				const editBtn = document.createElement('button');
+				editBtn.className = 'note-edit-btn';
+				editBtn.type = 'button';
+				editBtn.setAttribute('aria-label', 'Edit note');
+				editBtn.title = 'Edit note';
+				editBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>';
+				editBtn.addEventListener('click', () => startEditNote(entryId, note));
+				const del = document.createElement('button');
+				del.className = 'note-delete';
+				del.type = 'button';
+				del.setAttribute('aria-label', 'Delete note');
+				del.title = 'Delete note';
+				del.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6"/></svg>';
+				del.addEventListener('click', () => deleteNote(entryId, note.id));
+				noteActions.append(editBtn, del);
+				item.append(noteActions, text, time);
+				timeline.append(item);
+			});
+		}
+
+		function startEditNote(entryId, note) {
+			currentEditingNoteId = note.id;
+			const textarea = document.getElementById('add-note-textarea');
+			const btn = document.getElementById('add-note-button');
+			const cancelBtn = document.getElementById('cancel-note-edit');
+			textarea.value = note.text;
+			btn.textContent = 'Update Note';
+			cancelBtn.hidden = false;
+			textarea.focus();
+			renderNotesTimeline(entryId); // highlight editing note
+		}
+
+		function cancelEditNote() {
+			currentEditingNoteId = null;
+			const textarea = document.getElementById('add-note-textarea');
+			const btn = document.getElementById('add-note-button');
+			const cancelBtn = document.getElementById('cancel-note-edit');
+			textarea.value = '';
+			btn.textContent = '+ Add Note';
+			cancelBtn.hidden = true;
+			if (currentDetailEntryId) renderNotesTimeline(currentDetailEntryId);
+		}
+
+		function deleteNote(entryId, noteId) {
+			if (!window.confirm('Delete this note?')) return;
+			if (currentEditingNoteId === noteId) cancelEditNote();
+			const notes = readLocalNotes(entryId).filter(n => n.id !== noteId);
+			writeLocalNotes(entryId, notes);
+			db.collection('entries').doc(entryId).collection('notes').doc(noteId).delete()
+				.catch(err => console.error('Failed to delete note from Firestore', err));
+			renderNotesTimeline(entryId);
+			renderEntries();
+		}
+
 		function openEntryDetails(entryIndex) {
 			const entry = readEntries()[entryIndex];
 			if (!entry) return;
+			currentDetailEntryId = entry.id || null;
 			const values = entry.customFields || {};
 			const fields = readCustomFields();
 			const isPhoneField = (field) => field.type === "mobile" || /^(mobile( number)?|phone( number)?|telephone|contact number)$/i.test(field.label.trim());
@@ -1379,6 +1544,25 @@
 					detailsList.append(row);
 				});
 			}
+
+			// Reset note textarea
+			document.getElementById('add-note-textarea').value = '';
+
+			// Render notes from localStorage first (instant)
+			if (currentDetailEntryId) {
+				renderNotesTimeline(currentDetailEntryId);
+				// Then sync fresh notes from Firestore in background
+				db.collection('entries').doc(currentDetailEntryId).collection('notes')
+					.orderBy('createdAt', 'desc').get()
+					.then((snapshot) => {
+						const remoteNotes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: doc.data().createdAt?.toDate?.().toISOString() || doc.data().createdAt }));
+						writeLocalNotes(currentDetailEntryId, remoteNotes);
+						if (detailsDialog.open && currentDetailEntryId === entry.id) {
+							renderNotesTimeline(currentDetailEntryId);
+						}
+					}).catch(() => {/* offline - local cache is fine */});
+			}
+
 			detailsDialog.showModal();
 		}
 
@@ -1396,14 +1580,61 @@
 			openEntryDetails(Number(event.target.dataset.entryIndex));
 		});
 		document.getElementById("close-details").addEventListener("click", () => detailsDialog.close());
+
+		// Add / Update Note button handler
+		document.getElementById('add-note-button').addEventListener('click', () => {
+			const textarea = document.getElementById('add-note-textarea');
+			const text = textarea.value.trim();
+			if (!text || !currentDetailEntryId) return;
+			const btn = document.getElementById('add-note-button');
+			btn.disabled = true;
+
+			if (currentEditingNoteId) {
+				// UPDATE existing note
+				const notes = readLocalNotes(currentDetailEntryId).map(n =>
+					n.id === currentEditingNoteId ? { ...n, text, updatedAt: new Date().toISOString() } : n
+				);
+				writeLocalNotes(currentDetailEntryId, notes);
+				db.collection('entries').doc(currentDetailEntryId).collection('notes').doc(currentEditingNoteId).update({
+					text,
+					updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+				}).catch(err => console.error('Failed to update note in Firestore', err));
+				currentEditingNoteId = null;
+				document.getElementById('add-note-button').textContent = '+ Add Note';
+				document.getElementById('cancel-note-edit').hidden = true;
+			} else {
+				// ADD new note
+				const noteId = createLocalId();
+				const createdAt = new Date().toISOString();
+				const note = { id: noteId, text, createdAt };
+				const notes = readLocalNotes(currentDetailEntryId);
+				notes.push(note);
+				writeLocalNotes(currentDetailEntryId, notes);
+				db.collection('entries').doc(currentDetailEntryId).collection('notes').doc(noteId).set({
+					text,
+					createdAt: firebase.firestore.FieldValue.serverTimestamp()
+				}).catch(err => console.error('Failed to save note to Firestore', err));
+			}
+
+			textarea.value = '';
+			btn.disabled = false;
+			renderNotesTimeline(currentDetailEntryId);
+			renderEntries();
+			textarea.focus();
+		});
+
+		document.getElementById('cancel-note-edit').addEventListener('click', cancelEditNote);
 		detailsDialog.addEventListener("click", (event) => {
 			if (event.target === detailsDialog) detailsDialog.close();
 		});
-		detailsDialog.addEventListener("keydown", (event) => {
-			if (event.key === "Escape" && detailsDialog.open) {
-				event.preventDefault();
-				detailsDialog.close();
-			}
+		detailsDialog.addEventListener("close", () => {
+			currentEditingNoteId = null;
+			const btn = document.getElementById('add-note-button');
+			if (btn) btn.textContent = '+ Add Note';
+			const cancelBtn = document.getElementById('cancel-note-edit');
+			if (cancelBtn) cancelBtn.hidden = true;
+			const ta = document.getElementById('add-note-textarea');
+			if (ta) ta.value = '';
 		});
 		menuButton.addEventListener("click", () => {
 			const willOpen = menuPanel.hidden;
