@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="theme-color" content="#0D9488">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="application-name" content="Customer Records">
+	<link rel="manifest" href="./manifest.webmanifest">
+	<link rel="icon" href="./app-icon.svg" type="image/svg+xml">
+	<title>Customer Records</title>
+	<style>
+		:root {
+			color-scheme: light;
+			--page-bg: #F1F5F9;
+			--surface: #FFFFFF;
+			--ink: #0F172A;
+			--muted: #64748B;
+			--line: #CBD5E1;
+			--navy: #0F172A;
+			--teal: #0D9488;
+			--focus: rgba(13, 148, 136, 0.2);
+		}
+
+		* { box-sizing: border-box; }
+
+		body {
+			min-width: 320px;
+			min-height: 100vh;
+			margin: 0;
+			background: var(--page-bg);
+			color: var(--ink);
+			font-family: "Segoe UI", Arial, sans-serif;
+		}
+
+		main {
+			width: min(100% - 32px, 720px);
+			margin: 28px auto 112px;
+		}
+
+		.list-heading, .form-heading {
+			display: flex;
+			align-items: center;
+			gap: 16px;
+			margin-bottom: 22px;
+		}
+
+		.list-heading { justify-content: space-between; }
+		.list-heading-actions { display: flex; align-items: center; gap: 8px; }
+		.form-heading { justify-content: flex-start; }
+		.heading-copy { min-width: 0; }
+
+		.eyebrow {
+			margin: 0 0 8px;
+			color: var(--teal);
+			font-size: 11px;
+			font-weight: 800;
+			letter-spacing: 1px;
+			text-transform: uppercase;
+		}
+
+		h1 {
+			margin: 0;
+			font-size: clamp(26px, 6vw, 34px);
+			line-height: 1.15;
+		}
+
+		.form-panel {
+			padding: 28px;
+			border: 1px solid #E2E8F0;
+			border-radius: 8px;
+			background: var(--surface);
+			box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+		}
+
+		.view[hidden] { display: none; }
+
+		.record-count {
+			flex: 0 0 auto;
+			padding: 7px 10px;
+			border-radius: 5px;
+			background: #CCFBF1;
+			color: #115E59;
+			font-size: 12px;
+			font-weight: 800;
+		}
+
+		.search-tools-button, .filter-tools-button { width: 40px; height: 40px; flex: 0 0 40px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 8px; background: #FFFFFF; color: #334155; cursor: pointer; }
+		.search-tools-button:hover, .search-tools-button[aria-expanded="true"], .filter-tools-button:hover, .filter-tools-button[aria-expanded="true"] { border-color: var(--teal); background: #E8F8F5; color: #0F766E; }
+		.search-tools-button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+		.search-tools-button svg, .filter-tools-button svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+		.entry-tools { display: grid; gap: 10px; margin: -8px 0 18px; }
+		.entry-tools[hidden] { display: none; }
+		.search-tool-panel[hidden], .filter-tool-panel[hidden] { display: none; }
+		.entry-tool-row { display: flex; gap: 8px; min-width: 0; }
+		.entry-search { flex: 1 1 auto; min-width: 0; min-height: 46px; }
+		.tool-button { min-height: 46px; padding: 0 14px; border: 1px solid var(--line); border-radius: 6px; background: #FFFFFF; color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+		.tool-button:hover { background: #F8FAFC; }
+		.saved-filter-select { flex: 1 1 auto; min-width: 0; min-height: 42px; padding: 8px 10px; font-size: 14px; }
+		.saved-filter-actions { display: flex; gap: 8px; }
+		.saved-filter-actions .tool-button { min-height: 42px; padding: 0 11px; }
+		.filter-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; padding: 12px; border: 1px solid #DCE5EA; border-radius: 8px; background: #FFFFFF; }
+		.filter-panel input, .filter-panel select { min-width: 0; min-height: 42px; padding: 8px 10px; font-size: 14px; }
+		.filter-value-control { min-width: 0; }
+		.filter-value-control select, .filter-value-control input { width: 100%; }
+		@media (max-width: 480px) {
+			.filter-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; padding: 9px; gap: 6px; }
+			.saved-filter-actions .tool-button { padding-inline: 9px; }
+		}
+
+		.entry-list { display: grid; gap: 8px; }
+
+		.entry-swipe {
+			position: relative;
+			overflow: hidden;
+			border-radius: 8px;
+			background: #E2E8F0;
+			animation: card-enter 180ms ease both;
+		}
+
+		.swipe-actions {
+			position: absolute;
+			inset: 0 0 0 auto;
+			width: 152px;
+			display: flex;
+			align-items: stretch;
+			visibility: hidden;
+		}
+
+		.entry-swipe.open .swipe-actions { visibility: visible; }
+
+		.swipe-action {
+			width: 76px;
+			min-width: 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+			border: 0;
+			background: #334155;
+			color: #FFFFFF;
+			font: inherit;
+			font-size: 12px;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		.swipe-action.delete { background: #B91C1C; }
+		.swipe-action:hover { filter: brightness(0.94); }
+		.swipe-action:focus-visible { outline: 2px solid #FFFFFF; outline-offset: -4px; }
+		.swipe-action svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+		.entry-card {
+			position: relative;
+			z-index: 1;
+			padding: 11px 14px;
+			border: 1px solid #E2E8F0;
+			border-radius: 8px;
+			background: var(--surface);
+			box-shadow: 0 3px 12px rgba(15, 23, 42, 0.045);
+			transition: transform 180ms ease;
+			touch-action: pan-y;
+		}
+
+		.entry-swipe.open .entry-card { transform: translateX(-152px); }
+
+		@keyframes card-enter {
+			from { opacity: 0; transform: translateY(6px); }
+			to { opacity: 1; transform: translateY(0); }
+		}
+
+		.card-top, .contact-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 14px;
+		}
+
+		.card-top { align-items: flex-start; }
+		.entry-name { min-width: 0; margin: 0; font-size: 15px; line-height: 1.25; overflow-wrap: anywhere; }
+		.entry-fields { display: grid; grid-template-columns: repeat(100, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(32px, auto)); column-gap: 0; row-gap: 6px; margin-top: 4px; }
+		.entry-fields > .field-value { min-width: 0; margin-top: 0; padding-inline: 6px; }
+		.entry-fields > .field-value > strong { display: inline; margin-right: 4px; }
+		.field-label-avatar { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; margin-right: 6px; border-radius: 50%; background: #CCFBF1; color: #0F766E; font-size: 10px; font-weight: 800; line-height: 1; vertical-align: middle; }
+		.entry-card-title { color: var(--ink); font-size: 18px; font-weight: 900; line-height: 1.25; overflow-wrap: anywhere; }
+		.entry-amount { flex: 0 0 auto; color: #047857; font-size: 16px; font-weight: 800; white-space: nowrap; }
+		.contact-row { justify-content: flex-start; margin-top: 12px; }
+
+		.phone-number {
+			color: #334155;
+			font-size: 13px;
+			font-weight: 600;
+			text-decoration: none;
+		}
+
+		.phone-field {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.field-value { margin-top: 6px; font-size: 13px; line-height: 1.35; }
+		.entry-fields > .field-value.entry-card-title { font-size: 18px; font-weight: 900; line-height: 1.25; }
+
+		.call-button {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			border: 0;
+			cursor: pointer;
+		}
+
+		.call-button {
+			width: 32px;
+			height: 32px;
+			flex: 0 0 32px;
+			border-radius: 50%;
+			background: #CCFBF1;
+			color: #0F766E;
+			text-decoration: none;
+		}
+
+		.call-button:hover { background: #99F6E4; }
+
+		.call-button svg {
+			width: 17px;
+			height: 17px;
+			fill: none;
+			stroke: currentColor;
+			stroke-width: 2;
+			stroke-linecap: round;
+			stroke-linejoin: round;
+		}
+
+		.entry-description {
+			margin: 14px 0 0;
+			padding-top: 12px;
+			border-top: 1px solid #E2E8F0;
+			color: #475569;
+			font-size: 14px;
+			line-height: 1.55;
+			white-space: pre-wrap;
+			overflow-wrap: anywhere;
+		}
+
+		.empty-state {
+			padding: 34px 20px;
+			border: 1px dashed #94A3B8;
+			border-radius: 8px;
+			color: var(--muted);
+			text-align: center;
+			line-height: 1.5;
+		}
+
+		.empty-state strong { display: block; margin-bottom: 6px; color: var(--ink); font-size: 15px; }
+
+		.bottom-nav {
+			position: fixed;
+			left: 50%;
+			bottom: calc(12px + env(safe-area-inset-bottom));
+			z-index: 10;
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			width: min(380px, calc(100% - 24px));
+			padding: 8px 10px;
+			transform: translateX(-50%);
+			border: 1px solid rgba(203, 213, 225, 0.8);
+			border-radius: 22px;
+			background: rgba(255, 255, 255, 0.96);
+			box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18), 0 2px 6px rgba(15, 23, 42, 0.06);
+			backdrop-filter: blur(18px);
+		}
+
+		.nav-button {
+			min-width: 0;
+			min-height: 64px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 4px;
+			border: 0;
+			border-radius: 15px;
+			background: transparent;
+			color: var(--muted);
+			font: inherit;
+			font-size: 11px;
+			font-weight: 700;
+			cursor: pointer;
+			transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+		}
+
+		.nav-button svg {
+			width: 21px;
+			height: 21px;
+			fill: none;
+			stroke: currentColor;
+			stroke-width: 1.8;
+			stroke-linecap: round;
+			stroke-linejoin: round;
+		}
+
+		.nav-button:hover { color: #0F766E; background: #F0FDFA; }
+		.nav-button[aria-current="page"] { color: #0F766E; background: #E8F8F5; }
+		.nav-button.add-nav { color: #475569; background: transparent; }
+		.nav-button.add-nav svg { width: 42px; height: 42px; padding: 10px; border-radius: 50%; background: var(--teal); color: #FFFFFF; stroke-width: 2; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.28); }
+		.nav-button.add-nav:hover { color: #0F766E; background: #F0FDFA; }
+		.nav-button.add-nav:hover svg { background: #0F766E; }
+		.nav-button:focus-visible, .call-button:focus-visible { outline: 3px solid #14B8A6; outline-offset: 2px; }
+
+		.menu-panel {
+			position: fixed;
+			right: max(16px, env(safe-area-inset-right));
+			bottom: calc(96px + env(safe-area-inset-bottom));
+			z-index: 11;
+			width: min(240px, calc(100vw - 32px));
+			padding: 6px;
+			border: 1px solid #E2E8F0;
+			border-radius: 8px;
+			background: #FFFFFF;
+			box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+		}
+
+		.menu-panel[hidden] { display: none; }
+
+		.menu-action {
+			width: 100%;
+			min-height: 44px;
+			padding: 10px 12px;
+			border: 0;
+			border-radius: 5px;
+			background: transparent;
+			color: var(--ink);
+			font: inherit;
+			font-size: 14px;
+			text-align: left;
+			cursor: pointer;
+		}
+
+		.menu-action:hover { background: #F1F5F9; }
+		.menu-action.danger { color: #B91C1C; }
+		.menu-action:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+
+		.field-list { display: grid; gap: 10px; margin-bottom: 20px; }
+		.field[hidden] { display: none; }
+		.field-list-status { min-height: 18px; margin: -8px 0 12px; color: var(--muted); font-size: 12px; }
+
+		.field-definition {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			padding: 12px 14px;
+			border: 1px solid #E2E8F0;
+			border-radius: 6px;
+			background: #F8FAFC;
+		}
+
+		.field-definition-name { min-width: 0; overflow-wrap: anywhere; font-size: 14px; font-weight: 700; }
+		.field-definition-type { flex: 0 0 auto; color: var(--muted); font-size: 12px; text-transform: capitalize; }
+		.field-definition-info { display: grid; min-width: 0; gap: 4px; }
+		.field-definition-actions, .builder-actions { display: flex; align-items: center; gap: 8px; }
+		.field-definition-actions { margin-left: auto; }
+		.field-definition.dragging { opacity: 0.45; }
+		.field-definition.drop-target { border-color: var(--teal); background: #F0FDFA; }
+		.field-drag-handle { width: 38px; height: 38px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 5px; background: transparent; color: #64748B; cursor: grab; touch-action: none; }
+		.field-drag-handle:active { cursor: grabbing; }
+		.field-drag-handle:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+		.field-drag-handle svg { width: 19px; height: 19px; fill: currentColor; }
+
+		.field-action {
+			width: 38px;
+			height: 38px;
+			flex: 0 0 auto;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			border: 1px solid #CBD5E1;
+			border-radius: 6px;
+			background: #FFFFFF;
+			color: #334155;
+			cursor: pointer;
+		}
+
+		.field-action:hover { background: #F1F5F9; }
+		.field-action.delete { color: #B91C1C; }
+		.field-action svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+		.builder-actions .submit-button { flex: 1; }
+		.cancel-edit { min-height: 48px; padding: 10px 14px; border: 1px solid #CBD5E1; border-radius: 6px; background: #FFFFFF; color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+		.cancel-edit:hover { background: #F1F5F9; }
+		.field-status { min-height: 18px; margin: -8px 0 0; color: #0F766E; font-size: 13px; }
+		.field-fab {
+			position: fixed;
+			right: max(20px, calc((100vw - 720px) / 2));
+			bottom: calc(104px + env(safe-area-inset-bottom));
+			z-index: 8;
+			width: 56px;
+			height: 56px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			border: 0;
+			border-radius: 50%;
+			background: var(--teal);
+			color: #FFFFFF;
+			box-shadow: 0 6px 18px rgba(13, 148, 136, 0.32);
+			cursor: pointer;
+		}
+
+		.field-fab:hover { background: #0F766E; }
+		.field-fab[hidden] { display: none; }
+		.field-fab:focus-visible { outline: 3px solid #14B8A6; outline-offset: 3px; }
+		.field-fab svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+
+		.field-dialog {
+			width: min(100% - 32px, 460px);
+			max-height: min(90vh, 640px);
+			padding: 24px;
+			border: 1px solid #E2E8F0;
+			border-radius: 10px;
+			background: #FFFFFF;
+			color: var(--ink);
+			box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);
+		}
+
+		.field-dialog::backdrop { background: rgba(15, 23, 42, 0.48); backdrop-filter: blur(2px); }
+		.dialog-heading { margin: 0 0 20px; font-size: 21px; line-height: 1.25; }
+		.dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
+		.dialog-actions .submit-button { min-width: 132px; }
+		.dialog-cancel { min-height: 50px; padding: 12px 16px; border: 1px solid #CBD5E1; border-radius: 6px; background: #FFFFFF; color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+		.dialog-cancel:hover { background: #F1F5F9; }
+		.details-dialog { width: min(100% - 32px, 520px); max-height: min(86vh, 720px); padding: 22px; border: 1px solid #E2E8F0; border-radius: 10px; background: #FFFFFF; color: var(--ink); box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24); }
+		.details-dialog::backdrop { background: rgba(15, 23, 42, 0.48); backdrop-filter: blur(2px); }
+		.details-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 18px; }
+		.details-title { margin: 0; font-size: 20px; line-height: 1.3; overflow-wrap: anywhere; }
+		.details-close { width: 38px; height: 38px; flex: 0 0 auto; border: 1px solid #CBD5E1; border-radius: 6px; background: #FFFFFF; color: #334155; font-size: 22px; cursor: pointer; }
+		.details-close:hover { background: #F1F5F9; }
+		.details-list { display: grid; gap: 0; max-height: calc(86vh - 120px); overflow-y: auto; }
+		.details-row { display: grid; grid-template-columns: minmax(100px, 0.7fr) minmax(0, 1fr); gap: 14px; padding: 12px 0; border-top: 1px solid #E2E8F0; }
+		.details-row.no-label { grid-template-columns: minmax(0, 1fr); }
+		.details-label { color: var(--muted); font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+		.details-value { min-width: 0; color: var(--ink); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; white-space: pre-wrap; }
+		.details-value.phone-field { justify-content: flex-start; }
+		.entry-card { cursor: pointer; }
+		.entry-card:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+		.field-value { margin-top: 10px; color: #475569; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+		.field-value strong { color: var(--ink); }
+		.builder-note { margin: 0 0 18px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+
+		.back-button {
+			flex: 0 0 42px;
+			width: 42px;
+			height: 42px;
+			border-radius: 6px;
+			background: #E2E8F0;
+			color: var(--ink);
+		}
+
+		form { display: grid; gap: 20px; }
+
+		.field { display: grid; gap: 8px; }
+		#custom-entry-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
+
+		label {
+			font-size: 13px;
+			font-weight: 700;
+		}
+
+		input, textarea, select {
+			width: 100%;
+			min-height: 48px;
+			padding: 12px 14px;
+			border: 1px solid var(--line);
+			border-radius: 6px;
+			background: #FFFFFF;
+			color: var(--ink);
+			font: inherit;
+			font-size: 16px;
+			transition: border-color 0.15s ease, box-shadow 0.15s ease;
+		}
+
+		input::placeholder, textarea::placeholder { color: #94A3B8; }
+
+		input:focus, textarea:focus, select:focus {
+			border-color: var(--teal);
+			outline: none;
+			box-shadow: 0 0 0 3px var(--focus);
+		}
+
+		textarea {
+			min-height: 120px;
+			resize: vertical;
+		}
+
+		.field-hint {
+			margin: 0;
+			color: var(--muted);
+			font-size: 12px;
+			line-height: 1.45;
+		}
+
+		.amount-wrap {
+			display: flex;
+			align-items: center;
+			overflow: hidden;
+			border: 1px solid var(--line);
+			border-radius: 6px;
+		}
+
+		.amount-wrap:focus-within {
+			border-color: var(--teal);
+			box-shadow: 0 0 0 3px var(--focus);
+		}
+
+		.currency {
+			padding: 0 14px;
+			color: var(--muted);
+			font-weight: 700;
+		}
+
+		.amount-wrap input {
+			border: 0;
+			border-radius: 0;
+			box-shadow: none;
+		}
+
+		.amount-wrap input:focus { box-shadow: none; }
+
+		.submit-button {
+			min-height: 50px;
+			margin-top: 4px;
+			padding: 12px 18px;
+			border: 0;
+			border-radius: 6px;
+			background: var(--navy);
+			color: #FFFFFF;
+			font: inherit;
+			font-size: 14px;
+			font-weight: 800;
+			cursor: pointer;
+			transition: background 0.15s ease, transform 0.15s ease;
+		}
+
+		.submit-button:hover { background: #1E293B; }
+		.submit-button:active { transform: translateY(1px); }
+		.submit-button:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+
+		@media (max-width: 480px) {
+			main { width: min(100% - 24px, 720px); margin: 20px auto 102px; }
+			.form-panel { padding: 20px 16px; }
+			form { gap: 18px; }
+			.entry-card { padding: 10px 12px; }
+			.field-fab { right: 18px; bottom: calc(104px + env(safe-area-inset-bottom)); }
+			.field-dialog { padding: 20px 16px; }
+			.details-dialog { padding: 18px 16px; }
+		}
+	</style>
+</head>
+<body>
+	<main>
+		<section class="view" id="list-view" aria-labelledby="list-title">
+			<div class="list-heading">
+				<div class="heading-copy">
+					<h1 id="list-title">Entries</h1>
+				</div>
+				<div class="list-heading-actions">
+					<button class="search-tools-button" id="search-tools-button" type="button" aria-label="Show search" title="Search" aria-expanded="false" aria-controls="search-tool-panel">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+					</button>
+					<button class="filter-tools-button" id="filter-tools-button" type="button" aria-label="Show filters and saved filters" title="Filters" aria-expanded="false" aria-controls="filter-tool-panel">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-6.5 7.5v5l-3 1v-6Z"/></svg>
+					</button>
+					<span class="record-count" id="record-count" aria-live="polite">0 entries</span>
+				</div>
+			</div>
+			<div class="entry-tools" id="entry-tools" hidden>
+				<div class="search-tool-panel" id="search-tool-panel" hidden>
+					<input class="entry-search" id="entry-search" type="search" placeholder="Search entries" aria-label="Search entries">
+				</div>
+				<div class="filter-tool-panel" id="filter-tool-panel" hidden>
+					<div class="filter-panel" id="filter-panel">
+						<select id="filter-field" aria-label="Filter by"><option value="">Filter by field</option></select>
+						<div class="filter-value-control" id="filter-value-control">
+							<input id="filter-value" type="text" aria-label="Filter value" placeholder="Value">
+						</div>
+						<button class="tool-button" id="clear-filter-button" type="button">Clear</button>
+					</div>
+					<div class="entry-tool-row">
+						<select class="saved-filter-select" id="saved-filter-select" aria-label="Saved filters">
+							<option value="">Saved filters</option>
+						</select>
+						<div class="saved-filter-actions">
+							<button class="tool-button" id="save-filter-button" type="button">Save filter</button>
+							<button class="tool-button" id="delete-filter-button" type="button" aria-label="Delete selected saved filter" title="Delete saved filter" hidden>Delete</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="entry-list" id="entry-list" aria-live="polite"></div>
+		</section>
+
+		<section class="view" id="form-view" aria-labelledby="form-title" hidden>
+			<div class="form-heading">
+				<div class="heading-copy">
+					<h1 id="form-title">Add entry</h1>
+				</div>
+			</div>
+
+			<div class="form-panel" aria-label="Customer entry form">
+				<form id="entry-form">
+				<div id="custom-entry-fields"></div>
+
+					<button class="submit-button" type="submit">Save entry</button>
+				</form>
+			</div>
+		</section>
+
+		<section class="view" id="builder-view" aria-labelledby="builder-title" hidden>
+			<div class="form-heading">
+				<div class="heading-copy">
+					<h1 id="builder-title">Create field</h1>
+				</div>
+			</div>
+			<div class="form-panel">
+				<p class="builder-note">Add a field to your customer form. New fields will appear in Add Entry and on saved records.</p>
+				<h2 style="margin: 0 0 10px; font-size: 15px;">Custom fields</h2>
+				<div class="field-list" id="field-definition-list"></div>
+				<p class="field-list-status" id="field-list-status" aria-live="polite"></p>
+			</div>
+		</section>
+	</main>
+
+	<button class="field-fab" id="add-field-button" type="button" aria-label="Add field" title="Add field" hidden>
+		<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+	</button>
+
+	<dialog class="field-dialog" id="field-dialog" aria-labelledby="field-dialog-title">
+		<h2 class="dialog-heading" id="field-dialog-title">Add field</h2>
+		<form id="field-builder-form">
+			<div class="field">
+				<label for="new-field-label">Field name</label>
+				<input id="new-field-label" name="label" type="text" placeholder="For example, Follow-up date" maxlength="60" required>
+			</div>
+			<div class="field">
+				<label for="new-field-type">Field format</label>
+				<select id="new-field-type" name="type" required>
+					<option value="text">Text</option>
+					<option value="number">Number</option>
+					<option value="date">Date</option>
+					<option value="time">Time</option>
+					<option value="select">Selectable menu</option>
+					<option value="mobile">Mobile number</option>
+				</select>
+			</div>
+			<div class="field" id="select-options-field" hidden>
+				<label for="new-field-options">Menu options</label>
+				<textarea id="new-field-options" name="options" rows="4" maxlength="1200" placeholder="Enter one option per line"></textarea>
+				<p class="field-hint">Add one choice per line. Blank lines are ignored.</p>
+			</div>
+			<div class="field">
+				<label for="new-field-width">Card width (%)</label>
+				<input id="new-field-width" name="width" type="number" min="10" max="100" step="1" value="100" inputmode="numeric" required>
+				<p class="field-hint">Set two fields to 50% to place them side by side.</p>
+			</div>
+			<p class="field-status" id="field-status" aria-live="polite"></p>
+			<div class="dialog-actions">
+				<button class="dialog-cancel" id="cancel-edit-button" type="button">Cancel</button>
+				<button class="submit-button" id="save-field-button" type="submit">Save field</button>
+			</div>
+		</form>
+	</dialog>
+
+	<dialog class="field-dialog" id="save-filter-dialog" aria-labelledby="save-filter-title">
+		<h2 class="dialog-heading" id="save-filter-title">Save filter</h2>
+		<form id="save-filter-form">
+			<div class="field">
+				<label for="saved-filter-name">Filter name</label>
+				<input id="saved-filter-name" name="name" type="text" maxlength="50" placeholder="For example, Pending follow-ups" required>
+			</div>
+			<div class="dialog-actions">
+				<button class="dialog-cancel" id="cancel-save-filter" type="button">Cancel</button>
+				<button class="submit-button" type="submit">Save filter</button>
+			</div>
+		</form>
+	</dialog>
+
+	<dialog class="details-dialog" id="details-dialog" aria-labelledby="details-title">
+		<div class="details-heading">
+			<h2 class="details-title" id="details-title">Entry details</h2>
+			<button class="details-close" id="close-details" type="button" aria-label="Close details">&times;</button>
+		</div>
+		<div class="details-list" id="details-list"></div>
+	</dialog>
+
+	<div class="menu-panel" id="menu-panel" role="menu" aria-label="Entry actions" hidden>
+		<button class="menu-action" id="create-field-button" type="button" role="menuitem">Create field</button>
+		<button class="menu-action" id="cloud-sync-button" type="button" role="menuitem">Cloud sync</button>
+		<button class="menu-action" id="export-button" type="button" role="menuitem">Export entries</button>
+		<button class="menu-action danger" id="clear-button" type="button" role="menuitem">Clear all entries</button>
+	</div>
+
+	<dialog class="field-dialog" id="cloud-dialog" aria-labelledby="cloud-dialog-title">
+		<h2 class="dialog-heading" id="cloud-dialog-title">Cloud sync</h2>
+		<p class="field-hint" id="cloud-status" aria-live="polite">Connect this device to sync records.</p>
+		<div id="cloud-connect-panel">
+			<p class="field-hint">No phone number or password needed. This creates a private temporary account for this browser only. Clearing browser data may remove access to that account.</p>
+			<p class="field-hint">Before connecting, enable Anonymous sign-in in Firebase Console under Authentication → Sign-in method.</p>
+			<button class="submit-button" id="cloud-connect-anonymous" type="button">Connect this device</button>
+		</div>
+		<div id="cloud-account-panel" hidden>
+			<p class="field-hint" id="cloud-account-phone"></p>
+			<div class="field-list" id="cloud-import-options" hidden>
+				<p class="field-hint" id="cloud-import-message">Choose how to handle records saved in this browser.</p>
+				<button class="submit-button" id="import-local-data" type="button">Import local records</button>
+				<button class="dialog-cancel" id="use-cloud-data" type="button">Use cloud data</button>
+			</div>
+		</div>
+		<div class="dialog-actions">
+			<button class="dialog-cancel" id="close-cloud-dialog" type="button">Close</button>
+		</div>
+	</dialog>
+
+	<nav class="bottom-nav" aria-label="Main navigation">
+		<button class="nav-button" id="view-button" type="button" aria-current="page">
+			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v11h14V9M9 20v-6h6v6"/></svg>
+			<span>View</span>
+		</button>
+		<button class="nav-button add-nav" id="add-button" type="button">
+			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+			<span>Add Entry</span>
+		</button>
+		<button class="nav-button" id="menu-button" type="button" aria-haspopup="menu" aria-expanded="false">
+			<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+			<span>Menu</span>
+		</button>
+	</nav>
+
+	<script>
+		const storageKey = "suryoday-crm-entries";
+		const fieldsStorageKey = "suryoday-crm-custom-fields";
+		const savedFiltersStorageKey = "suryoday-crm-saved-filters";
+		const cloudOwnerStorageKey = "suryoday-crm-cloud-owner";
+		const firebaseConfig = {
+			apiKey: "AIzaSyDeamXezlBYQUCwiguJfdNPWxLRm0oNOeU",
+			authDomain: "suryoday-crm.firebaseapp.com",
+			projectId: "suryoday-crm",
+			storageBucket: "suryoday-crm.firebasestorage.app",
+			messagingSenderId: "142211313999",
+			appId: "1:142211313999:web:a5d3359b9876f36539d53a"
+		};
+		const listView = document.getElementById("list-view");
+		const formView = document.getElementById("form-view");
+		const builderView = document.getElementById("builder-view");
+		const entryForm = document.getElementById("entry-form");
+		const fieldBuilderForm = document.getElementById("field-builder-form");
+		const entryList = document.getElementById("entry-list");
+		const recordCount = document.getElementById("record-count");
+		const entryTools = document.getElementById("entry-tools");
+		const searchToolsButton = document.getElementById("search-tools-button");
+		const filterToolsButton = document.getElementById("filter-tools-button");
+		const searchToolPanel = document.getElementById("search-tool-panel");
+		const filterToolPanel = document.getElementById("filter-tool-panel");
+		const entrySearch = document.getElementById("entry-search");
+		const filterPanel = document.getElementById("filter-panel");
+		const filterField = document.getElementById("filter-field");
+		const filterValueControl = document.getElementById("filter-value-control");
+		const savedFilterSelect = document.getElementById("saved-filter-select");
+		const deleteFilterButton = document.getElementById("delete-filter-button");
+		const saveFilterDialog = document.getElementById("save-filter-dialog");
+		const saveFilterForm = document.getElementById("save-filter-form");
+		const cloudDialog = document.getElementById("cloud-dialog");
+		const cloudStatus = document.getElementById("cloud-status");
+		const cloudConnectPanel = document.getElementById("cloud-connect-panel");
+		const cloudAccountPanel = document.getElementById("cloud-account-panel");
+		const cloudImportOptions = document.getElementById("cloud-import-options");
+		const addButton = document.getElementById("add-button");
+		const viewButton = document.getElementById("view-button");
+		const menuButton = document.getElementById("menu-button");
+		const menuPanel = document.getElementById("menu-panel");
+		const customEntryFields = document.getElementById("custom-entry-fields");
+		const fieldDefinitionList = document.getElementById("field-definition-list");
+		const fieldStatus = document.getElementById("field-status");
+		const fieldDialog = document.getElementById("field-dialog");
+		const addFieldButton = document.getElementById("add-field-button");
+		const detailsDialog = document.getElementById("details-dialog");
+		const detailsTitle = document.getElementById("details-title");
+		const detailsList = document.getElementById("details-list");
+		let editingFieldId = null;
+		let editingEntryIndex = null;
+		let firebaseApi = null;
+		let firebaseAuth = null;
+		let firestore = null;
+		let firebaseUser = null;
+		let cloudListeners = [];
+		let cloudCollectionsLoaded = false;
+		let pendingCloudData = { entries: [], fields: [] };
+
+		function setActiveNavigation(activeButton) {
+			[viewButton, addButton, menuButton].forEach((button) => {
+				if (button === activeButton) button.setAttribute("aria-current", "page");
+				else button.removeAttribute("aria-current");
+			});
+		}
+
+		function readEntries() {
+			try {
+				const entries = JSON.parse(localStorage.getItem(storageKey) || "[]");
+				return Array.isArray(entries) ? entries : [];
+			} catch {
+				return [];
+			}
+		}
+
+		function readCustomFields() {
+			try {
+				const fields = JSON.parse(localStorage.getItem(fieldsStorageKey) || "[]");
+				return Array.isArray(fields) ? fields.filter((field) => field && field.id && field.label && ["text", "number", "date", "time", "select", "mobile"].includes(field.type)) : [];
+			} catch {
+				return [];
+			}
+		}
+
+		function setCloudStatus(message, isError = false) {
+			cloudStatus.textContent = message;
+			cloudStatus.style.color = isError ? "#B91C1C" : "";
+		}
+
+		function createLocalId() {
+			return crypto.randomUUID ? crypto.randomUUID() : `local_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+		}
+
+		function writeLocalData(storageKeyToWrite, data, collectionName = null) {
+			localStorage.setItem(storageKeyToWrite, JSON.stringify(data));
+			if (!firebaseUser || !cloudCollectionsLoaded || !collectionName) return;
+			cloudWriteQueues[collectionName] = (cloudWriteQueues[collectionName] || Promise.resolve())
+				.then(() => syncCloudCollection(collectionName, data))
+				.catch((error) => setCloudStatus(`Saved locally. Cloud sync failed: ${error.message}`, true));
+		}
+
+		function stopCloudListeners() {
+			cloudListeners.forEach((unsubscribe) => unsubscribe());
+			cloudListeners = [];
+			cloudCollectionsLoaded = false;
+		}
+
+		function userCollection(name, user = firebaseUser) {
+			return firebaseApi.collection(firestore, "users", user.uid, name);
+		}
+
+		async function syncCloudCollection(name, rows) {
+			if (!firebaseUser) return;
+			const collectionRef = userCollection(name);
+			const existing = await firebaseApi.getDocs(collectionRef);
+			const normalizedRows = rows.map((row) => ({ ...row, id: row.id || createLocalId() }));
+			const nextIds = new Set(normalizedRows.map((row) => row.id));
+			const operations = [
+				...existing.docs.filter((item) => !nextIds.has(item.id)).map((item) => ({ type: "delete", ref: item.ref })),
+				...normalizedRows.map((row) => ({ type: "set", ref: firebaseApi.doc(collectionRef, row.id), data: row }))
+			];
+			for (let index = 0; index < operations.length; index += 400) {
+				const batch = firebaseApi.writeBatch(firestore);
+				operations.slice(index, index + 400).forEach((operation) => {
+					if (operation.type === "delete") batch.delete(operation.ref);
+					else batch.set(operation.ref, operation.data);
+				});
+				await batch.commit();
+			}
+		}
+
+		function applyCloudSnapshot(name, snapshot) {
+			const rows = snapshot.docs.map((item) => ({ ...item.data(), id: item.id }));
+			const key = name === "entries" ? storageKey : name === "fields" ? fieldsStorageKey : savedFiltersStorageKey;
+			localStorage.setItem(key, JSON.stringify(rows));
+			if (name === "entries") {
+				if (!listView.hidden) renderEntries();
+			} else if (name === "fields") {
+				renderFilterFields();
+				if (!builderView.hidden) renderFieldDefinitions();
+				if (!formView.hidden) renderCustomEntryFields();
+			} else {
+				renderSavedFilters();
+			}
+		}
+
+		function listenToCloudCollections() {
+			stopCloudListeners();
+			cloudCollectionsLoaded = true;
+			localStorage.setItem(cloudOwnerStorageKey, firebaseUser.uid);
+			["entries", "fields", "savedFilters"].forEach((name) => {
+				const unsubscribe = firebaseApi.onSnapshot(userCollection(name), (snapshot) => {
+					applyCloudSnapshot(name, snapshot);
+				}, (error) => setCloudStatus(`Cloud sync error: ${error.message}`, true));
+				cloudListeners.push(unsubscribe);
+			});
+			setCloudStatus("Cloud sync is active for this device.");
+		}
+
+		async function loadCloudData(user) {
+			stopCloudListeners();
+			cloudCollectionsLoaded = false;
+			setCloudStatus("Checking cloud records…");
+			const [entrySnapshot, fieldSnapshot, filterSnapshot] = await Promise.all([
+				firebaseApi.getDocs(userCollection("entries", user)),
+				firebaseApi.getDocs(userCollection("fields", user)),
+				firebaseApi.getDocs(userCollection("savedFilters", user))
+			]);
+			const cloudEntries = entrySnapshot.docs.map((item) => ({ ...item.data(), id: item.id }));
+			const cloudFields = fieldSnapshot.docs.map((item) => ({ ...item.data(), id: item.id }));
+			const cloudFilters = filterSnapshot.docs.map((item) => ({ ...item.data(), id: item.id }));
+			pendingCloudData = { entries: cloudEntries, fields: cloudFields, savedFilters: cloudFilters };
+			const owner = localStorage.getItem(cloudOwnerStorageKey);
+			if (owner && owner !== user.uid) {
+				localStorage.removeItem(storageKey);
+				localStorage.removeItem(fieldsStorageKey);
+				localStorage.removeItem(savedFiltersStorageKey);
+			}
+			const localEntries = readEntries();
+			const localFields = readCustomFields();
+			const localFilters = readSavedFilters();
+			const hasLocalData = localEntries.length > 0 || localFields.length > 0 || localFilters.length > 0;
+			const hasCloudData = cloudEntries.length > 0 || cloudFields.length > 0 || cloudFilters.length > 0;
+			cloudAccountPanel.hidden = false;
+			document.getElementById("cloud-account-phone").textContent = "Connected with a temporary account for this device.";
+			cloudImportOptions.hidden = !hasLocalData;
+			document.getElementById("cloud-import-message").textContent = hasCloudData
+				? "This account already has cloud records. Import merges this browser’s data; Use cloud data replaces the browser copy."
+				: "This account has no cloud records yet. Choose whether to import the records saved in this browser.";
+			document.getElementById("use-cloud-data").textContent = hasCloudData ? "Use cloud data" : "Start with an empty account";
+			if (!hasLocalData) {
+				localStorage.setItem(storageKey, JSON.stringify(cloudEntries));
+				localStorage.setItem(fieldsStorageKey, JSON.stringify(cloudFields));
+				localStorage.setItem(savedFiltersStorageKey, JSON.stringify(cloudFilters));
+				listenToCloudCollections();
+				renderFilterFields();
+				renderSavedFilters();
+				renderEntries();
+				return;
+			}
+			setCloudStatus(hasCloudData ? "Choose which records to keep before syncing." : "Choose whether to import this browser’s local records.");
+		}
+
+		async function initializeFirebase() {
+			if (firebaseApi) return;
+			const [appSdk, authSdk, firestoreSdk] = await Promise.all([
+				import("https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js"),
+				import("https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js"),
+				import("https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js")
+			]);
+			firebaseApi = { ...appSdk, ...authSdk, ...firestoreSdk };
+			const app = firebaseApi.initializeApp(firebaseConfig);
+			firebaseAuth = firebaseApi.getAuth(app);
+			firestore = firebaseApi.getFirestore(app);
+			firebaseApi.onAuthStateChanged(firebaseAuth, async (user) => {
+				const previousUser = firebaseUser;
+				firebaseUser = user;
+				cloudConnectPanel.hidden = Boolean(user);
+				cloudAccountPanel.hidden = !user;
+				if (!user) {
+					stopCloudListeners();
+					if (previousUser) {
+						localStorage.removeItem(cloudOwnerStorageKey);
+						localStorage.removeItem(storageKey);
+						localStorage.removeItem(fieldsStorageKey);
+						localStorage.removeItem(savedFiltersStorageKey);
+						renderSavedFilters("");
+						renderFilterFields("");
+						renderEntries();
+					}
+					setCloudStatus("Connect this device to sync with Firestore.");
+					return;
+				}
+				try {
+					await loadCloudData(user);
+				} catch (error) {
+					setCloudStatus(`Could not load cloud records: ${error.message}`, true);
+				}
+			});
+		}
+
+		const cloudWriteQueues = {};
+
+		function formatFieldValue(field, value) {
+			if (field.type !== "date" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+			const [year, month, day] = value.split("-");
+			return `${day}-${month}-${year}`;
+		}
+
+		function showList() {
+			listView.hidden = false;
+			formView.hidden = true;
+			builderView.hidden = true;
+			menuPanel.hidden = true;
+			addFieldButton.hidden = true;
+			menuButton.setAttribute("aria-expanded", "false");
+			setActiveNavigation(viewButton);
+			renderFilterFields();
+			renderEntries();
+		}
+
+		function showForm(entryIndex = null) {
+			listView.hidden = true;
+			formView.hidden = false;
+			builderView.hidden = true;
+			menuPanel.hidden = true;
+			addFieldButton.hidden = true;
+			menuButton.setAttribute("aria-expanded", "false");
+			setActiveNavigation(addButton);
+			editingEntryIndex = entryIndex;
+			renderCustomEntryFields();
+			const isEditing = entryIndex !== null;
+			document.getElementById("form-title").textContent = isEditing ? "Edit entry" : "Add entry";
+			entryForm.querySelector(".submit-button").textContent = isEditing ? "Save changes" : "Save entry";
+			if (isEditing) {
+				const entry = readEntries()[entryIndex];
+				const customValues = entry?.customFields || {};
+				readCustomFields().forEach((field) => {
+					const input = entryForm.elements.namedItem(`custom_${field.id}`);
+					if (input) input.value = customValues[field.id] || "";
+				});
+			}
+			customEntryFields.querySelector("input")?.focus();
+			window.scrollTo({ top: 0, behavior: "smooth" });
+		}
+
+		function showFieldBuilder() {
+			listView.hidden = true;
+			formView.hidden = true;
+			builderView.hidden = false;
+			menuPanel.hidden = true;
+			addFieldButton.hidden = false;
+			menuButton.setAttribute("aria-expanded", "false");
+			setActiveNavigation(menuButton);
+			renderFieldDefinitions();
+			window.scrollTo({ top: 0, behavior: "smooth" });
+		}
+
+		function openFieldDialog(field = null) {
+			resetFieldEditor();
+			if (field) startEditingField(field.id);
+			else document.getElementById("field-dialog-title").textContent = "Add field";
+			fieldDialog.showModal();
+			document.getElementById("new-field-label").focus();
+		}
+
+		function renderFieldDefinitions() {
+			fieldDefinitionList.replaceChildren();
+			const fields = readCustomFields();
+			if (fields.length === 0) {
+				return;
+			}
+
+			fields.forEach((field) => {
+				const row = document.createElement("div");
+				row.className = "field-definition";
+				row.dataset.fieldId = field.id;
+				row.tabIndex = 0;
+				const info = document.createElement("div");
+				info.className = "field-definition-info";
+				const label = document.createElement("span");
+				label.className = "field-definition-name";
+				label.textContent = field.label;
+				const type = document.createElement("span");
+				type.className = "field-definition-type";
+				const formatLabel = field.type === "time" ? "time only" : field.type === "select" ? "selectable menu" : field.type;
+				type.textContent = `${formatLabel} · ${field.width || 100}%`;
+				info.append(label, type);
+				const dragHandle = document.createElement("button");
+				dragHandle.className = "field-drag-handle";
+				dragHandle.type = "button";
+				dragHandle.draggable = true;
+				dragHandle.setAttribute("aria-label", `Drag to reorder ${field.label}`);
+				dragHandle.title = "Drag to reorder";
+				dragHandle.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="5" r="1.5"/><circle cx="16" cy="5" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="16" cy="12" r="1.5"/><circle cx="8" cy="19" r="1.5"/><circle cx="16" cy="19" r="1.5"/></svg>';
+				const actions = document.createElement("div");
+				actions.className = "field-definition-actions";
+				const editButton = document.createElement("button");
+				editButton.className = "field-action";
+				editButton.type = "button";
+				editButton.dataset.action = "edit";
+				editButton.dataset.fieldId = field.id;
+				editButton.setAttribute("aria-label", `Edit ${field.label}`);
+				editButton.title = `Edit ${field.label}`;
+				editButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>';
+				const deleteButton = document.createElement("button");
+				deleteButton.className = "field-action delete";
+				deleteButton.type = "button";
+				deleteButton.dataset.action = "delete";
+				deleteButton.dataset.fieldId = field.id;
+				deleteButton.setAttribute("aria-label", `Delete ${field.label}`);
+				deleteButton.title = `Delete ${field.label}`;
+				deleteButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg>';
+				actions.append(editButton, deleteButton);
+				row.append(dragHandle, info, actions);
+				fieldDefinitionList.append(row);
+			});
+		}
+
+		function moveField(fieldId, targetFieldId, insertAfter = false) {
+			if (!fieldId || !targetFieldId || fieldId === targetFieldId) return;
+			const fields = readCustomFields();
+			const sourceIndex = fields.findIndex((field) => field.id === fieldId);
+			const targetIndex = fields.findIndex((field) => field.id === targetFieldId);
+			if (sourceIndex < 0 || targetIndex < 0) return;
+			const [field] = fields.splice(sourceIndex, 1);
+			const adjustedTargetIndex = fields.findIndex((item) => item.id === targetFieldId);
+			fields.splice(adjustedTargetIndex + (insertAfter ? 1 : 0), 0, field);
+			try {
+				writeLocalData(fieldsStorageKey, fields, "fields");
+			} catch {
+				alert("The field order could not be saved in this browser.");
+				return;
+			}
+			renderFieldDefinitions();
+			renderFilterFields();
+			renderEntries();
+			const newPosition = fields.findIndex((item) => item.id === fieldId) + 1;
+			const status = document.getElementById("field-list-status");
+			status.textContent = `${field.label} moved to position ${newPosition} of ${fields.length}.`;
+			document.querySelector(`.field-definition[data-field-id="${CSS.escape(fieldId)}"]`)?.focus();
+		}
+
+			function startEditingField(fieldId) {
+				const field = readCustomFields().find((item) => item.id === fieldId);
+				if (!field) return;
+				editingFieldId = field.id;
+				document.getElementById("new-field-label").value = field.label;
+				document.getElementById("new-field-type").value = field.type;
+				document.getElementById("new-field-options").value = (field.options || []).join("\n");
+				syncFieldOptionEditor();
+				document.getElementById("new-field-width").value = field.width || 100;
+				document.getElementById("save-field-button").textContent = "Update field";
+				document.getElementById("field-dialog-title").textContent = "Edit field";
+				fieldStatus.textContent = `Editing ${field.label}`;
+			}
+
+			function resetFieldEditor() {
+				editingFieldId = null;
+				fieldBuilderForm.reset();
+				syncFieldOptionEditor();
+				document.getElementById("save-field-button").textContent = "Save field";
+				document.getElementById("field-dialog-title").textContent = "Add field";
+				fieldStatus.textContent = "";
+			}
+
+			function syncFieldOptionEditor() {
+				const isSelectable = document.getElementById("new-field-type").value === "select";
+				const optionsField = document.getElementById("select-options-field");
+				optionsField.hidden = !isSelectable;
+				document.getElementById("new-field-options").required = isSelectable;
+			}
+
+			function deleteCustomField(fieldId) {
+				const fields = readCustomFields();
+				const field = fields.find((item) => item.id === fieldId);
+				if (!field || !window.confirm(`Delete the field “${field.label}” and its saved values from all entries?`)) return;
+
+				try {
+					writeLocalData(fieldsStorageKey, fields.filter((item) => item.id !== fieldId), "fields");
+					const entries = readEntries().map((entry) => {
+						const customFields = { ...(entry.customFields || {}) };
+						delete customFields[fieldId];
+						return { ...entry, customFields };
+					});
+					writeLocalData(storageKey, entries, "entries");
+				} catch {
+					alert("This field could not be deleted in this browser.");
+					return;
+				}
+
+				if (editingFieldId === fieldId) {
+					resetFieldEditor();
+					fieldDialog.close();
+				}
+				renderFieldDefinitions();
+				renderFilterFields();
+				renderEntries();
+				fieldStatus.textContent = `${field.label} deleted.`;
+			}
+
+		function renderCustomEntryFields() {
+			customEntryFields.replaceChildren();
+			const fields = readCustomFields();
+			if (fields.length === 0) {
+				const empty = document.createElement("p");
+				empty.className = "field-hint";
+				empty.textContent = "Create at least one field from Menu before adding an entry.";
+				customEntryFields.append(empty);
+				entryForm.querySelector(".submit-button").hidden = true;
+				return;
+			}
+			entryForm.querySelector(".submit-button").hidden = false;
+			fields.forEach((field) => {
+				const wrapper = document.createElement("div");
+				wrapper.className = "field";
+				const label = document.createElement("label");
+				label.htmlFor = `custom-${field.id}`;
+				label.textContent = field.label;
+				const input = field.type === "select" ? document.createElement("select") : document.createElement("input");
+				input.id = `custom-${field.id}`;
+				input.name = `custom_${field.id}`;
+				if (field.type === "select") {
+					const placeholder = document.createElement("option");
+					placeholder.value = "";
+					placeholder.textContent = "Select an option";
+					input.append(placeholder);
+					(field.options || []).forEach((option) => {
+						const choice = document.createElement("option");
+						choice.value = option;
+						choice.textContent = option;
+						input.append(choice);
+					});
+				} else {
+					input.type = field.type === "mobile" ? "tel" : field.type;
+					if (field.type === "mobile") {
+						input.inputMode = "tel";
+						input.autocomplete = "tel";
+					}
+					if (field.type === "number") input.step = "any";
+					if (field.type !== "mobile") input.autocomplete = "off";
+				}
+				wrapper.append(label, input);
+				customEntryFields.append(wrapper);
+			});
+		}
+
+		function readSavedFilters() {
+			try {
+				const filters = JSON.parse(localStorage.getItem(savedFiltersStorageKey) || "[]");
+				return Array.isArray(filters) ? filters.filter((filter) => filter && filter.id && filter.name) : [];
+			} catch {
+				return [];
+			}
+		}
+
+		function renderSavedFilters(selectedId = savedFilterSelect.value) {
+			savedFilterSelect.replaceChildren(new Option("Saved filters", ""));
+			readSavedFilters().forEach((filter) => savedFilterSelect.add(new Option(filter.name, filter.id)));
+			savedFilterSelect.value = selectedId;
+			deleteFilterButton.hidden = !savedFilterSelect.value;
+		}
+
+		function renderFilterFields(selectedId = filterField.value, value = document.getElementById("filter-value")?.value || "") {
+			filterField.replaceChildren(new Option("Select field", ""));
+			readCustomFields().forEach((field) => filterField.add(new Option(field.label, field.id)));
+			filterField.value = selectedId;
+			if (filterField.value !== selectedId) filterField.value = "";
+			renderFilterValueControl(filterField.value === selectedId ? value : "");
+		}
+
+		function renderFilterValueControl(value = "") {
+			filterValueControl.replaceChildren();
+			const field = readCustomFields().find((item) => item.id === filterField.value);
+			let input;
+			if (field?.type === "select") {
+				input = document.createElement("select");
+				input.append(new Option("Any value", ""));
+				(field.options || []).forEach((option) => input.add(new Option(option, option)));
+			} else {
+				input = document.createElement("input");
+				input.type = ["date", "time", "number"].includes(field?.type) ? field.type : "text";
+				input.placeholder = "Value";
+			}
+			input.id = "filter-value";
+			input.setAttribute("aria-label", "Filter value");
+			input.value = value;
+			filterValueControl.append(input);
+		}
+
+		function getCurrentFilter() {
+			return {
+				query: entrySearch.value.trim(),
+				fieldId: filterField.value,
+				operator: "contains",
+				value: document.getElementById("filter-value").value.trim()
+			};
+		}
+
+		function entryMatchesFilters(entry, fields, filter) {
+			const values = entry.customFields || {};
+			const legacyValues = [entry.name, entry.mobile, entry.amount, entry.description].filter(Boolean);
+			const searchText = [...legacyValues, ...fields.flatMap((field) => [field.label, values[field.id]])].join(" ").toLocaleLowerCase();
+			if (filter.query && !searchText.includes(filter.query.toLocaleLowerCase())) return false;
+			if (!filter.fieldId || !filter.value) return true;
+			const value = String(values[filter.fieldId] ?? "").toLocaleLowerCase();
+			const expected = filter.value.toLocaleLowerCase();
+			return value.includes(expected);
+		}
+
+		function renderEntries() {
+			const entries = readEntries();
+			const fields = readCustomFields();
+			const currentFilter = getCurrentFilter();
+			const visibleEntries = entries.map((entry, entryIndex) => ({ entry, entryIndex }))
+				.filter(({ entry }) => entryMatchesFilters(entry, fields, currentFilter));
+			const hasActiveFilter = Boolean(currentFilter.query || (currentFilter.fieldId && currentFilter.value));
+			recordCount.textContent = hasActiveFilter
+				? `${visibleEntries.length} of ${entries.length} ${entries.length === 1 ? "entry" : "entries"}`
+				: `${entries.length} ${entries.length === 1 ? "entry" : "entries"}`;
+			entryList.replaceChildren();
+
+			if (entries.length === 0) {
+				const emptyState = document.createElement("div");
+				emptyState.className = "empty-state";
+				const message = document.createElement("strong");
+				message.textContent = "No entries yet";
+				const hint = document.createElement("span");
+				hint.textContent = "Use Add Entry below to add your first customer record.";
+				emptyState.append(message, hint);
+				entryList.append(emptyState);
+				return;
+			}
+			if (visibleEntries.length === 0) {
+				const emptyState = document.createElement("div");
+				emptyState.className = "empty-state";
+				const message = document.createElement("strong");
+				message.textContent = "No matching entries";
+				const hint = document.createElement("span");
+				hint.textContent = "Change or clear your search and filters.";
+				emptyState.append(message, hint);
+				entryList.append(emptyState);
+				return;
+			}
+
+			visibleEntries.forEach(({ entry, entryIndex }) => {
+				const swipeItem = document.createElement("div");
+				swipeItem.className = "entry-swipe";
+				const actions = document.createElement("div");
+				actions.className = "swipe-actions";
+				actions.inert = true;
+				const editButton = document.createElement("button");
+				editButton.className = "swipe-action";
+				editButton.type = "button";
+				editButton.dataset.entryAction = "edit";
+				editButton.dataset.entryIndex = String(entryIndex);
+				editButton.setAttribute("aria-label", `Edit ${Object.values(entry.customFields || {}).find(Boolean) || "entry"}`);
+				editButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg><span>Edit</span>';
+				const deleteButton = document.createElement("button");
+				deleteButton.className = "swipe-action delete";
+				deleteButton.type = "button";
+				deleteButton.dataset.entryAction = "delete";
+				deleteButton.dataset.entryIndex = String(entryIndex);
+				deleteButton.setAttribute("aria-label", `Delete ${Object.values(entry.customFields || {}).find(Boolean) || "entry"}`);
+				deleteButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg><span>Delete</span>';
+				actions.append(editButton, deleteButton);
+				swipeItem.append(actions);
+
+				const card = document.createElement("article");
+				card.className = "entry-card";
+				card.tabIndex = 0;
+				card.dataset.entryIndex = String(entryIndex);
+				card.setAttribute("aria-haspopup", "dialog");
+
+				const customValues = entry.customFields || {};
+				const fields = readCustomFields();
+				const isPhoneField = (field) => field.type === "mobile" || /^(mobile( number)?|phone( number)?|telephone|contact number)$/i.test(field.label.trim());
+				const isAmountField = (field) => /^amount$/i.test(field.label.trim());
+				const cardFields = fields;
+				const titleField = cardFields.find((field) => !isPhoneField(field) && !isAmountField(field) && customValues[field.id] !== undefined && customValues[field.id] !== "");
+				const cardLabel = titleField ? customValues[titleField.id] : (!fields.length && entry.name ? entry.name : "Entry");
+				card.setAttribute("aria-label", `${cardLabel}. Tap for details, swipe left for edit and delete actions.`);
+				const cardFieldList = document.createElement("div");
+				cardFieldList.className = "entry-fields";
+				let cardRow = 0;
+				let columnsUsed = 0;
+				cardFields.forEach((field) => {
+					const width = Math.min(100, Math.max(10, Number(field.width) || 100));
+					if (columnsUsed + width > 100) {
+						cardRow += 1;
+						columnsUsed = 0;
+					}
+					if (cardRow >= 3) return;
+					columnsUsed += width;
+					const value = customValues[field.id];
+					if (value === undefined || value === "") return;
+					const fieldValue = document.createElement("div");
+					fieldValue.className = "field-value";
+					fieldValue.style.gridColumn = `span ${width}`;
+					fieldValue.style.gridRow = String(cardRow + 1);
+					if (field === titleField) {
+						fieldValue.classList.add("entry-card-title");
+						fieldValue.textContent = formatFieldValue(field, value);
+					} else if (isPhoneField(field)) {
+						const callLink = document.createElement("a");
+						callLink.className = "call-button";
+						callLink.href = `tel:${value.replace(/[^+\d]/g, "")}`;
+						callLink.setAttribute("aria-label", `Call ${value}`);
+						callLink.title = `Call ${value}`;
+						callLink.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.2 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.84.58 2.8.7A2 2 0 0 1 22 16.92z"/></svg>';
+						const numberLink = document.createElement("a");
+						numberLink.className = "phone-number";
+						numberLink.href = callLink.href;
+						numberLink.textContent = value;
+						fieldValue.classList.add("phone-field");
+						fieldValue.append(callLink, numberLink);
+					} else if (!/^(name|number|date)$/i.test(field.label.trim())) {
+						const fieldLabel = document.createElement("span");
+						fieldLabel.className = "field-label-avatar";
+						fieldLabel.textContent = Array.from(field.label.trim()).slice(0, 2).join("").toLocaleUpperCase();
+						fieldLabel.setAttribute("aria-label", field.label);
+						fieldLabel.title = field.label;
+						fieldValue.append(fieldLabel, document.createTextNode(` ${formatFieldValue(field, value)}`));
+					}
+					cardFieldList.append(fieldValue);
+				});
+				if (cardFieldList.childElementCount === 0) {
+					const emptyTitle = document.createElement("div");
+					emptyTitle.className = "entry-card-title";
+					emptyTitle.textContent = "Entry";
+					cardFieldList.append(emptyTitle);
+				}
+				if (fields.length === 0 && entry.name) {
+					cardFieldList.replaceChildren();
+					const legacyName = document.createElement("div");
+					legacyName.className = "entry-card-title";
+					legacyName.textContent = entry.name;
+					const legacy = document.createElement("p");
+					legacy.className = "entry-description";
+					legacy.textContent = [entry.mobile, entry.amount ? `₹${entry.amount}` : "", entry.description].filter(Boolean).join(" · ");
+					cardFieldList.append(legacyName, legacy);
+				}
+				card.append(cardFieldList);
+				swipeItem.append(card);
+				entryList.append(swipeItem);
+			});
+		}
+
+		viewButton.addEventListener("click", showList);
+		addButton.addEventListener("click", () => showForm());
+		entryList.addEventListener("click", (event) => {
+			const button = event.target.closest("button[data-entry-action]");
+			if (!button) return;
+			const entryIndex = Number(button.dataset.entryIndex);
+			if (!Number.isInteger(entryIndex)) return;
+			if (button.dataset.entryAction === "edit") {
+				closeOpenCards();
+				showForm(entryIndex);
+				return;
+			}
+			if (button.dataset.entryAction === "delete") {
+				const entries = readEntries();
+				const entry = entries[entryIndex];
+				const title = Object.values(entry?.customFields || {}).find(Boolean) || "this entry";
+				if (!entry || !window.confirm(`Delete ${title}? This cannot be undone.`)) return;
+				entries.splice(entryIndex, 1);
+				try {
+					writeLocalData(storageKey, entries, "entries");
+				} catch {
+					alert("This entry could not be deleted in this browser.");
+					return;
+				}
+				renderEntries();
+			}
+		});
+		let swipeStart = null;
+		entryList.addEventListener("pointerdown", (event) => {
+			if (event.pointerType !== "touch" || event.target.closest("a, button")) {
+				swipeStart = null;
+				return;
+			}
+			const card = event.target.closest(".entry-card");
+			if (!card) return;
+			swipeStart = { card, x: event.clientX, y: event.clientY };
+		});
+		entryList.addEventListener("pointerup", (event) => {
+			if (!swipeStart) return;
+			const deltaX = event.clientX - swipeStart.x;
+			const deltaY = event.clientY - swipeStart.y;
+			const targetItem = swipeStart.card.closest(".entry-swipe");
+			swipeStart = null;
+			if (Math.abs(deltaX) < 48 || Math.abs(deltaX) < Math.abs(deltaY) * 1.25) return;
+			if (deltaX < 0) openSwipeItem(targetItem);
+			else closeSwipeItem(targetItem);
+		});
+		entryList.addEventListener("pointercancel", () => { swipeStart = null; });
+		entryList.addEventListener("keydown", (event) => {
+			const card = event.target.closest(".entry-card");
+			if (!card || (event.key !== "ArrowLeft" && event.key !== "ArrowRight")) return;
+			event.preventDefault();
+			const item = card.closest(".entry-swipe");
+			if (event.key === "ArrowLeft") openSwipeItem(item);
+			else closeSwipeItem(item);
+		});
+		function closeOpenCards() {
+			entryList.querySelectorAll(".entry-swipe.open").forEach(closeSwipeItem);
+		}
+		function openSwipeItem(item) {
+			closeOpenCards();
+			if (!item) return;
+			item.classList.add("open");
+			item.querySelector(".swipe-actions").inert = false;
+		}
+		function closeSwipeItem(item) {
+			if (!item) return;
+			item.classList.remove("open");
+			item.querySelector(".swipe-actions").inert = true;
+		}
+		function openEntryDetails(entryIndex) {
+			const entry = readEntries()[entryIndex];
+			if (!entry) return;
+			const values = entry.customFields || {};
+			const fields = readCustomFields();
+			const isPhoneField = (field) => field.type === "mobile" || /^(mobile( number)?|phone( number)?|telephone|contact number)$/i.test(field.label.trim());
+			const titleField = fields.find((field) => !isPhoneField(field) && values[field.id] !== undefined && values[field.id] !== "");
+			detailsTitle.textContent = titleField ? formatFieldValue(titleField, values[titleField.id]) : "Entry details";
+			detailsList.replaceChildren();
+
+			if (fields.length === 0 && entry.name) {
+				[["Name", entry.name], ["Mobile", entry.mobile], ["Amount", entry.amount ? `₹${entry.amount}` : ""], ["Description", entry.description]].forEach(([label, value]) => {
+					if (!value || label === "Name") return;
+					const row = document.createElement("div");
+					row.className = "details-row";
+					const fieldLabel = document.createElement("span");
+					fieldLabel.className = "details-label";
+					fieldLabel.textContent = label;
+					const fieldValue = document.createElement("div");
+					fieldValue.className = "details-value";
+					fieldValue.textContent = value;
+					row.append(fieldLabel, fieldValue);
+					detailsList.append(row);
+				});
+			} else {
+				fields.forEach((field) => {
+					const value = values[field.id];
+					if (field === titleField || value === undefined || value === "") return;
+					const row = document.createElement("div");
+					row.className = "details-row";
+					const fieldLabel = document.createElement("span");
+					fieldLabel.className = "details-label";
+					if (/^name$/i.test(field.label.trim())) {
+						row.classList.add("no-label");
+						fieldLabel.hidden = true;
+					} else fieldLabel.textContent = field.label;
+					const fieldValue = document.createElement("div");
+					fieldValue.className = "details-value";
+					if (isPhoneField(field)) {
+						fieldValue.classList.add("phone-field");
+						const callLink = document.createElement("a");
+						callLink.className = "call-button";
+						callLink.href = `tel:${value.replace(/[^+\d]/g, "")}`;
+						callLink.setAttribute("aria-label", `Call ${value}`);
+						callLink.title = `Call ${value}`;
+						callLink.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.2 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.84.58 2.8.7A2 2 0 0 1 22 16.92z"/></svg>';
+						const numberLink = document.createElement("a");
+						numberLink.className = "phone-number";
+						numberLink.href = callLink.href;
+						numberLink.textContent = value;
+						fieldValue.append(callLink, numberLink);
+					} else {
+						fieldValue.textContent = formatFieldValue(field, value);
+					}
+					row.append(fieldLabel, fieldValue);
+					detailsList.append(row);
+				});
+			}
+			detailsDialog.showModal();
+		}
+
+		entryList.addEventListener("click", (event) => {
+			if (event.target.closest("a, button")) return;
+			const card = event.target.closest(".entry-card");
+			if (!card) return;
+			closeOpenCards();
+			openEntryDetails(Number(card.dataset.entryIndex));
+		});
+		entryList.addEventListener("keydown", (event) => {
+			if (event.target !== event.target.closest(".entry-card") || (event.key !== "Enter" && event.key !== " ")) return;
+			event.preventDefault();
+			closeOpenCards();
+			openEntryDetails(Number(event.target.dataset.entryIndex));
+		});
+		document.getElementById("close-details").addEventListener("click", () => detailsDialog.close());
+		detailsDialog.addEventListener("click", (event) => {
+			if (event.target === detailsDialog) detailsDialog.close();
+		});
+		detailsDialog.addEventListener("keydown", (event) => {
+			if (event.key === "Escape" && detailsDialog.open) {
+				event.preventDefault();
+				detailsDialog.close();
+			}
+		});
+		menuButton.addEventListener("click", () => {
+			const willOpen = menuPanel.hidden;
+			menuPanel.hidden = !willOpen;
+			menuButton.setAttribute("aria-expanded", String(willOpen));
+			setActiveNavigation(willOpen ? menuButton : (formView.hidden ? viewButton : addButton));
+		});
+		document.getElementById("cloud-sync-button").addEventListener("click", async () => {
+			menuPanel.hidden = true;
+			menuButton.setAttribute("aria-expanded", "false");
+			cloudDialog.showModal();
+			try {
+				await initializeFirebase();
+			} catch (error) {
+				setCloudStatus(`Firebase could not connect: ${error.message}`, true);
+			}
+		});
+		document.getElementById("close-cloud-dialog").addEventListener("click", () => cloudDialog.close());
+		cloudDialog.addEventListener("click", (event) => {
+			if (event.target === cloudDialog) cloudDialog.close();
+		});
+		document.getElementById("cloud-connect-anonymous").addEventListener("click", async (event) => {
+			if (!firebaseAuth) return;
+			const button = event.currentTarget;
+			button.disabled = true;
+			setCloudStatus("Connecting this device…");
+			try {
+				await firebaseApi.signInAnonymously(firebaseAuth);
+			} catch (error) {
+				const messages = {
+					"auth/operation-not-allowed": "Enable Anonymous sign-in in Firebase Authentication settings.",
+					"auth/unauthorized-domain": `Add ${location.hostname} to Firebase Authentication authorized domains.`,
+					"auth/network-request-failed": "Could not reach Firebase. Check your internet connection."
+				};
+				setCloudStatus(messages[error.code] || `Could not connect: ${error.message}`, true);
+				button.disabled = false;
+			}
+		});
+		document.getElementById("import-local-data").addEventListener("click", async () => {
+			if (!firebaseUser) return;
+			const localEntries = readEntries().map((entry) => ({ ...entry, id: entry.id || createLocalId() }));
+			const localFields = readCustomFields().map((field) => ({ ...field, id: field.id || createLocalId() }));
+			const localFilters = readSavedFilters().map((filter) => ({ ...filter, id: filter.id || createLocalId() }));
+			const mergeById = (cloudRows, localRows) => [...new Map([...cloudRows, ...localRows].map((row) => [row.id, row])).values()];
+			const entries = mergeById(pendingCloudData.entries, localEntries);
+			const fields = mergeById(pendingCloudData.fields, localFields);
+			const savedFilters = mergeById(pendingCloudData.savedFilters, localFilters);
+			try {
+				localStorage.setItem(storageKey, JSON.stringify(entries));
+				localStorage.setItem(fieldsStorageKey, JSON.stringify(fields));
+				localStorage.setItem(savedFiltersStorageKey, JSON.stringify(savedFilters));
+				await Promise.all([
+					syncCloudCollection("entries", entries),
+					syncCloudCollection("fields", fields),
+					syncCloudCollection("savedFilters", savedFilters)
+				]);
+				pendingCloudData = { entries, fields, savedFilters };
+				listenToCloudCollections();
+				renderFilterFields();
+				renderSavedFilters();
+				renderEntries();
+				cloudImportOptions.hidden = true;
+				setCloudStatus("Local records imported and cloud sync is active.");
+			} catch (error) {
+				setCloudStatus(`Import failed: ${error.message}`, true);
+			}
+		});
+		document.getElementById("use-cloud-data").addEventListener("click", () => {
+			if (!firebaseUser) return;
+			localStorage.setItem(storageKey, JSON.stringify(pendingCloudData.entries));
+			localStorage.setItem(fieldsStorageKey, JSON.stringify(pendingCloudData.fields));
+			localStorage.setItem(savedFiltersStorageKey, JSON.stringify(pendingCloudData.savedFilters));
+			listenToCloudCollections();
+			renderFilterFields();
+			renderSavedFilters();
+			renderEntries();
+			cloudImportOptions.hidden = true;
+		});
+		document.getElementById("create-field-button").addEventListener("click", showFieldBuilder);
+		document.addEventListener("click", (event) => {
+			if (!menuPanel.hidden && !menuPanel.contains(event.target) && !menuButton.contains(event.target)) {
+				menuPanel.hidden = true;
+				menuButton.setAttribute("aria-expanded", "false");
+				setActiveNavigation(formView.hidden ? viewButton : addButton);
+			}
+		});
+		document.addEventListener("keydown", (event) => {
+			if (event.key === "Escape" && !menuPanel.hidden) {
+				menuPanel.hidden = true;
+				menuButton.setAttribute("aria-expanded", "false");
+				menuButton.focus();
+				setActiveNavigation(formView.hidden ? viewButton : addButton);
+			}
+		});
+		document.getElementById("export-button").addEventListener("click", () => {
+			const entries = readEntries();
+			const fields = readCustomFields();
+			if (entries.length === 0 && fields.length === 0) return;
+			const file = new Blob([JSON.stringify({ fields, entries }, null, 2)], { type: "application/json" });
+			const download = document.createElement("a");
+			download.href = URL.createObjectURL(file);
+			download.download = "crm-entries.json";
+			download.click();
+			URL.revokeObjectURL(download.href);
+			menuPanel.hidden = true;
+			menuButton.setAttribute("aria-expanded", "false");
+		});
+		fieldDefinitionList.addEventListener("click", (event) => {
+			const button = event.target.closest("button[data-action]");
+			if (!button) return;
+					if (button.dataset.action === "edit") openFieldDialog(readCustomFields().find((field) => field.id === button.dataset.fieldId));
+			if (button.dataset.action === "delete") deleteCustomField(button.dataset.fieldId);
+		});
+		let draggedFieldId = null;
+		function clearFieldDropTargets() {
+			fieldDefinitionList.querySelectorAll(".drop-target, .dragging").forEach((row) => row.classList.remove("drop-target", "dragging"));
+		}
+		fieldDefinitionList.addEventListener("dragstart", (event) => {
+			const handle = event.target.closest(".field-drag-handle");
+			if (!handle) return;
+			draggedFieldId = handle.closest(".field-definition").dataset.fieldId;
+			event.dataTransfer.effectAllowed = "move";
+			event.dataTransfer.setData("text/plain", draggedFieldId);
+			handle.closest(".field-definition").classList.add("dragging");
+		});
+		fieldDefinitionList.addEventListener("dragover", (event) => {
+			const target = event.target.closest(".field-definition");
+			if (!draggedFieldId || !target || target.dataset.fieldId === draggedFieldId) return;
+			event.preventDefault();
+			event.dataTransfer.dropEffect = "move";
+			fieldDefinitionList.querySelectorAll(".drop-target").forEach((row) => row.classList.remove("drop-target"));
+			target.classList.add("drop-target");
+		});
+		fieldDefinitionList.addEventListener("drop", (event) => {
+			const target = event.target.closest(".field-definition");
+			if (!draggedFieldId || !target) return;
+			event.preventDefault();
+			const insertAfter = event.clientY > target.getBoundingClientRect().top + target.getBoundingClientRect().height / 2;
+			moveField(draggedFieldId, target.dataset.fieldId, insertAfter);
+			draggedFieldId = null;
+			clearFieldDropTargets();
+		});
+		fieldDefinitionList.addEventListener("dragend", () => {
+			draggedFieldId = null;
+			clearFieldDropTargets();
+		});
+		fieldDefinitionList.addEventListener("keydown", (event) => {
+			const handle = event.target.closest(".field-drag-handle");
+			if (!handle || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) return;
+			event.preventDefault();
+			const rows = [...fieldDefinitionList.querySelectorAll(".field-definition")];
+			const row = handle.closest(".field-definition");
+			const index = rows.indexOf(row);
+			const target = rows[index + (event.key === "ArrowUp" ? -1 : 1)];
+			if (target) moveField(row.dataset.fieldId, target.dataset.fieldId, event.key === "ArrowDown");
+		});
+		let touchDrag = null;
+		fieldDefinitionList.addEventListener("pointerdown", (event) => {
+			const handle = event.target.closest(".field-drag-handle");
+			if (event.pointerType !== "touch" || !handle) return;
+			touchDrag = { fieldId: handle.closest(".field-definition").dataset.fieldId, startY: event.clientY, active: false };
+		});
+		document.addEventListener("pointermove", (event) => {
+			if (!touchDrag || event.pointerType !== "touch") return;
+			if (!touchDrag.active && Math.abs(event.clientY - touchDrag.startY) < 8) return;
+			touchDrag.active = true;
+			event.preventDefault();
+			const target = document.elementFromPoint(event.clientX, event.clientY)?.closest(".field-definition");
+			fieldDefinitionList.querySelectorAll(".drop-target").forEach((row) => row.classList.remove("drop-target"));
+			if (target && target.dataset.fieldId !== touchDrag.fieldId) target.classList.add("drop-target");
+		});
+		document.addEventListener("pointerup", (event) => {
+			if (!touchDrag || event.pointerType !== "touch") return;
+			if (touchDrag.active) {
+				const target = document.elementFromPoint(event.clientX, event.clientY)?.closest(".field-definition");
+				if (target && target.dataset.fieldId !== touchDrag.fieldId) {
+					const rect = target.getBoundingClientRect();
+					moveField(touchDrag.fieldId, target.dataset.fieldId, event.clientY > rect.top + rect.height / 2);
+				}
+			}
+			touchDrag = null;
+			clearFieldDropTargets();
+		});
+		addFieldButton.addEventListener("click", () => openFieldDialog());
+		document.getElementById("cancel-edit-button").addEventListener("click", () => {
+			resetFieldEditor();
+			fieldDialog.close();
+		});
+		fieldDialog.addEventListener("click", (event) => {
+			if (event.target === fieldDialog) fieldDialog.close();
+		});
+		fieldDialog.addEventListener("close", resetFieldEditor);
+		fieldBuilderForm.addEventListener("submit", (event) => {
+			event.preventDefault();
+			if (!fieldBuilderForm.reportValidity()) return;
+
+			const formData = new FormData(fieldBuilderForm);
+			const label = String(formData.get("label")).trim();
+			if (!label) return;
+			const fields = readCustomFields();
+			const type = String(formData.get("type"));
+			const width = Math.min(100, Math.max(10, Number(formData.get("width")) || 100));
+			const options = type === "select"
+				? [...new Set(String(formData.get("options") || "").split(/\r?\n/).map((option) => option.trim()).filter(Boolean))]
+				: [];
+			if (type === "select" && options.length === 0) {
+				fieldStatus.textContent = "Add at least one menu option.";
+				document.getElementById("new-field-options").focus();
+				return;
+			}
+			const updatedFields = editingFieldId
+				? fields.map((field) => field.id === editingFieldId ? { ...field, label, type, width, options } : field)
+				: [...fields, { id: createLocalId(), label, type, width, options }];
+			try {
+				writeLocalData(fieldsStorageKey, updatedFields, "fields");
+			} catch {
+				alert("This field could not be saved in this browser.");
+				return;
+			}
+			const wasEditing = Boolean(editingFieldId);
+			resetFieldEditor();
+			renderFieldDefinitions();
+			renderFilterFields();
+			fieldStatus.textContent = wasEditing ? `${label} updated.` : `${label} added. Add another field or open Add Entry.`;
+			fieldDialog.close();
+		});
+		document.getElementById("new-field-type").addEventListener("change", syncFieldOptionEditor);
+		entrySearch.addEventListener("input", () => {
+			savedFilterSelect.value = "";
+			deleteFilterButton.hidden = true;
+			renderEntries();
+		});
+		searchToolsButton.addEventListener("click", () => {
+			searchToolPanel.hidden = !searchToolPanel.hidden;
+			searchToolsButton.setAttribute("aria-expanded", String(!searchToolPanel.hidden));
+			searchToolsButton.setAttribute("aria-label", searchToolPanel.hidden ? "Show search" : "Hide search");
+			entryTools.hidden = searchToolPanel.hidden && filterToolPanel.hidden;
+			if (!searchToolPanel.hidden) entrySearch.focus();
+		});
+		filterToolsButton.addEventListener("click", () => {
+			filterToolPanel.hidden = !filterToolPanel.hidden;
+			filterToolsButton.setAttribute("aria-expanded", String(!filterToolPanel.hidden));
+			filterToolsButton.setAttribute("aria-label", filterToolPanel.hidden ? "Show filters and saved filters" : "Hide filters and saved filters");
+			entryTools.hidden = searchToolPanel.hidden && filterToolPanel.hidden;
+		});
+		filterField.addEventListener("change", () => {
+			renderFilterValueControl();
+			savedFilterSelect.value = "";
+			deleteFilterButton.hidden = true;
+			renderEntries();
+		});
+		filterValueControl.addEventListener("input", () => {
+			savedFilterSelect.value = "";
+			deleteFilterButton.hidden = true;
+			renderEntries();
+		});
+		filterValueControl.addEventListener("change", renderEntries);
+		document.getElementById("clear-filter-button").addEventListener("click", () => {
+			entrySearch.value = "";
+			filterField.value = "";
+			renderFilterValueControl();
+			savedFilterSelect.value = "";
+			deleteFilterButton.hidden = true;
+			renderEntries();
+		});
+		document.getElementById("save-filter-button").addEventListener("click", () => {
+			const filter = getCurrentFilter();
+			if (!filter.query && !(filter.fieldId && filter.value)) {
+				window.alert("Add a search term or field condition before saving a filter.");
+				return;
+			}
+			saveFilterForm.reset();
+			saveFilterDialog.showModal();
+			document.getElementById("saved-filter-name").focus();
+		});
+		document.getElementById("cancel-save-filter").addEventListener("click", () => saveFilterDialog.close());
+		saveFilterDialog.addEventListener("click", (event) => {
+			if (event.target === saveFilterDialog) saveFilterDialog.close();
+		});
+		saveFilterForm.addEventListener("submit", (event) => {
+			event.preventDefault();
+			if (!saveFilterForm.reportValidity()) return;
+			const name = document.getElementById("saved-filter-name").value.trim();
+			if (!name) return;
+			const filters = readSavedFilters();
+			const saved = { id: `filter_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, name, ...getCurrentFilter() };
+			try {
+				writeLocalData(savedFiltersStorageKey, [...filters, saved], "savedFilters");
+			} catch {
+				window.alert("This filter could not be saved in this browser.");
+				return;
+			}
+			renderSavedFilters(saved.id);
+			saveFilterDialog.close();
+		});
+		savedFilterSelect.addEventListener("change", () => {
+			const saved = readSavedFilters().find((filter) => filter.id === savedFilterSelect.value);
+			deleteFilterButton.hidden = !saved;
+			if (!saved) return;
+			entrySearch.value = saved.query || "";
+			renderFilterFields(saved.fieldId || "", saved.value || "");
+			searchToolPanel.hidden = !saved.query;
+			filterToolPanel.hidden = !saved.fieldId;
+			if (searchToolPanel.hidden && filterToolPanel.hidden) filterToolPanel.hidden = false;
+			entryTools.hidden = false;
+			searchToolsButton.setAttribute("aria-expanded", String(!searchToolPanel.hidden));
+			searchToolsButton.setAttribute("aria-label", searchToolPanel.hidden ? "Show search" : "Hide search");
+			filterToolsButton.setAttribute("aria-expanded", String(!filterToolPanel.hidden));
+			filterToolsButton.setAttribute("aria-label", filterToolPanel.hidden ? "Show filters and saved filters" : "Hide filters and saved filters");
+			renderEntries();
+		});
+		deleteFilterButton.addEventListener("click", () => {
+			const selectedId = savedFilterSelect.value;
+			if (!selectedId) return;
+			try {
+				writeLocalData(savedFiltersStorageKey, readSavedFilters().filter((filter) => filter.id !== selectedId), "savedFilters");
+			} catch {
+				window.alert("This saved filter could not be deleted.");
+				return;
+			}
+			renderSavedFilters("");
+		});
+		document.getElementById("clear-button").addEventListener("click", () => {
+			if (!window.confirm("Clear all saved entries? This cannot be undone.")) return;
+			writeLocalData(storageKey, [], "entries");
+			menuPanel.hidden = true;
+			menuButton.setAttribute("aria-expanded", "false");
+			showList();
+		});
+		entryForm.addEventListener("submit", (event) => {
+			event.preventDefault();
+			if (!entryForm.reportValidity()) return;
+
+			const formData = new FormData(entryForm);
+			const entries = readEntries();
+			const entry = {
+				id: editingEntryIndex === null ? createLocalId() : entries[editingEntryIndex]?.id || createLocalId(),
+				customFields: Object.fromEntries(readCustomFields().map((field) => [field.id, String(formData.get(`custom_${field.id}`) || "").trim()]).filter(([, value]) => value !== ""))
+			};
+			if (editingEntryIndex === null) entries.unshift(entry);
+			else entries[editingEntryIndex] = entry;
+			try {
+				writeLocalData(storageKey, entries, "entries");
+			} catch {
+				alert("This entry could not be saved in this browser.");
+				return;
+			}
+			entryForm.reset();
+			editingEntryIndex = null;
+			showList();
+		});
+
+		renderFilterFields();
+		renderSavedFilters();
+		renderEntries();
+		if ("serviceWorker" in navigator && location.protocol !== "file:") {
+			navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+		}
+	</script>
+</body>
+</html>
+    

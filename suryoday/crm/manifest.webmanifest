@@ -1,0 +1,22 @@
+{
+	"id": "./crm.html",
+	"name": "Customer Records",
+	"short_name": "Records",
+	"description": "Customer and collection records",
+	"start_url": "./crm.html",
+	"scope": "./",
+	"display": "standalone",
+	"display_override": ["standalone"],
+	"orientation": "portrait",
+	"theme_color": "#0D9488",
+	"background_color": "#F1F5F9",
+	"categories": ["business", "productivity"],
+	"icons": [
+		{
+			"src": "./app-icon.svg",
+			"sizes": "any",
+			"type": "image/svg+xml",
+			"purpose": "any"
+		}
+	]
+}
