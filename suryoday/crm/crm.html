@@ -1265,6 +1265,10 @@
 				const title = Object.values(entry?.customFields || {}).find(Boolean) || "this entry";
 				if (!entry || !window.confirm(`Delete ${title}? This cannot be undone.`)) return;
 				entries.splice(entryIndex, 1);
+				// Delete from Firestore using the entry's deterministic ID
+				if (entry && entry.id) {
+					db.collection('entries').doc(entry.id).delete().catch(err => console.error('Failed to delete entry from Firestore', err));
+				}
 				try {
 					writeLocalData(storageKey, entries, "entries");
 				} catch {
@@ -1685,7 +1689,7 @@
 				// Save locally
 				writeLocalData(storageKey, entries, "entries");
 				// Save to Firestore with timestamp
-				db.collection('entries').add({
+				db.collection('entries').doc(entry.id).set({
 					...entry,
 					createdAt: firebase.firestore.FieldValue.serverTimestamp()
 				});
