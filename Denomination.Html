@@ -1,226 +1,221 @@
-Grammar Correction & Explanation
-Correction:
- * "Occupy the full page."
- * "The date should not shrink."
- * "I do not need text of this length."
-Explanation:
- * Added "the" before "full page" and "date" to complete the noun phrases.
- * Replaced "cannot" with "should not" to better express a design requirement.
- * Changed "Didnot need this length text" to "I do not need text of this length" (or "I do not need text that long") to fix the tense and word order.
-Here is the updated code based on your requirements:
- * Full Page Layout: The card container now occupies width: 100% and height: 100vh to fill the entire browser screen.
- * Fixed Date Display: Prevented the date section from shrinking by setting flex-shrink: 0 and whitespace constraints.
- * Shortened Title: Simplified the main title to "Denominations Calculator" without the long bracketed text.
 <!DOCTYPE html>
 <html lang="ta">
 <head>
     <meta charset="UTF-8" />
     <title>Denominations Calculator</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        darkBg: '#0b132b',
+                        cardBg: '#1c2541',
+                        accentCyan: '#38bdf8',
+                        accentEmerald: '#10b981',
+                        accentRose: '#f43f5e',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
+        /* Custom scrollbars and touch optimizations */
         * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
-        body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            height: 100vh;
-            width: 100vw;
-            background-color: #0f172a;
-            color: #f8fafc;
-            overflow: hidden; /* Ensures single-page fit without scrolling */
-            display: flex;
+        input {
+            user-select: auto;
         }
-        .container {
-            width: 100%;
-            height: 100%;
-            background: #1e293b;
-            padding: 16px 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            gap: 12px;
-        }
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-        }
-        h2 {
-            font-size: 1.4rem;
-            color: #f8fafc;
-            font-weight: 700;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        #dateDisplay {
-            font-size: 1rem;
-            color: #38bdf8;
-            font-weight: 600;
-            white-space: nowrap;
-            flex-shrink: 0; /* Prevents date from shrinking */
-            background: #0f172a;
-            padding: 4px 10px;
-            border-radius: 6px;
-            border: 1px solid #334155;
-        }
-        .top-input-group {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #0f172a;
-            padding: 10px 16px;
-            border-radius: 8px;
-            border: 1px solid #334155;
-        }
-        .top-input-group label {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #38bdf8;
-        }
-        .top-input-group input {
-            width: 140px;
-            font-size: 1.1rem;
-            padding: 6px 10px;
-            text-align: right;
-            background-color: #1e293b;
-            color: #fff;
-            border: 1px solid #475569;
-            border-radius: 6px;
-        }
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px 16px;
-            flex: 1;
-            align-content: center;
-        }
-        .row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #111827;
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid #1f2937;
-        }
-        label {
-            font-size: 1rem;
-            color: #cbd5e1;
-            font-weight: 500;
-        }
-        input[type="number"] {
-            font-size: 1rem;
-            width: 80px;
-            padding: 4px 6px;
-            text-align: right;
-            background-color: #1f2937;
-            color: #fff;
-            border: 1px solid #374151;
-            border-radius: 4px;
-        }
+        /* Hide spin buttons on number inputs */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
-        .amount {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #34d399;
+        input[type=number] {
+            -moz-appearance: textfield;
         }
-        .currency {
-            display: inline-flex;
-            align-items: center;
-            gap: 2px;
-            font-size: 1rem;
-            color: #34d399;
+        /* Glassmorphism subtle effects */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        #result {
-            font-size: 1.1rem;
-            text-align: center;
-            background: #0f172a;
-            padding: 10px;
-            border-radius: 8px;
-            color: #fff;
-            border: 1px solid #334155;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
+        .glass-input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
-        .balance-row {
-            color: #fbbf24;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-        .buttons {
-            display: flex;
-            gap: 12px;
-        }
-        .buttons button {
-            flex: 1;
-            padding: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            background-color: #059669;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .buttons button:hover {
-            opacity: 0.9;
-        }
-        .buttons button.clear {
-            background-color: #dc2626;
+        .glass-input:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header-row">
-            <!-- Shortened title -->
-            <h2>Denominations Calculator</h2>
-            <!-- Date display protected from shrinking -->
-            <div id="dateDisplay"></div>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen min-h-[100dvh] w-screen overflow-hidden flex justify-center items-center antialiased">
+
+    <!-- App Main Container -->
+    <div class="w-full h-full max-w-md mx-auto flex flex-col justify-between p-2.5 sm:p-4 bg-slate-900 border-x border-slate-800 shadow-2xl relative">
+
+        <!-- Toast Notification -->
+        <div id="toast" class="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-500 text-slate-950 font-bold px-4 py-2 rounded-full text-xs shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+            <span id="toastMsg">Saved successfully!</span>
         </div>
 
-        <!-- System Amount row right below title -->
-        <div class="top-input-group">
-            <label for="systemAmount">System Amount (Syst ₹)</label>
-            <input type="number" id="systemAmount" autocomplete="off" min="0" placeholder="0" />
+        <!-- Custom Confirmation Modal -->
+        <div id="confirmModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 max-w-xs w-full text-center shadow-2xl scale-95 transition-transform duration-200" id="confirmBox">
+                <div class="w-12 h-12 bg-rose-500/10 text-rose-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-100 mb-1">Clear Data?</h3>
+                <p class="text-xs text-slate-400 mb-5">Are you sure you want to reset all denomination inputs and system amount?</p>
+                <div class="flex gap-2.5">
+                    <button id="cancelModalBtn" class="flex-1 py-2 px-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold active:scale-95 transition-all">Cancel</button>
+                    <button id="confirmClearBtn" class="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold active:scale-95 transition-all">Clear All</button>
+                </div>
+            </div>
         </div>
 
-        <!-- Grid layout to fit full screen -->
-        <div class="grid-container">
-            <div class="row"><label>2000 x</label> <input type="number" id="note2000" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total2000" class="amount">0</span></span></div>
-            <div class="row"><label>50 x</label> <input type="number" id="note50" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total50" class="amount">0</span></span></div>
-            <div class="row"><label>500 x</label> <input type="number" id="note500" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total500" class="amount">0</span></span></div>
-            <div class="row"><label>20 x</label> <input type="number" id="note20" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total20" class="amount">0</span></span></div>
-            <div class="row"><label>200 x</label> <input type="number" id="note200" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total200" class="amount">0</span></span></div>
-            <div class="row"><label>10 x</label> <input type="number" id="note10" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total10" class="amount">0</span></span></div>
-            <div class="row"><label>100 x</label> <input type="number" id="note100" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total100" class="amount">0</span></span></div>
-            <div class="row"><label>2 x</label> <input type="number" id="note2" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total2" class="amount">0</span></span></div>
-            <div class="row"><label>Acc x</label> <input type="number" id="coins" autocomplete="off" min="0" /> = <span class="currency">₹<span id="totalCoins" class="amount">0</span></span></div>
-            <div class="row"><label>1 x</label> <input type="number" id="note1" autocomplete="off" min="0" /> = <span class="currency">₹<span id="total1" class="amount">0</span></span></div>
+        <!-- Header Section -->
+        <header class="flex justify-between items-center py-1 px-1">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                </div>
+                <h1 class="text-base font-extrabold text-slate-100 tracking-tight">Denominations</h1>
+            </div>
+            <div id="dateDisplay" class="text-xs font-semibold text-sky-400 bg-sky-950/60 border border-sky-800/50 px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-inner">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <span>--/--/----</span>
+            </div>
+        </header>
+
+        <!-- System Amount Card -->
+        <div class="glass-card rounded-xl p-2.5 my-1.5 border border-slate-800">
+            <div class="flex justify-between items-center gap-2">
+                <label for="systemAmount" class="text-xs font-bold text-sky-400 uppercase tracking-wider flex items-center gap-1">
+                    System Amount (Syst ₹)
+                </label>
+                <div class="relative flex-1 max-w-[140px]">
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm">₹</span>
+                    <input type="number" id="systemAmount" autocomplete="off" min="0" placeholder="0" class="glass-input w-full pl-6 pr-2.5 py-1.5 text-right font-bold text-sm text-white rounded-lg outline-none transition-all placeholder:text-slate-600" />
+                </div>
+            </div>
         </div>
 
-        <div id="result">
-            <div>மொத்தம்: ₹<span id="grandTotal">0</span></div>
-            <div class="balance-row">Balance: ₹<span id="balance">0</span></div>
+        <!-- Denominations Grid (2 columns) -->
+        <main class="grid grid-cols-2 gap-1.5 my-auto py-1">
+            <!-- Row 2000 -->
+            <div class="glass-card rounded-lg p-1.5 flex items-center justify-between border border-slate-800/80">
+                <span class="text-xs font-bold text-slate-300 w-11">2000 ×</span>
+                <input type="number" id="note2000" min="0" placeholder="0" class="glass-input w-14 py-1 px-1.5 text-right font-bold text-xs text-white rounded-md outline-none" />
+                <span class="text-xs font-semibold text-emerald-400 w-12 text-right truncate">₹<span id="total2000">0</span></span>
+            </div>
+            <!-- Row 50 -->
+            <div class="glass-card rounded-lg p-1.5 flex items-center justify-between border border-slate-800/80">
+                <span class="text-xs font-bold text-slate-300 w-11">50 ×</span>
+                <input type="number" id="note50" min="0" placeholder="0" class="glass-input w-14 py-1 px-1.5 text-right font-bold text-xs text-white rounded-md outline-none" />
+                <span class="text-xs font-semibold text-emerald-400 w-12 text-right truncate">₹<span id="total50">0</span></span>
+            </div>
+
+            <!-- Row 500 -->
+            <div class="glass-card rounded-lg p-1.5 flex items-center justify-between border border-slate-800/80">
+                <span class="text-xs font-bold text-slate-300 w-11">500 ×</span>
+                <input type="number" id="note500" min="0" placeholder="0" class="glass-input w-14 py-1 px-1.5 text-right font-bold text-xs text-white rounded-md outline-none" />
+                <span class="text-xs font-semibold text-emerald-400 w-12 text-right truncate">₹<span id="total500">0</span></span>
+            </div>
+            <!-- Row 20 -->
+            <div class="glass-card rounded-lg p-1.5 flex items-center justify-between border border-slate-800/80">
+                <span class="text-xs font-bold text-slate-300 w-11">20 ×</span>
+                <input type="number" id="note20" min="0" placeholder="0" class="glass-input w-14 py-1 px-1.5 text-right font-bold text-xs text-white rounded-md outline-none" />
+                <span class="text-xs font-semibold text-emerald-400 w-12 text-right truncate">₹<span id="total20">0</span></span>
+            </div>
+
+            <!-- Row 200 -->
+            <div class="glass-card rounded-lg p-1.5 flex items-center justify-between border border-slate-800/80">
+                <span class="text-xs font-bold text-slate-300 w-11">200 ×</span>
+                <input type="number" id="note200" min="0" placeholder="0" class="glass-input w-14 py-1 px-1.5 text-right font-bold text-xs text-white rounded-md outline-none" />
+                <span class="text-xs font-semibold text-emerald-400 w-12 text-right truncate">₹<span id="total200">0</span></span>
+            </div>
+            <!-- Row 10 -->
+            <div class="glass-card rounded-lg p-1.5 flex items-center justify-between border border-slate-800/80">
+                <span class="text-xs font-bold text-slate-300 w-11">10 ×</span>
+                <input type="number" id="note10" min="0" placeholder="0" class="glass-input w-14 py-1 px-1.5 text-right font-bold text-xs text-white rounded-md outline-none" />
+                <span class="text-xs font-semibold text-emerald-400 w-12 text-right truncate">₹<span id="total10">0</span></span>
+            </div>
+
+            <!-- Row 100 -->
+            <div class="glass-card rounded-lg p-1.5 flex items-center justify-between border border-slate-800/80">
+                <span class="text-xs font-bold text-slate-300 w-11">100 ×</span>
+                <input type="number" id="note100" min="0" placeholder="0" class="glass-input w-14 py-1 px-1.5 text-right font-bold text-xs text-white rounded-md outline-none" />
+                <span class="text-xs font-semibold text-emerald-400 w-12 text-right truncate">₹<span id="total100">0</span></span>
+            </div>
+            <!-- Row 2 -->
+            <div class="glass-card rounded-lg p-1.5 flex items-center justify-between border border-slate-800/80">
+                <span class="text-xs font-bold text-slate-300 w-11">2 ×</span>
+                <input type="number" id="note2" min="0" placeholder="0" class="glass-input w-14 py-1 px-1.5 text-right font-bold text-xs text-white rounded-md outline-none" />
+                <span class="text-xs font-semibold text-emerald-400 w-12 text-right truncate">₹<span id="total2">0</span></span>
+            </div>
+
+            <!-- Row Acc / Coins -->
+            <div class="glass-card rounded-lg p-1.5 flex items-center justify-between border border-slate-800/80">
+                <span class="text-xs font-bold text-amber-400 w-11">Acc ×</span>
+                <input type="number" id="coins" min="0" placeholder="0" class="glass-input w-14 py-1 px-1.5 text-right font-bold text-xs text-white rounded-md outline-none" />
+                <span class="text-xs font-semibold text-emerald-400 w-12 text-right truncate">₹<span id="totalCoins">0</span></span>
+            </div>
+            <!-- Row 1 -->
+            <div class="glass-card rounded-lg p-1.5 flex items-center justify-between border border-slate-800/80">
+                <span class="text-xs font-bold text-slate-300 w-11">1 ×</span>
+                <input type="number" id="note1" min="0" placeholder="0" class="glass-input w-14 py-1 px-1.5 text-right font-bold text-xs text-white rounded-md outline-none" />
+                <span class="text-xs font-semibold text-emerald-400 w-12 text-right truncate">₹<span id="total1">0</span></span>
+            </div>
+        </main>
+
+        <!-- Summary & Balance Display -->
+        <div id="result" class="glass-card rounded-xl p-3 my-1 flex justify-around items-center border border-slate-800 shadow-md">
+            <!-- Grand Total -->
+            <div class="text-center">
+                <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">மொத்தம்</div>
+                <div class="text-base sm:text-lg font-extrabold text-white">₹<span id="grandTotal">0</span></div>
+            </div>
+            <div class="h-7 w-[1px] bg-slate-800"></div>
+            <!-- Balance -->
+            <div class="text-center">
+                <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Balance</div>
+                <div class="text-base sm:text-lg font-extrabold text-amber-400 transition-colors duration-200" id="balanceBox">₹<span id="balance">0</span></div>
+            </div>
         </div>
 
-        <div class="buttons">
-            <button id="saveBtn">Save</button>
-            <button id="clearBtn" class="clear">Clear</button>
-        </div>
+        <!-- Action Buttons -->
+        <footer class="flex gap-2 pt-1 pb-0.5">
+            <button id="saveBtn" class="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-1.5 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                Save
+            </button>
+            <button id="clearBtn" class="flex-1 py-2.5 px-4 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-lg shadow-rose-950/50 flex items-center justify-center gap-1.5 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                Clear
+            </button>
+        </footer>
+
     </div>
 
+    <!-- Application Script -->
     <script>
+        // Standard denomination definitions
         const denominations = [
             { id: 'note2000', value: 2000 },
             { id: 'note500', value: 500 },
@@ -233,35 +228,67 @@ Here is the updated code based on your requirements:
             { id: 'note1', value: 1 }
         ];
 
+        // Format numbers to Indian currency standard string
+        function formatNumber(num) {
+            return num.toLocaleString('en-IN');
+        }
+
+        // Calculation logic
         function calculate() {
             let total = 0;
+            
+            // Calculate note totals
             denominations.forEach(denom => {
                 const count = parseInt(document.getElementById(denom.id).value) || 0;
                 const amount = denom.value * count;
-                document.getElementById('total' + denom.id.replace('note', '')).textContent = amount;
+                const totalElem = document.getElementById('total' + denom.id.replace('note', ''));
+                if (totalElem) {
+                    totalElem.textContent = formatNumber(amount);
+                }
                 total += amount;
             });
+
+            // Calculate coins / custom amount
             const coinsCount = parseInt(document.getElementById('coins').value) || 0;
             const coinsAmount = coinsCount;
-            document.getElementById('totalCoins').textContent = coinsAmount;
+            document.getElementById('totalCoins').textContent = formatNumber(coinsAmount);
             total += coinsAmount;
 
-            document.getElementById('grandTotal').textContent = total;
+            // Grand total display
+            document.getElementById('grandTotal').textContent = formatNumber(total);
 
+            // System Amount & Balance display logic
             const systemAmt = parseInt(document.getElementById('systemAmount').value) || 0;
             const balance = systemAmt - total;
-            document.getElementById('balance').textContent = balance;
+            const balanceElem = document.getElementById('balance');
+            const balanceBox = document.getElementById('balanceBox');
+
+            balanceElem.textContent = formatNumber(balance);
+
+            // Dynamic color feedback for balance state
+            if (systemAmt > 0 && balance === 0) {
+                balanceBox.className = "text-base sm:text-lg font-extrabold text-emerald-400 transition-colors duration-200";
+            } else if (balance < 0) {
+                balanceBox.className = "text-base sm:text-lg font-extrabold text-rose-400 transition-colors duration-200";
+            } else {
+                balanceBox.className = "text-base sm:text-lg font-extrabold text-amber-400 transition-colors duration-200";
+            }
         }
 
+        // Show formatted current date
         function showCurrentDate() {
             const now = new Date();
             const dd = String(now.getDate()).padStart(2, '0');
             const mm = String(now.getMonth() + 1).padStart(2, '0');
             const yyyy = now.getFullYear();
-            document.getElementById('dateDisplay').textContent = `${dd}-${mm}-${yyyy}`;
+            const dateSpan = document.querySelector('#dateDisplay span');
+            if (dateSpan) {
+                dateSpan.textContent = `${dd}-${mm}-${yyyy}`;
+            }
         }
 
-        function saveToLocalStorage() {
+        // Save input values to LocalStorage
+        function saveToLocalStorage(showToastNotification = false) {
             const data = {};
             denominations.forEach(denom => {
                 data[denom.id] = document.getElementById(denom.id).value;
@@ -269,55 +296,102 @@ Here is the updated code based on your requirements:
             data['coins'] = document.getElementById('coins').value;
             data['systemAmount'] = document.getElementById('systemAmount').value;
             localStorage.setItem('denominationsData', JSON.stringify(data));
-        }
 
-        function clearLocalStorage() {
-            if (confirm("Are you sure you want to clear the data?")) {
-                localStorage.removeItem('denominationsData');
-                location.reload();
+            if (showToastNotification) {
+                showToast("Data saved successfully!");
             }
         }
 
+        // Load input values from LocalStorage
         function loadFromLocalStorage() {
             const storedData = localStorage.getItem('denominationsData');
             if (storedData) {
-                const data = JSON.parse(storedData);
-                Object.keys(data).forEach(key => {
-                    const el = document.getElementById(key);
-                    if (el) el.value = data[key];
-                });
-                calculate();
+                try {
+                    const data = JSON.parse(storedData);
+                    Object.keys(data).forEach(key => {
+                        const el = document.getElementById(key);
+                        if (el) el.value = data[key];
+                    });
+                    calculate();
+                } catch (e) {
+                    console.error("Error reading saved data", e);
+                }
             }
         }
 
-        document.getElementById('saveBtn').addEventListener('click', () => {
-            saveToLocalStorage();
-            alert('Data saved!');
-        });
+        // Modal management for clearing data
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmBox = document.getElementById('confirmBox');
 
-        document.getElementById('clearBtn').addEventListener('click', clearLocalStorage);
+        function openModal() {
+            confirmModal.classList.remove('opacity-0', 'pointer-events-none');
+            confirmBox.classList.remove('scale-95');
+            confirmBox.classList.add('scale-100');
+        }
 
-        denominations.forEach(denom => {
-            document.getElementById(denom.id).addEventListener('input', () => {
-                calculate();
-                saveToLocalStorage();
+        function closeModal() {
+            confirmModal.classList.add('opacity-0', 'pointer-events-none');
+            confirmBox.classList.remove('scale-100');
+            confirmBox.classList.add('scale-95');
+        }
+
+        function clearLocalStorage() {
+            localStorage.removeItem('denominationsData');
+            denominations.forEach(denom => {
+                const el = document.getElementById(denom.id);
+                if (el) el.value = '';
             });
-        });
-
-        document.getElementById('coins').addEventListener('input', () => {
+            document.getElementById('coins').value = '';
+            document.getElementById('systemAmount').value = '';
             calculate();
-            saveToLocalStorage();
+            closeModal();
+            showToast("All data cleared!");
+        }
+
+        // Toast feedback implementation
+        let toastTimeout;
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.textContent = message;
+            
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 2000);
+        }
+
+        // Event Listeners setup
+        document.getElementById('saveBtn').addEventListener('click', () => saveToLocalStorage(true));
+        document.getElementById('clearBtn').addEventListener('click', openModal);
+        document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+        document.getElementById('confirmClearBtn').addEventListener('click', clearLocalStorage);
+
+        // Attach listeners to input fields
+        const allInputs = [...denominations.map(d => d.id), 'coins', 'systemAmount'];
+        allInputs.forEach(id => {
+            const elem = document.getElementById(id);
+            if (elem) {
+                elem.addEventListener('input', () => {
+                    calculate();
+                    saveToLocalStorage(false);
+                });
+                // Auto-select text on focus for fast mobile typing
+                elem.addEventListener('focus', function() {
+                    this.select();
+                });
+            }
         });
 
-        document.getElementById('systemAmount').addEventListener('input', () => {
-            calculate();
-            saveToLocalStorage();
+        // Initialize application on load
+        window.addEventListener('DOMContentLoaded', () => {
+            showCurrentDate();
+            loadFromLocalStorage();
         });
-
-        showCurrentDate();
-        loadFromLocalStorage();
     </script>
 </body>
 </html>
-
-Does this layout work better for your screen size?
