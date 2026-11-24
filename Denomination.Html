@@ -246,14 +246,18 @@
             min-height: 64px;
             margin: 0 -12px;
             padding: 0 16px;
-            background: #000;
+            background: #172554;
             color: #fff;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
         }
 
         .app-shell > header h1 {
             overflow: hidden;
             color: #fff !important;
-            font-size: 19px;
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
@@ -273,18 +277,31 @@
         }
 
         .toolbar-action {
-            width: 40px;
-            height: 44px;
+            display: grid;
+            width: 38px;
+            height: 38px;
             padding: 8px;
+            place-items: center;
             border: 0;
+            border-radius: 10px;
             color: #fff;
-            background: transparent;
+            background: rgba(255, 255, 255, 0.1);
             cursor: pointer;
+            transition: background-color 150ms ease, transform 150ms ease;
+        }
+
+        .toolbar-action:hover,
+        .toolbar-action:focus-visible {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .toolbar-action:active {
+            transform: scale(0.94);
         }
 
         .toolbar-action svg {
-            width: 24px;
-            height: 24px;
+            width: 21px;
+            height: 21px;
             fill: none;
             stroke: currentColor;
             stroke-width: 2;
@@ -401,12 +418,20 @@
             display: grid;
             grid-template-columns: 1fr 0.9fr 1.25fr;
             align-items: center;
-            min-height: 48px;
+            min-height: 42px;
             padding: 0 12px;
-            color: #fff;
-            background: #000;
-            font-size: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            border-radius: 8px 8px 0 0;
+            color: #475569;
+            background: #f1f5f9;
+            font-size: 12px;
             font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .table-head span:nth-child(2) {
+            text-align: center;
         }
 
         .table-head span:last-child {
@@ -420,7 +445,7 @@
             align-items: center;
             gap: 8px;
             width: 100%;
-            min-height: 68px;
+            min-height: 64px;
             padding: 8px 12px !important;
             border: 0;
             border-bottom: 1px solid #d8d8d8;
@@ -456,23 +481,26 @@
             width: 100%;
             min-width: 0;
             max-width: none !important;
-            height: 42px;
+            height: 40px;
             padding: 4px 8px !important;
-            border: 0 !important;
-            border-bottom: 2px solid #888 !important;
-            border-radius: 0 !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
             color: #111 !important;
-            
-            background: #fff !important;
+            background: #f8fafc !important;
             font-size: 18px !important;
             text-align: center !important;
+        }
+
+        .app-shell main > .glass-card > input:focus {
+            border-color: #2563eb !important;
+            outline: 2px solid rgba(37, 99, 235, 0.16);
         }
 
         .app-shell main > .glass-card > span {
             grid-column: 3;
             grid-row: 1;
             min-width: 0;
-            color: #111 !important;
+            color: #047857 !important;
             font-size: 16px;
             font-weight: 700;
             text-align: right;
@@ -574,12 +602,7 @@
 
         <!-- Header Section -->
         <header class="flex justify-between items-center py-0.5 px-1 shrink-0">
-            <div class="flex items-center gap-1.5">
-                <div class="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                </div>
-                <h1 class="text-sm font-extrabold text-slate-100 tracking-tight">Denominations</h1>
-            </div>
+            <h1 id="summaryDate">--/--/----</h1>
             <div class="toolbar-actions">
                 <button id="saveBtn" class="toolbar-action" type="button" aria-label="Save" title="Save">
                     <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l7 7v9a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
@@ -592,13 +615,6 @@
                 </button>
             </div>
         </header>
-
-        <section class="top-summary" aria-label="Denomination summary">
-            <div class="summary-line">
-                <span>Date:</span>
-                <strong id="summaryDate">--/--/----</strong>
-            </div>
-        </section>
 
         <!-- System amount, total, and balance -->
         <nav class="system-amount-row" aria-label="Amount summary">
@@ -806,18 +822,12 @@
         // Show formatted current date
         function showCurrentDate() {
             const now = new Date();
-            const dd = String(now.getDate()).padStart(2, '0');
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const yyyy = now.getFullYear();
-            const dateText = `${dd}-${mm}-${yyyy}`;
             document.getElementById('summaryDate').textContent = now.toLocaleDateString('en-IN', {
                 weekday: 'short',
                 day: '2-digit',
                 month: 'short',
                 year: '2-digit'
             });
-            const dateSpan = document.querySelector('#dateDisplay span');
-            if (dateSpan) dateSpan.textContent = dateText;
         }
 
         // Save input values to LocalStorage
