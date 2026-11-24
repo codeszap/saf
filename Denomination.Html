@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ta">
+<html lang="en-IN">
 <head>
     <meta charset="UTF-8" />
     <title>Denominations Calculator</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,12 +61,482 @@
             border-color: #38bdf8;
             box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
         }
+
+        body {
+            height: auto !important;
+            min-height: 100dvh;
+            width: 100%;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            align-items: flex-start !important;
+        }
+
+        .app-shell {
+            height: auto !important;
+            min-height: 100dvh;
+            overflow: visible !important;
+            justify-content: flex-start !important;
+            gap: 12px;
+            padding: 12px;
+            border-left: 0;
+            border-right: 0;
+        }
+
+        .app-shell > header {
+            min-height: 40px;
+            padding: 4px 2px;
+        }
+
+        .app-shell > header h1 {
+            font-size: 16px;
+        }
+
+        .app-shell > header #dateDisplay {
+            font-size: 12px;
+            padding: 5px 9px;
+        }
+
+        .app-shell > .glass-card {
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+
+        .app-shell > .glass-card label {
+            font-size: 12px;
+        }
+
+        .app-shell > .glass-card input {
+            min-height: 40px;
+            font-size: 16px;
+        }
+
+        .app-shell main {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            flex: none !important;
+            justify-content: initial !important;
+            gap: 8px;
+            padding: 0;
+            overflow: visible !important;
+        }
+
+        .app-shell main > .glass-card {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) minmax(48px, 0.8fr);
+            grid-template-rows: auto auto;
+            align-content: center;
+            gap: 6px 4px;
+            width: 100%;
+            height: auto !important;
+            min-height: 68px;
+            padding: 8px !important;
+            border-radius: 12px;
+        }
+
+        .app-shell main > .glass-card > div {
+            width: auto !important;
+            min-width: 0;
+            gap: 4px;
+        }
+
+        .app-shell main > .glass-card > div > span:first-child {
+            font-size: 13px;
+        }
+
+        .app-shell main > .glass-card > input {
+            grid-column: 2;
+            grid-row: 1;
+            width: 100%;
+            min-width: 0;
+            max-width: none !important;
+            height: 36px;
+            padding: 4px 6px;
+            font-size: 16px;
+        }
+
+        .app-shell main > .glass-card > span {
+            grid-column: 1 / -1;
+            grid-row: 2;
+            min-width: 0;
+            font-size: 12px;
+            text-align: left;
+        }
+
+        #result {
+            min-height: 68px;
+            border-radius: 14px;
+        }
+
+        #result > div:not(.h-6) > div:last-child {
+            font-size: 18px;
+        }
+
+        .app-shell footer {
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+            padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+            background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(12px);
+        }
+
+        .app-shell footer button {
+            min-height: 46px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 360px) {
+            .app-shell {
+                padding: 10px;
+            }
+
+            .app-shell main {
+                grid-template-columns: 1fr;
+                gap: 7px;
+            }
+
+            .app-shell main > .glass-card {
+                grid-template-columns: minmax(0, 1fr) minmax(70px, 0.7fr) minmax(76px, auto);
+                grid-template-rows: auto;
+                min-height: 56px;
+                padding: 8px 10px !important;
+            }
+
+            .app-shell main > .glass-card > input {
+                grid-column: 2;
+                grid-row: 1;
+            }
+
+            .app-shell main > .glass-card > span {
+                grid-column: 3;
+                grid-row: 1;
+                text-align: right;
+            }
+        }
+
+        body {
+            background: #f2f2f2 !important;
+            color: #111 !important;
+            align-items: flex-start !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        body.w-screen {
+            width: 100% !important;
+        }
+
+        .app-shell {
+            width: 100%;
+            max-width: 760px;
+            min-height: 100dvh;
+            margin: 0 auto;
+            padding: 0 16px 24px;
+            gap: 0;
+            background: #fff !important;
+            color: #111 !important;
+            box-shadow: none !important;
+        }
+
+        .app-shell.app-shell {
+            padding: 0 16px 24px !important;
+        }
+
+        .app-shell > header {
+            box-sizing: border-box;
+            min-height: 64px;
+            margin: 0 -12px;
+            padding: 0 16px;
+            background: #000;
+            color: #fff;
+        }
+
+        .app-shell > header h1 {
+            overflow: hidden;
+            color: #fff !important;
+            font-size: 19px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .app-shell > header > div:first-child > div {
+            display: none;
+        }
+
+        .app-shell > header #dateDisplay {
+            display: none !important;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-action {
+            width: 40px;
+            height: 44px;
+            padding: 8px;
+            border: 0;
+            color: #fff;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .toolbar-action svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .top-summary {
+            display: grid;
+            gap: 14px;
+            padding: 18px 0 12px;
+        }
+
+        .summary-line {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: clamp(15px, 4vw, 21px);
+            font-weight: 700;
+        }
+
+        .summary-line strong {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #grandTotal {
+            font-size: clamp(20px, 5vw, 28px);
+        }
+
+        .amount-words {
+            margin: 4px 0 14px;
+            color: #111;
+            text-align: center;
+            font-size: clamp(14px, 3.8vw, 20px);
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .system-amount-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 0 0 12px;
+            padding: 10px 0;
+            border-top: 1px solid #e5e5e5;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .system-amount-row label {
+            flex-shrink: 0;
+            color: #333 !important;
+            font-size: 14px !important;
+            font-weight: 700;
+        }
+
+        .system-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        .system-input-wrap > span {
+            color: #333;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .system-amount-row input {
+            width: 100px;
+            min-height: 40px;
+            padding: 6px 10px !important;
+            border: 0 !important;
+            border-bottom: 1px solid #777 !important;
+            border-radius: 0 !important;
+            color: #111 !important;
+            background: #fff !important;
+            font-size: 18px !important;
+        }
+
+        .system-amount-row #balanceBox {
+            flex-shrink: 0;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .balance-good { color: #059669 !important; }
+        .balance-negative { color: #e11d48 !important; }
+        .balance-pending { color: #b45309 !important; }
+
+        .app-shell main {
+            display: flex !important;
+            flex: none !important;
+            flex-direction: column;
+            gap: 0;
+            padding: 0;
+            overflow: visible !important;
+        }
+
+        .table-head {
+            display: grid;
+            grid-template-columns: 1fr 0.9fr 1.25fr;
+            align-items: center;
+            min-height: 48px;
+            padding: 0 12px;
+            color: #fff;
+            background: #000;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .table-head span:last-child {
+            text-align: right;
+        }
+
+        .app-shell main > .glass-card {
+            display: grid !important;
+            grid-template-columns: 1fr 0.9fr 1.25fr;
+            grid-template-rows: auto;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            min-height: 68px;
+            padding: 8px 12px !important;
+            border: 0;
+            border-bottom: 1px solid #d8d8d8;
+            border-radius: 0;
+            background: #fff !important;
+            box-shadow: none;
+            backdrop-filter: none;
+        }
+
+        .app-shell main > .glass-card > div {
+            width: auto !important;
+            min-width: 0;
+            gap: 4px;
+        }
+
+        .app-shell main > .glass-card > div > span:first-child {
+            color: #111 !important;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .app-shell main > .glass-card > div > span:first-child:not(.text-amber-400)::before {
+            content: "₹ ";
+        }
+
+        .app-shell main > .glass-card > div > span:nth-child(2) {
+            display: none;
+        }
+
+        .app-shell main > .glass-card > input {
+            grid-column: 2;
+            grid-row: 1;
+            width: 100%;
+            min-width: 0;
+            max-width: none !important;
+            height: 42px;
+            padding: 4px 8px !important;
+            border: 0 !important;
+            border-bottom: 2px solid #888 !important;
+            border-radius: 0 !important;
+            color: #111 !important;
+            
+            background: #fff !important;
+            font-size: 18px !important;
+            text-align: center !important;
+        }
+
+        .app-shell main > .glass-card > span {
+            grid-column: 3;
+            grid-row: 1;
+            min-width: 0;
+            color: #111 !important;
+            font-size: 16px;
+            font-weight: 700;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .app-shell footer {
+            display: none !important;
+        }
+
+        @media (max-width: 420px) {
+            .app-shell {
+                padding-right: 12px;
+                padding-left: 12px;
+            }
+
+            .app-shell.app-shell {
+                padding-right: 12px !important;
+                padding-left: 12px !important;
+            }
+
+            .app-shell > header {
+                margin-right: -12px;
+                margin-left: -12px;
+                padding-right: 10px;
+                padding-left: 12px;
+            }
+
+            .toolbar-actions {
+                gap: 0;
+            }
+
+            .toolbar-action {
+                width: 38px;
+            }
+
+            .system-amount-row {
+                gap: 5px;
+            }
+
+            .system-amount-row label,
+            .system-amount-row #balanceBox {
+                font-size: 11px !important;
+            }
+
+            .system-amount-row input {
+                width: 58px;
+                padding-right: 2px !important;
+                padding-left: 2px !important;
+                font-size: 16px !important;
+            }
+
+            .app-shell main > .glass-card,
+            .table-head {
+                grid-template-columns: minmax(88px, 1fr) minmax(72px, 0.85fr) minmax(100px, 1.15fr);
+                gap: 6px;
+                padding-right: 8px !important;
+                padding-left: 8px !important;
+            }
+
+            .app-shell main > .glass-card > div > span:first-child {
+                font-size: 15px;
+            }
+
+            .app-shell main > .glass-card > span {
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans h-screen h-[100dvh] w-screen overflow-hidden flex justify-center items-center antialiased">
 
     <!-- App Main Container -->
-    <div class="w-full h-full max-w-md mx-auto flex flex-col justify-between p-2 sm:p-3 bg-slate-900 border-x border-slate-800 shadow-2xl relative overflow-hidden">
+    <div class="app-shell w-full h-full max-w-md mx-auto flex flex-col justify-between p-2 sm:p-3 bg-slate-900 border-x border-slate-800 shadow-2xl relative overflow-hidden">
 
         <!-- Toast Notification -->
         <div id="toast" class="absolute top-3 left-1/2 -translate-x-1/2 z-50 bg-emerald-500 text-slate-950 font-bold px-3 py-1 rounded-full text-[11px] shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none flex items-center gap-1">
@@ -97,27 +567,52 @@
                 </div>
                 <h1 class="text-sm font-extrabold text-slate-100 tracking-tight">Denominations</h1>
             </div>
-            <div id="dateDisplay" class="text-[11px] font-semibold text-sky-400 bg-sky-950/60 border border-sky-800/50 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-inner">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                <span>--/--/----</span>
+            <div class="toolbar-actions">
+                <button id="saveBtn" class="toolbar-action" type="button" aria-label="Save" title="Save">
+                    <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l7 7v9a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                </button>
+                <button id="shareBtn" class="toolbar-action" type="button" aria-label="Share" title="Share">
+                    <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"></line></svg>
+                </button>
+                <button id="clearBtn" class="toolbar-action" type="button" aria-label="Clear all" title="Clear all">
+                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
             </div>
         </header>
 
-        <!-- System Amount Card -->
-        <div class="glass-card rounded-lg p-1.5 shrink-0 border border-slate-800">
-            <div class="flex justify-between items-center gap-2">
-                <label for="systemAmount" class="text-[11px] font-bold text-sky-400 uppercase tracking-wider flex items-center gap-1">
-                    System Amount (Syst ₹)
-                </label>
-                <div class="relative flex-1 max-w-[140px]">
-                    <span class="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-xs">₹</span>
-                    <input type="number" id="systemAmount" autocomplete="off" min="0" placeholder="0" class="glass-input w-full pl-5 pr-2 py-1 text-right font-bold text-xs text-white rounded-md outline-none transition-all placeholder:text-slate-600" />
-                </div>
+        <section class="top-summary" aria-label="Denomination summary">
+            <div class="summary-line">
+                <span>Date:</span>
+                <strong id="summaryDate">--/--/----</strong>
             </div>
+            <div class="summary-line">
+                <span>Total Notes / Coins:</span>
+                <strong id="totalCount">0</strong>
+            </div>
+            <div class="summary-line">
+                <span>Total Amount:</span>
+                <strong>₹<span id="grandTotal">0</span> /-</strong>
+            </div>
+            <p class="amount-words" id="amountWords" aria-live="polite"></p>
+        </section>
+
+        <!-- System Amount Card -->
+        <div class="system-amount-row">
+            <label for="systemAmount">System Amount:</label>
+            <div class="system-input-wrap">
+                <span>₹</span>
+                <input type="number" id="systemAmount" autocomplete="off" min="0" placeholder="0" />
+            </div>
+            <span id="balanceBox" class="balance-pending">Balance: ₹<strong id="balance">0</strong></span>
         </div>
 
         <!-- Single Column Denominations List (No-scroll fit) -->
         <main class="flex-1 flex flex-col justify-between py-1 overflow-hidden">
+            <div class="table-head" aria-hidden="true">
+                <span>Currency</span>
+                <span>Count</span>
+                <span>Amount</span>
+            </div>
 
             <!-- Row 2000 -->
             <div class="glass-card rounded-md px-2 py-0.5 flex items-center justify-between border border-slate-800/80 gap-2 h-[8.5%]">
@@ -125,7 +620,7 @@
                     <span class="text-xs font-bold text-slate-200">2000</span>
                     <span class="text-[10px] font-semibold text-slate-500">×</span>
                 </div>
-                <input type="number" id="note2000" min="0" placeholder="0" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
+                <input type="number" id="note2000" min="0" placeholder="×" aria-label="Count of 2000 rupee notes" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
                 <span class="text-xs font-semibold text-emerald-400 text-right font-mono min-w-[75px]">₹<span id="total2000">0</span></span>
             </div>
 
@@ -135,7 +630,7 @@
                     <span class="text-xs font-bold text-slate-200">500</span>
                     <span class="text-[10px] font-semibold text-slate-500">×</span>
                 </div>
-                <input type="number" id="note500" min="0" placeholder="0" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
+                <input type="number" id="note500" min="0" placeholder="×" aria-label="Count of 500 rupee notes" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
                 <span class="text-xs font-semibold text-emerald-400 text-right font-mono min-w-[75px]">₹<span id="total500">0</span></span>
             </div>
 
@@ -145,7 +640,7 @@
                     <span class="text-xs font-bold text-slate-200">200</span>
                     <span class="text-[10px] font-semibold text-slate-500">×</span>
                 </div>
-                <input type="number" id="note200" min="0" placeholder="0" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
+                <input type="number" id="note200" min="0" placeholder="×" aria-label="Count of 200 rupee notes" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
                 <span class="text-xs font-semibold text-emerald-400 text-right font-mono min-w-[75px]">₹<span id="total200">0</span></span>
             </div>
 
@@ -155,7 +650,7 @@
                     <span class="text-xs font-bold text-slate-200">100</span>
                     <span class="text-[10px] font-semibold text-slate-500">×</span>
                 </div>
-                <input type="number" id="note100" min="0" placeholder="0" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
+                <input type="number" id="note100" min="0" placeholder="×" aria-label="Count of 100 rupee notes" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
                 <span class="text-xs font-semibold text-emerald-400 text-right font-mono min-w-[75px]">₹<span id="total100">0</span></span>
             </div>
 
@@ -165,7 +660,7 @@
                     <span class="text-xs font-bold text-slate-200">50</span>
                     <span class="text-[10px] font-semibold text-slate-500">×</span>
                 </div>
-                <input type="number" id="note50" min="0" placeholder="0" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
+                <input type="number" id="note50" min="0" placeholder="×" aria-label="Count of 50 rupee notes" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
                 <span class="text-xs font-semibold text-emerald-400 text-right font-mono min-w-[75px]">₹<span id="total50">0</span></span>
             </div>
 
@@ -175,7 +670,7 @@
                     <span class="text-xs font-bold text-slate-200">20</span>
                     <span class="text-[10px] font-semibold text-slate-500">×</span>
                 </div>
-                <input type="number" id="note20" min="0" placeholder="0" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
+                <input type="number" id="note20" min="0" placeholder="×" aria-label="Count of 20 rupee notes" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
                 <span class="text-xs font-semibold text-emerald-400 text-right font-mono min-w-[75px]">₹<span id="total20">0</span></span>
             </div>
 
@@ -185,8 +680,18 @@
                     <span class="text-xs font-bold text-slate-200">10</span>
                     <span class="text-[10px] font-semibold text-slate-500">×</span>
                 </div>
-                <input type="number" id="note10" min="0" placeholder="0" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
+                <input type="number" id="note10" min="0" placeholder="×" aria-label="Count of 10 rupee notes" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
                 <span class="text-xs font-semibold text-emerald-400 text-right font-mono min-w-[75px]">₹<span id="total10">0</span></span>
+            </div>
+
+            <!-- Row 5 -->
+            <div class="glass-card rounded-md px-2 py-0.5 flex items-center justify-between border border-slate-800/80 gap-2 h-[8.5%]">
+                <div class="flex items-center gap-1 w-20 shrink-0">
+                    <span class="text-xs font-bold text-slate-200">5</span>
+                    <span class="text-[10px] font-semibold text-slate-500">×</span>
+                </div>
+                <input type="number" id="note5" min="0" placeholder="×" aria-label="Count of 5 rupee coins" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
+                <span class="text-xs font-semibold text-emerald-400 text-right font-mono min-w-[75px]">₹<span id="total5">0</span></span>
             </div>
 
             <!-- Row 2 -->
@@ -195,7 +700,7 @@
                     <span class="text-xs font-bold text-slate-200">2</span>
                     <span class="text-[10px] font-semibold text-slate-500">×</span>
                 </div>
-                <input type="number" id="note2" min="0" placeholder="0" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
+                <input type="number" id="note2" min="0" placeholder="×" aria-label="Count of 2 rupee coins" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
                 <span class="text-xs font-semibold text-emerald-400 text-right font-mono min-w-[75px]">₹<span id="total2">0</span></span>
             </div>
 
@@ -205,7 +710,7 @@
                     <span class="text-xs font-bold text-slate-200">1</span>
                     <span class="text-[10px] font-semibold text-slate-500">×</span>
                 </div>
-                <input type="number" id="note1" min="0" placeholder="0" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
+                <input type="number" id="note1" min="0" placeholder="×" aria-label="Count of 1 rupee coins" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
                 <span class="text-xs font-semibold text-emerald-400 text-right font-mono min-w-[75px]">₹<span id="total1">0</span></span>
             </div>
 
@@ -215,37 +720,10 @@
                     <span class="text-xs font-bold text-amber-400 truncate">Acc / Coins</span>
                     <span class="text-[10px] font-semibold text-slate-500">×</span>
                 </div>
-                <input type="number" id="coins" min="0" placeholder="0" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
+                <input type="number" id="coins" min="0" placeholder="×" aria-label="Count of other coins" class="glass-input flex-1 max-w-[90px] py-0.5 px-2 text-right font-bold text-xs text-white rounded outline-none h-6" />
                 <span class="text-xs font-semibold text-emerald-400 text-right font-mono min-w-[75px]">₹<span id="totalCoins">0</span></span>
             </div>
         </main>
-
-        <!-- Summary & Balance Display -->
-        <div id="result" class="glass-card rounded-lg p-2 shrink-0 flex justify-around items-center border border-slate-800 shadow-md">
-            <!-- Grand Total -->
-            <div class="text-center">
-                <div class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">மொத்தம்</div>
-                <div class="text-sm font-extrabold text-white">₹<span id="grandTotal">0</span></div>
-            </div>
-            <div class="h-6 w-[1px] bg-slate-800"></div>
-            <!-- Balance -->
-            <div class="text-center">
-                <div class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Balance</div>
-                <div class="text-sm font-extrabold text-amber-400 transition-colors duration-200" id="balanceBox">₹<span id="balance">0</span></div>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <footer class="flex gap-2 pt-0.5 shrink-0">
-            <button id="saveBtn" class="flex-1 py-1.5 px-3 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs rounded-lg shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-1 transition-all">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                Save
-            </button>
-            <button id="clearBtn" class="flex-1 py-1.5 px-3 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold text-xs rounded-lg shadow-lg shadow-rose-950/50 flex items-center justify-center gap-1 transition-all">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                Clear
-            </button>
-        </footer>
 
     </div>
 
@@ -260,6 +738,7 @@
             { id: 'note50', value: 50 },
             { id: 'note20', value: 20 },
             { id: 'note10', value: 10 },
+            { id: 'note5', value: 5 },
             { id: 'note2', value: 2 },
             { id: 'note1', value: 1 }
         ];
@@ -272,11 +751,13 @@
         // Calculation logic
         function calculate() {
             let total = 0;
+            let totalCount = 0;
             
             // Calculate note totals
             denominations.forEach(denom => {
                 const count = parseInt(document.getElementById(denom.id).value) || 0;
                 const amount = denom.value * count;
+                totalCount += count;
                 const totalElem = document.getElementById('total' + denom.id.replace('note', ''));
                 if (totalElem) {
                     totalElem.textContent = formatNumber(amount);
@@ -287,28 +768,64 @@
             // Calculate coins / custom amount
             const coinsCount = parseInt(document.getElementById('coins').value) || 0;
             const coinsAmount = coinsCount;
+            totalCount += coinsCount;
             document.getElementById('totalCoins').textContent = formatNumber(coinsAmount);
             total += coinsAmount;
 
             // Grand total display
             document.getElementById('grandTotal').textContent = formatNumber(total);
+            document.getElementById('totalCount').textContent = formatNumber(totalCount);
+            document.getElementById('amountWords').textContent = numberToIndianWords(total);
 
             // System Amount & Balance display logic
             const systemAmt = parseInt(document.getElementById('systemAmount').value) || 0;
             const balance = systemAmt - total;
-            const balanceElem = document.getElementById('balance');
             const balanceBox = document.getElementById('balanceBox');
 
-            balanceElem.textContent = formatNumber(balance);
+            document.getElementById('balance').textContent = formatNumber(balance);
 
             // Dynamic color feedback for balance state
             if (systemAmt > 0 && balance === 0) {
-                balanceBox.className = "text-base sm:text-lg font-extrabold text-emerald-400 transition-colors duration-200";
+                balanceBox.className = "balance-good";
             } else if (balance < 0) {
-                balanceBox.className = "text-base sm:text-lg font-extrabold text-rose-400 transition-colors duration-200";
+                balanceBox.className = "balance-negative";
             } else {
-                balanceBox.className = "text-base sm:text-lg font-extrabold text-amber-400 transition-colors duration-200";
+                balanceBox.className = "balance-pending";
             }
+        }
+
+        function numberToIndianWords(value) {
+            if (!value) return 'Zero Rupees';
+            const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+            const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+            const underThousand = number => {
+                let words = '';
+                if (number >= 100) {
+                    words += `${ones[Math.floor(number / 100)]} Hundred `;
+                    number %= 100;
+                }
+                if (number >= 20) {
+                    words += `${tens[Math.floor(number / 10)]} `;
+                    number %= 10;
+                }
+                if (number > 0) words += `${ones[number]} `;
+                return words;
+            };
+
+            let remaining = Math.floor(value);
+            const parts = [];
+            [
+                [10000000, 'Crore'],
+                [100000, 'Lakh'],
+                [1000, 'Thousand']
+            ].forEach(([unit, label]) => {
+                if (remaining >= unit) {
+                    parts.push(`${underThousand(Math.floor(remaining / unit))}${label}`);
+                    remaining %= unit;
+                }
+            });
+            if (remaining > 0) parts.push(underThousand(remaining).trim());
+            return `${parts.join(' ').trim()} Rupees`;
         }
 
         // Show formatted current date
@@ -317,10 +834,15 @@
             const dd = String(now.getDate()).padStart(2, '0');
             const mm = String(now.getMonth() + 1).padStart(2, '0');
             const yyyy = now.getFullYear();
+            const dateText = `${dd}-${mm}-${yyyy}`;
+            document.getElementById('summaryDate').textContent = now.toLocaleDateString('en-IN', {
+                weekday: 'short',
+                day: '2-digit',
+                month: 'short',
+                year: '2-digit'
+            });
             const dateSpan = document.querySelector('#dateDisplay span');
-            if (dateSpan) {
-                dateSpan.textContent = `${dd}-${mm}-${yyyy}`;
-            }
+            if (dateSpan) dateSpan.textContent = dateText;
         }
 
         // Save input values to LocalStorage
@@ -401,8 +923,47 @@
             }, 2000);
         }
 
+        async function shareSummary() {
+            const summary = [
+                `Date: ${document.getElementById('summaryDate').textContent}`,
+                `Total Notes / Coins: ${document.getElementById('totalCount').textContent}`,
+                `Total Amount: ₹${document.getElementById('grandTotal').textContent}`,
+                ...denominations.map(denom => {
+                    const count = parseInt(document.getElementById(denom.id).value) || 0;
+                    return `${formatNumber(denom.value)} × ${count} = ₹${formatNumber(denom.value * count)}`;
+                }),
+                `Acc / Coins: ${document.getElementById('coins').value || 0} = ₹${document.getElementById('totalCoins').textContent}`
+            ].join('\n');
+
+            try {
+                if (navigator.share) {
+                    await navigator.share({ title: 'Denomination Summary', text: summary });
+                } else if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(summary);
+                    showToast('Summary copied!');
+                } else {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = summary;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-9999px';
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    const copied = document.execCommand('copy');
+                    textArea.remove();
+                    if (!copied) throw new Error('Clipboard copy was not available');
+                    showToast('Summary copied!');
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Unable to share denomination summary:', error);
+                    showToast('Unable to share summary');
+                }
+            }
+        }
+
         // Event Listeners setup
         document.getElementById('saveBtn').addEventListener('click', () => saveToLocalStorage(true));
+        document.getElementById('shareBtn').addEventListener('click', shareSummary);
         document.getElementById('clearBtn').addEventListener('click', openModal);
         document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
         document.getElementById('confirmClearBtn').addEventListener('click', clearLocalStorage);
@@ -427,6 +988,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             showCurrentDate();
             loadFromLocalStorage();
+            calculate();
         });
     </script>
 </body>
