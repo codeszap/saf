@@ -707,6 +707,17 @@
       loadFromLocalStorage();
     };
 
+    window.addEventListener('pageshow', function() {
+      selectionModePerDate = {};
+      renderGroupedView();
+      document.querySelectorAll('.select-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      document.querySelectorAll('.entry-item.selected').forEach(row => {
+        row.classList.remove('selected');
+      });
+    });
+
     function setDefaultDate() {
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('collectionDate').value = today;
@@ -1175,7 +1186,7 @@
                  onclick="handleRowClick(event, '${date}', ${item.originalIndex})">
               
               <div class="entry-left">
-                <input type="checkbox" 
+                <input type="checkbox" autocomplete="off"
                        class="select-checkbox checkbox-date-${safeDateClass} ${isSelectMode ? 'show' : ''}" 
                        value="${item.originalIndex}" 
                        onchange="toggleRowHighlight(this)">
