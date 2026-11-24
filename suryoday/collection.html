@@ -227,6 +227,13 @@
       display: flex;
       align-items: stretch;
       background: #E8EDF5;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .entry-swipe-container.swipe-open .swipe-actions {
+      visibility: visible;
+      pointer-events: auto;
     }
 
     .swipe-action {
@@ -1344,9 +1351,12 @@
               <button class="collapse-toggle ${isCollapsed ? 'collapsed' : ''}" onclick="event.stopPropagation(); toggleGroupCard('${date}')" onkeydown="event.stopPropagation()" aria-label="${isCollapsed ? 'EXPAND' : 'COLLAPSE'} ${formattedDate}" title="${isCollapsed ? 'EXPAND' : 'COLLAPSE'}">
                 <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
               </button>
-              <span class="date-title">${formattedDate}<span class="card-count">${group.items.length}</span></span>
+              <span class="date-title">${formattedDate}</span>
             </div>
-            <span class="total-amount">₹${group.total.toFixed(2)}</span>
+            <div class="date-header-right">
+              <span class="total-amount">₹${group.total.toFixed(2)}</span>
+              <span class="card-count">${group.items.length}</span>
+            </div>
           </div>
 
           <div class="bulk-actions-bar ${isSelectMode && !isCollapsed ? 'active' : ''}">
