@@ -230,7 +230,7 @@
             max-width: 760px;
             min-height: 100dvh;
             margin: 0 auto;
-            padding: 0 16px 24px;
+            padding: 0 16px 104px;
             gap: 0;
             background: #fff !important;
             color: #111 !important;
@@ -238,7 +238,7 @@
         }
 
         .app-shell.app-shell {
-            padding: 0 16px 24px !important;
+            padding: 0 16px 104px !important;
         }
 
         .app-shell > header {
@@ -294,8 +294,8 @@
 
         .top-summary {
             display: grid;
-            gap: 14px;
-            padding: 18px 0 12px;
+            gap: 0;
+            padding: 18px 0 8px;
         }
 
         .summary-line {
@@ -312,71 +312,81 @@
             font-variant-numeric: tabular-nums;
         }
 
-        #grandTotal {
-            font-size: clamp(20px, 5vw, 28px);
-        }
-
-        .amount-words {
-            margin: 4px 0 14px;
-            color: #111;
-            text-align: center;
-            font-size: clamp(14px, 3.8vw, 20px);
-            font-weight: 700;
-            line-height: 1.35;
-        }
-
         .system-amount-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin: 0 0 12px;
-            padding: 10px 0;
+            gap: 8px;
+            position: fixed;
+            z-index: 20;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            width: min(calc(100% - 32px), 728px);
+            margin: 0 auto;
+            padding: 10px 12px max(10px, env(safe-area-inset-bottom));
             border-top: 1px solid #e5e5e5;
-            border-bottom: 1px solid #e5e5e5;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
         }
 
-        .system-amount-row label {
-            flex-shrink: 0;
+        .system-amount-group,
+        .total-amount-group,
+        .balance-group {
+            display: flex;
+            min-width: 0;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-align: center;
+        }
+
+        .system-amount-row label,
+        .system-amount-row .summary-label {
             color: #333 !important;
-            font-size: 14px !important;
+            font-size: 12px !important;
             font-weight: 700;
         }
 
         .system-input-wrap {
             display: flex;
             align-items: center;
-            gap: 4px;
-            margin-left: auto;
+            justify-content: center;
+            gap: 2px;
+            width: 100%;
         }
 
         .system-input-wrap > span {
             color: #333;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
         }
 
         .system-amount-row input {
-            width: 100px;
-            min-height: 40px;
-            padding: 6px 10px !important;
+            width: 74px;
+            min-width: 0;
+            min-height: 36px;
+            padding: 4px !important;
             border: 0 !important;
             border-bottom: 1px solid #777 !important;
             border-radius: 0 !important;
             color: #111 !important;
             background: #fff !important;
-            font-size: 18px !important;
+            font-size: 16px !important;
+            text-align: center;
         }
 
-        .system-amount-row #balanceBox {
-            flex-shrink: 0;
-            font-size: 14px;
+        .total-amount-value,
+        .balance-value {
+            color: #111;
+            font-size: 16px;
             font-weight: 700;
+            font-variant-numeric: tabular-nums;
         }
 
-        .balance-good { color: #059669 !important; }
-        .balance-negative { color: #e11d48 !important; }
-        .balance-pending { color: #b45309 !important; }
+        .balance-good .balance-value { color: #059669 !important; }
+        .balance-negative .balance-value { color: #e11d48 !important; }
+        .balance-pending .balance-value { color: #b45309 !important; }
 
         .app-shell main {
             display: flex !important;
@@ -499,20 +509,23 @@
                 width: 38px;
             }
 
-            .system-amount-row {
-                gap: 5px;
-            }
+            .system-amount-row { gap: 5px; }
 
             .system-amount-row label,
-            .system-amount-row #balanceBox {
+            .system-amount-row .summary-label {
                 font-size: 11px !important;
             }
 
             .system-amount-row input {
-                width: 58px;
+                width: 52px;
                 padding-right: 2px !important;
                 padding-left: 2px !important;
                 font-size: 16px !important;
+            }
+
+            .total-amount-value,
+            .balance-value {
+                font-size: 14px;
             }
 
             .app-shell main > .glass-card,
@@ -585,26 +598,26 @@
                 <span>Date:</span>
                 <strong id="summaryDate">--/--/----</strong>
             </div>
-            <div class="summary-line">
-                <span>Total Notes / Coins:</span>
-                <strong id="totalCount">0</strong>
-            </div>
-            <div class="summary-line">
-                <span>Total Amount:</span>
-                <strong>₹<span id="grandTotal">0</span> /-</strong>
-            </div>
-            <p class="amount-words" id="amountWords" aria-live="polite"></p>
         </section>
 
-        <!-- System Amount Card -->
-        <div class="system-amount-row">
-            <label for="systemAmount">System Amount:</label>
-            <div class="system-input-wrap">
-                <span>₹</span>
-                <input type="number" id="systemAmount" autocomplete="off" min="0" placeholder="0" />
+        <!-- System amount, total, and balance -->
+        <nav class="system-amount-row" aria-label="Amount summary">
+            <div class="system-amount-group">
+                <label for="systemAmount">System Amount</label>
+                <div class="system-input-wrap">
+                    <span>₹</span>
+                    <input type="number" id="systemAmount" autocomplete="off" min="0" placeholder="0" />
+                </div>
             </div>
-            <span id="balanceBox" class="balance-pending">Balance: ₹<strong id="balance">0</strong></span>
-        </div>
+            <div class="total-amount-group">
+                <span class="summary-label">Total Amount</span>
+                <strong class="total-amount-value">₹<span id="grandTotal">0</span></strong>
+            </div>
+            <div class="balance-group balance-pending" id="balanceBox">
+                <span class="summary-label">Balance</span>
+                <strong class="balance-value">₹<span id="balance">0</span></strong>
+            </div>
+        </nav>
 
         <!-- Single Column Denominations List (No-scroll fit) -->
         <main class="flex-1 flex flex-col justify-between py-1 overflow-hidden">
@@ -751,13 +764,11 @@
         // Calculation logic
         function calculate() {
             let total = 0;
-            let totalCount = 0;
             
             // Calculate note totals
             denominations.forEach(denom => {
                 const count = parseInt(document.getElementById(denom.id).value) || 0;
                 const amount = denom.value * count;
-                totalCount += count;
                 const totalElem = document.getElementById('total' + denom.id.replace('note', ''));
                 if (totalElem) {
                     totalElem.textContent = formatNumber(amount);
@@ -768,14 +779,11 @@
             // Calculate coins / custom amount
             const coinsCount = parseInt(document.getElementById('coins').value) || 0;
             const coinsAmount = coinsCount;
-            totalCount += coinsCount;
             document.getElementById('totalCoins').textContent = formatNumber(coinsAmount);
             total += coinsAmount;
 
             // Grand total display
             document.getElementById('grandTotal').textContent = formatNumber(total);
-            document.getElementById('totalCount').textContent = formatNumber(totalCount);
-            document.getElementById('amountWords').textContent = numberToIndianWords(total);
 
             // System Amount & Balance display logic
             const systemAmt = parseInt(document.getElementById('systemAmount').value) || 0;
@@ -785,47 +793,14 @@
             document.getElementById('balance').textContent = formatNumber(balance);
 
             // Dynamic color feedback for balance state
+            balanceBox.classList.remove('balance-good', 'balance-negative', 'balance-pending');
             if (systemAmt > 0 && balance === 0) {
-                balanceBox.className = "balance-good";
+                balanceBox.classList.add('balance-good');
             } else if (balance < 0) {
-                balanceBox.className = "balance-negative";
+                balanceBox.classList.add('balance-negative');
             } else {
-                balanceBox.className = "balance-pending";
+                balanceBox.classList.add('balance-pending');
             }
-        }
-
-        function numberToIndianWords(value) {
-            if (!value) return 'Zero Rupees';
-            const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-            const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-            const underThousand = number => {
-                let words = '';
-                if (number >= 100) {
-                    words += `${ones[Math.floor(number / 100)]} Hundred `;
-                    number %= 100;
-                }
-                if (number >= 20) {
-                    words += `${tens[Math.floor(number / 10)]} `;
-                    number %= 10;
-                }
-                if (number > 0) words += `${ones[number]} `;
-                return words;
-            };
-
-            let remaining = Math.floor(value);
-            const parts = [];
-            [
-                [10000000, 'Crore'],
-                [100000, 'Lakh'],
-                [1000, 'Thousand']
-            ].forEach(([unit, label]) => {
-                if (remaining >= unit) {
-                    parts.push(`${underThousand(Math.floor(remaining / unit))}${label}`);
-                    remaining %= unit;
-                }
-            });
-            if (remaining > 0) parts.push(underThousand(remaining).trim());
-            return `${parts.join(' ').trim()} Rupees`;
         }
 
         // Show formatted current date
@@ -926,7 +901,6 @@
         async function shareSummary() {
             const summary = [
                 `Date: ${document.getElementById('summaryDate').textContent}`,
-                `Total Notes / Coins: ${document.getElementById('totalCount').textContent}`,
                 `Total Amount: ₹${document.getElementById('grandTotal').textContent}`,
                 ...denominations.map(denom => {
                     const count = parseInt(document.getElementById(denom.id).value) || 0;
