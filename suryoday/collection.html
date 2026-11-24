@@ -6,20 +6,20 @@
   <title>Today Collection</title>
   <style>
     :root {
-      --bg-light: #F8FAFC;
-      --card-bg: #FFFFFF;
-      --header-bg: #0F172A; /* Deep Dark Navy Header */
+      --bg-light: #F4F7FB;
+      --card-bg: rgba(255, 255, 255, 0.96);
+      --header-bg: #172554;
       --header-text: #F8FAFC;
-      --accent-blue: #2563EB;
-      --badge-total-bg: #0D9488; /* High-Contrast Emerald Teal */
-      --badge-total-text: #FFFFFF;
-      --accent-green: #059669;
+      --accent-blue: #4F46E5;
+      --badge-total-bg: #DDF7EE;
+      --badge-total-text: #087A60;
+      --accent-green: #079669;
       --accent-purple: #7C3AED;
-      --accent-red: #DC2626;
-      --text-primary: #0F172A;
-      --text-secondary: #64748B;
-      --border-color: #E2E8F0;
-      --nav-bg: #FFFFFF;
+      --accent-red: #E5484D;
+      --text-primary: #182230;
+      --text-secondary: #738095;
+      --border-color: #E7ECF3;
+      --nav-bg: rgba(255, 255, 255, 0.94);
     }
 
     * {
@@ -31,10 +31,13 @@
     }
 
     body {
-      background-color: var(--bg-light);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(79, 70, 229, 0.07), transparent 28%),
+        radial-gradient(circle at 88% 18%, rgba(20, 184, 166, 0.06), transparent 24%),
+        var(--bg-light);
       color: var(--text-primary);
-      padding: 16px;
-      padding-bottom: 80px;
+      padding: 14px;
+      padding-bottom: 88px;
       min-height: 100vh;
       user-select: none;
     }
@@ -47,38 +50,98 @@
     /* Refined Group Card */
     .date-group-card {
       background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
+      border: 1px solid rgba(226, 232, 240, 0.9);
       border-radius: 8px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+      box-shadow: 0 8px 24px rgba(31, 41, 55, 0.07);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .date-group-card:hover {
+      box-shadow: 0 12px 28px rgba(31, 41, 55, 0.09);
     }
 
     /* Dark Header Bar */
     .date-header {
-      background-color: var(--header-bg);
-      padding: 12px 16px;
+      background: linear-gradient(135deg, #1E293B 0%, #312E81 100%);
+      padding: 13px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .date-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .collapse-toggle {
+      width: 24px;
+      height: 24px;
+      padding: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      color: #E2E8F0;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .collapse-toggle svg {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.2s ease;
+    }
+
+    .collapse-toggle.collapsed svg {
+      transform: rotate(-90deg);
     }
 
     .date-header .date-title {
-      font-size: 13px;
-      font-weight: 800;
-      color: #E2E8F0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 850;
+      color: #F8FAFC;
       text-transform: uppercase;
       letter-spacing: 0.8px;
     }
 
+    .card-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      color: #FFFFFF;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
     /* Total Amount Badge */
     .date-header .total-amount {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 900;
-      color: var(--badge-total-text);
-      background-color: var(--badge-total-bg);
-      padding: 5px 12px;
-      border-radius: 6px;
+      color: #FFFFFF;
+      background: none;
+      padding: 7px 0;
+      border-radius: 999px;
       letter-spacing: 0.5px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     }
@@ -120,12 +183,16 @@
 
     /* Entry List Container */
     .entry-list {
-      padding: 0 16px;
+      padding: 4px 12px;
+    }
+
+    .entry-list.collapsed {
+      display: none;
     }
 
     /* Entry Row Item - Flexible & Protected Layout */
     .entry-item {
-      padding: 12px 0;
+      padding: 13px 4px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -141,7 +208,8 @@
     }
 
     .entry-item.selected {
-      background-color: #FEF2F2;
+      background: linear-gradient(90deg, #FFF1F2, #FFFFFF);
+      border-radius: 12px;
     }
 
     .entry-left {
@@ -186,12 +254,12 @@
     /* Wrap Long Descriptions inside Badge cleanly */
     .type-badge {
       display: inline-block;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 800;
       color: var(--text-secondary);
-      background-color: #F1F5F9;
-      padding: 3px 8px;
-      border-radius: 4px;
+      background: #F4F7FB;
+      padding: 4px 8px;
+      border-radius: 999px;
       border: 1px solid #E2E8F0;
       width: fit-content;
       max-width: 100%;
@@ -261,43 +329,45 @@
       letter-spacing: 1px;
     }
 
-    /* 3-Tab Bottom Navigation Bar */
+    /* Floating Menu and Action Buttons */
     .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background-color: var(--nav-bg);
-      border-top: 1px solid var(--border-color);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 900;
-      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+      display: none;
     }
 
-    .nav-item {
+    .floating-actions {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
       display: flex;
-      flex-direction: column;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: 10px;
+      z-index: 900;
+    }
+
+    .fab {
+      width: 54px;
+      height: 54px;
+      border: none;
+      border-radius: 50%;
+      display: flex;
       align-items: center;
       justify-content: center;
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
       cursor: pointer;
-      width: 33.33%;
-      height: 100%;
-      gap: 3px;
-      transition: color 0.15s ease;
+      color: #FFFFFF;
+      background: linear-gradient(135deg, #4F46E5, #6366F1);
+      box-shadow: 0 10px 24px rgba(79, 70, 229, 0.32);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
 
-    .nav-item svg {
-      width: 20px;
-      height: 20px;
+    .fab:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(79, 70, 229, 0.38);
+    }
+
+    .fab svg {
+      width: 22px;
+      height: 22px;
       fill: none;
       stroke: currentColor;
       stroke-width: 2;
@@ -305,8 +375,36 @@
       stroke-linejoin: round;
     }
 
-    .nav-item.active {
-      color: var(--accent-blue);
+    .fab-main {
+      width: 62px;
+      height: 62px;
+    }
+
+    .fab-menu {
+      display: none;
+      width: 48px;
+      height: 48px;
+      background: #FFFFFF;
+      color: var(--text-primary);
+      box-shadow: 0 8px 20px rgba(31, 41, 55, 0.16);
+    }
+
+    .fab-menu.open {
+      display: flex;
+      animation: fabPop 0.16s ease-out;
+    }
+
+    .fab-main svg {
+      transition: transform 0.2s ease;
+    }
+
+    .fab-main.open svg {
+      transform: rotate(45deg);
+    }
+
+    @keyframes fabPop {
+      from { opacity: 0; transform: scale(0.75) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
     }
 
     /* Modal Overlay */
@@ -327,9 +425,9 @@
 
     .form-card {
       background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      padding: 20px;
-      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      padding: 22px;
+      border-radius: 20px;
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
       width: 100%;
       max-width: 420px;
@@ -382,7 +480,7 @@
       width: 100%;
       padding: 10px 12px;
       border: 1px solid var(--border-color);
-      border-radius: 6px;
+      border-radius: 10px;
       font-size: 14px;
       background-color: var(--bg-light);
       color: var(--text-primary);
@@ -407,20 +505,39 @@
       outline: none;
     }
 
+    .exclude-total-option {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 12px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .exclude-total-option input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      accent-color: var(--accent-blue);
+      flex-shrink: 0;
+    }
+
     .submit-btn {
       width: 100%;
       padding: 12px;
-      background: var(--header-bg);
+      background: linear-gradient(135deg, #4F46E5, #6366F1);
       color: #FFFFFF;
       border: none;
-      border-radius: 6px;
+      border-radius: 12px;
       font-size: 14px;
       font-weight: 800;
       cursor: pointer;
       margin-top: 8px;
       text-transform: uppercase;
       letter-spacing: 0.8px;
-      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+      box-shadow: 0 8px 18px rgba(79, 70, 229, 0.24);
     }
 
     .menu-options {
@@ -481,36 +598,24 @@
     </div>
   </div>
 
-  <!-- BOTTOM NAVIGATION BAR (3 TABS) -->
-  <nav class="bottom-nav">
-    <button class="nav-item active" id="navViewBtn" onclick="switchToViewTab()">
-      <svg viewBox="0 0 24 24">
-        <rect x="3" y="3" width="7" height="7"></rect>
-        <rect x="14" y="3" width="7" height="7"></rect>
-        <rect x="14" y="14" width="7" height="7"></rect>
-        <rect x="3" y="14" width="7" height="7"></rect>
-      </svg>
-      <span>VIEW</span>
-    </button>
-    
-    <button class="nav-item" id="navAddBtn" onclick="openModalForNew()">
-      <svg viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" y1="8" x2="12" y2="16"></line>
-        <line x1="8" y1="12" x2="16" y2="12"></line>
-      </svg>
-      <span>ADD ENTRY</span>
+  <!-- FLOATING ACTION MENU -->
+  <div class="floating-actions">
+    <button class="fab fab-main" id="fabMain" type="button" onclick="toggleFloatingMenu()" aria-label="OPEN ACTIONS">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
     </button>
 
-    <button class="nav-item" id="navMenuBtn" onclick="openMenuModal()">
-      <svg viewBox="0 0 24 24">
-        <line x1="3" y1="12" x2="21" y2="12"></line>
-        <line x1="3" y1="6" x2="21" y2="6"></line>
-        <line x1="3" y1="18" x2="21" y2="18"></line>
-      </svg>
-      <span>MENU</span>
+    <button class="fab fab-menu" id="fabView" type="button" onclick="switchToViewTab(); closeFloatingMenu(); window.scrollTo({top: 0, behavior: 'smooth'})" aria-label="VIEW COLLECTIONS" title="VIEW">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
     </button>
-  </nav>
+
+    <button class="fab fab-menu" id="fabAdd" type="button" onclick="closeFloatingMenu(); openModalForNew()" aria-label="ADD COLLECTION" title="ADD ENTRY">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
+
+    <button class="fab fab-menu" id="fabMenu" type="button" onclick="closeFloatingMenu(); openMenuModal()" aria-label="OPEN MENU" title="MENU">
+      <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
+  </div>
 
   <!-- MODAL ENTRY / EDIT SCREEN -->
   <div class="modal-overlay" id="entryModal">
@@ -535,6 +640,11 @@
           <label for="amount">AMOUNT (₹)</label>
           <input type="number" id="amount" name="amount" step="0.01" placeholder="0.00" required>
         </div>
+
+        <label class="exclude-total-option">
+          <input type="checkbox" id="excludeFromTotal" name="excludeFromTotal">
+          <span>EXCLUDE THIS AMOUNT FROM CARD TOTAL</span>
+        </label>
 
         <div class="form-group">
           <label for="type">TYPE</label>
@@ -587,11 +697,13 @@
 
   <script>
     let collections = [];
-    let selectionModePerDate = {}; 
+    let selectionModePerDate = {};
+    const collapsedDates = new Set();
     let pressTimer = null;
 
     window.onload = function() {
       setDefaultDate();
+      loadCollapsedDates();
       loadFromLocalStorage();
     };
 
@@ -616,9 +728,6 @@
 
     function openModal() {
       document.getElementById('entryModal').style.display = 'flex';
-      document.getElementById('navAddBtn').classList.add('active');
-      document.getElementById('navViewBtn').classList.remove('active');
-      document.getElementById('navMenuBtn').classList.remove('active');
     }
 
     function closeModal() {
@@ -628,9 +737,6 @@
 
     function openMenuModal() {
       document.getElementById('menuModal').style.display = 'flex';
-      document.getElementById('navMenuBtn').classList.add('active');
-      document.getElementById('navViewBtn').classList.remove('active');
-      document.getElementById('navAddBtn').classList.remove('active');
     }
 
     function closeMenuModal() {
@@ -638,10 +744,22 @@
       switchToViewTab();
     }
 
+    function toggleFloatingMenu() {
+      const mainFab = document.getElementById('fabMain');
+      const menuFabs = document.querySelectorAll('.fab-menu');
+      const isOpen = mainFab.classList.toggle('open');
+      menuFabs.forEach(button => button.classList.toggle('open', isOpen));
+      mainFab.setAttribute('aria-label', isOpen ? 'CLOSE ACTIONS' : 'OPEN ACTIONS');
+    }
+
+    function closeFloatingMenu() {
+      document.getElementById('fabMain').classList.remove('open');
+      document.querySelectorAll('.fab-menu').forEach(button => button.classList.remove('open'));
+      document.getElementById('fabMain').setAttribute('aria-label', 'OPEN ACTIONS');
+    }
+
     function switchToViewTab() {
-      document.getElementById('navViewBtn').classList.add('active');
-      document.getElementById('navAddBtn').classList.remove('active');
-      document.getElementById('navMenuBtn').classList.remove('active');
+      closeFloatingMenu();
     }
 
     window.onclick = function(event) {
@@ -659,9 +777,10 @@
       const amount = parseFloat(document.getElementById('amount').value);
       const type = document.getElementById('type').value.trim().toUpperCase();
       const description = document.getElementById('description').value.trim().toUpperCase();
+      const excludeFromTotal = document.getElementById('excludeFromTotal').checked;
       const editIndex = parseInt(document.getElementById('editIndex').value);
 
-      const entry = { date, name, amount, type, description };
+      const entry = { date, name, amount, type, description, excludeFromTotal };
 
       if (editIndex >= 0 && editIndex < collections.length) {
         collections[editIndex] = entry;
@@ -700,6 +819,7 @@
       document.getElementById('collectionDate').value = item.date;
       document.getElementById('name').value = item.name;
       document.getElementById('amount').value = item.amount;
+      document.getElementById('excludeFromTotal').checked = !!item.excludeFromTotal;
       document.getElementById('type').value = item.type;
       document.getElementById('description').value = item.description || '';
 
@@ -952,6 +1072,8 @@
       if (confirm("ARE YOU SURE YOU WANT TO CLEAR ALL SAVED DATA? THIS ACTION CANNOT BE UNDONE!")) {
         collections = [];
         localStorage.removeItem('daily_collections');
+        collapsedDates.clear();
+        localStorage.removeItem('collapsed_collection_dates');
         renderGroupedView();
         closeMenuModal();
       }
@@ -968,6 +1090,42 @@
           newOption.value = type;
           dataList.appendChild(newOption);
         }
+      }
+    }
+
+    function loadCollapsedDates() {
+      const stored = localStorage.getItem('collapsed_collection_dates');
+      if (!stored) return;
+
+      try {
+        const dates = JSON.parse(stored);
+        if (Array.isArray(dates)) {
+          collapsedDates.clear();
+          dates.forEach(date => collapsedDates.add(date));
+        }
+      } catch (e) {
+        console.error("Error reading collapsed card state:", e);
+      }
+    }
+
+    function saveCollapsedDates() {
+      localStorage.setItem('collapsed_collection_dates', JSON.stringify([...collapsedDates]));
+    }
+
+    function toggleGroupCard(date) {
+      if (collapsedDates.has(date)) {
+        collapsedDates.delete(date);
+      } else {
+        collapsedDates.add(date);
+      }
+      saveCollapsedDates();
+      renderGroupedView();
+    }
+
+    function handleHeaderKeydown(event, date) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleGroupCard(date);
       }
     }
 
@@ -989,7 +1147,9 @@
           };
         }
         grouped[item.date].items.unshift({ ...item, originalIndex });
-        grouped[item.date].total += item.amount;
+        if (!item.excludeFromTotal) {
+          grouped[item.date].total += item.amount;
+        }
       });
 
       const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
@@ -997,6 +1157,7 @@
       sortedDates.forEach(date => {
         const group = grouped[date];
         const isSelectMode = !!selectionModePerDate[date];
+        const isCollapsed = collapsedDates.has(date);
         const safeDateClass = date.replace(/-/g, '_');
 
         const groupCard = document.createElement('div');
@@ -1044,18 +1205,23 @@
         const formattedDate = formatDateToDMY(date);
 
         groupCard.innerHTML = `
-          <div class="date-header">
-            <span class="date-title">DATE: ${formattedDate}</span>
-            <span class="total-amount">TOTAL: ₹${group.total.toFixed(2)}</span>
+          <div class="date-header" onclick="toggleGroupCard('${date}')" onkeydown="handleHeaderKeydown(event, '${date}')" role="button" tabindex="0" aria-expanded="${isCollapsed ? 'false' : 'true'}">
+            <div class="date-header-left">
+              <button class="collapse-toggle ${isCollapsed ? 'collapsed' : ''}" onclick="event.stopPropagation(); toggleGroupCard('${date}')" onkeydown="event.stopPropagation()" aria-label="${isCollapsed ? 'EXPAND' : 'COLLAPSE'} ${formattedDate}" title="${isCollapsed ? 'EXPAND' : 'COLLAPSE'}">
+                <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+              <span class="date-title">${formattedDate}<span class="card-count">${group.items.length}</span></span>
+            </div>
+            <span class="total-amount">₹${group.total.toFixed(2)}</span>
           </div>
 
-          <div class="bulk-actions-bar ${isSelectMode ? 'active' : ''}">
+          <div class="bulk-actions-bar ${isSelectMode && !isCollapsed ? 'active' : ''}">
             <button class="btn-bulk-action btn-cancel-select" onclick="disableSelectionMode('${date}')">CANCEL</button>
             <button class="btn-bulk-action btn-select-all" onclick="toggleSelectAllDate('${safeDateClass}')">SELECT ALL</button>
             <button class="btn-bulk-action btn-delete-selected" onclick="deleteSelectedForDate('${safeDateClass}')">DELETE SELECTED</button>
           </div>
 
-          <div class="entry-list">
+          <div class="entry-list ${isCollapsed ? 'collapsed' : ''}">
             ${entriesHTML}
           </div>
         `;
