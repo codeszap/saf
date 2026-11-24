@@ -191,20 +191,84 @@
     }
 
     /* Entry Row Item - Flexible & Protected Layout */
+    .entry-swipe-container {
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .entry-swipe-container:last-child {
+      border-bottom: none;
+    }
+
     .entry-item {
+      position: relative;
+      z-index: 1;
       padding: 13px 4px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px; /* Space between left and right sections */
-      border-bottom: 1px solid var(--border-color);
       text-transform: uppercase;
       cursor: pointer;
-      transition: background-color 0.15s ease;
+      background: var(--card-bg);
+      transition: background-color 0.15s ease, transform 0.2s ease;
+      touch-action: pan-y;
     }
 
-    .entry-item:last-child {
-      border-bottom: none;
+    .entry-swipe-container.swipe-open .entry-item {
+      transform: translateX(180px);
+    }
+
+    .swipe-actions {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 180px;
+      display: flex;
+      align-items: stretch;
+      background: #E8EDF5;
+    }
+
+    .swipe-action {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      border: none;
+      color: #FFFFFF;
+      background: var(--accent-blue);
+      font-size: 9px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .swipe-action.toggle-total {
+      background: #0D9488;
+    }
+
+    .swipe-action.toggle-total.excluded {
+      background: #64748B;
+    }
+
+    .swipe-action.edit-action {
+      background: #475569;
+    }
+
+    .swipe-action.delete-action {
+      background: var(--accent-red);
+    }
+
+    .swipe-action svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .entry-item.selected {
@@ -306,6 +370,10 @@
     }
 
     .icon-btn.delete-btn:hover {
+      color: var(--accent-red);
+    }
+
+    .icon-btn.total-toggle-btn.excluded {
       color: var(--accent-red);
     }
 
@@ -505,25 +573,6 @@
       outline: none;
     }
 
-    .exclude-total-option {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      margin: 0 0 12px;
-      color: var(--text-secondary);
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .exclude-total-option input {
-      width: 16px;
-      height: 16px;
-      margin: 0;
-      accent-color: var(--accent-blue);
-      flex-shrink: 0;
-    }
-
     .submit-btn {
       width: 100%;
       padding: 12px;
@@ -641,11 +690,6 @@
           <input type="number" id="amount" name="amount" step="0.01" placeholder="0.00" required>
         </div>
 
-        <label class="exclude-total-option">
-          <input type="checkbox" id="excludeFromTotal" name="excludeFromTotal">
-          <span>EXCLUDE THIS AMOUNT FROM CARD TOTAL</span>
-        </label>
-
         <div class="form-group">
           <label for="type">TYPE</label>
           <input type="text" id="type" name="type" list="type-suggestions" placeholder="TYPE OR SELECT A TYPE" required autocomplete="off" oninput="this.value = this.value.toUpperCase()">
@@ -700,6 +744,8 @@
     let selectionModePerDate = {};
     const collapsedDates = new Set();
     let pressTimer = null;
+    let swipeStart = null;
+    let suppressRowClick = false;
 
     window.onload = function() {
       setDefaultDate();
@@ -788,10 +834,18 @@
       const amount = parseFloat(document.getElementById('amount').value);
       const type = document.getElementById('type').value.trim().toUpperCase();
       const description = document.getElementById('description').value.trim().toUpperCase();
-      const excludeFromTotal = document.getElementById('excludeFromTotal').checked;
       const editIndex = parseInt(document.getElementById('editIndex').value);
 
-      const entry = { date, name, amount, type, description, excludeFromTotal };
+      const entry = {
+        date,
+        name,
+        amount,
+        type,
+        description,
+        excludeFromTotal: editIndex >= 0 && editIndex < collections.length
+          ? !!collections[editIndex].excludeFromTotal
+          : false
+      };
 
       if (editIndex >= 0 && editIndex < collections.length) {
         collections[editIndex] = entry;
@@ -830,7 +884,6 @@
       document.getElementById('collectionDate').value = item.date;
       document.getElementById('name').value = item.name;
       document.getElementById('amount').value = item.amount;
-      document.getElementById('excludeFromTotal').checked = !!item.excludeFromTotal;
       document.getElementById('type').value = item.type;
       document.getElementById('description').value = item.description || '';
 
@@ -846,6 +899,60 @@
         localStorage.setItem('daily_collections', JSON.stringify(collections));
         renderGroupedView();
       }
+    }
+
+    function toggleExcludeFromTotal(index) {
+      const item = collections[index];
+      if (!item) return;
+
+      item.excludeFromTotal = !item.excludeFromTotal;
+      localStorage.setItem('daily_collections', JSON.stringify(collections));
+      closeSwipeRows();
+      renderGroupedView();
+    }
+
+    function startSwipe(event) {
+      if (event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      swipeStart = { x: touch.clientX, y: touch.clientY };
+    }
+
+    function moveSwipe(event) {
+      if (!swipeStart || event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - swipeStart.x;
+      const deltaY = touch.clientY - swipeStart.y;
+
+      if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        cancelLongPress();
+      }
+    }
+
+    function endSwipe(event, container) {
+      cancelLongPress();
+      if (!swipeStart || !event.changedTouches.length) {
+        swipeStart = null;
+        return;
+      }
+
+      const touch = event.changedTouches[0];
+      const deltaX = touch.clientX - swipeStart.x;
+      const deltaY = touch.clientY - swipeStart.y;
+      if (Math.abs(deltaX) >= 55 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        closeSwipeRows();
+        if (deltaX > 0 && container.querySelector('.swipe-actions')) {
+          container.classList.add('swipe-open');
+        }
+        suppressRowClick = true;
+        setTimeout(() => { suppressRowClick = false; }, 500);
+      }
+      swipeStart = null;
+    }
+
+    function closeSwipeRows() {
+      document.querySelectorAll('.entry-swipe-container.swipe-open').forEach(row => {
+        row.classList.remove('swipe-open');
+      });
     }
 
     /* Long Press Event Handlers */
@@ -887,6 +994,10 @@
     }
 
     function handleRowClick(event, date, originalIndex) {
+      if (suppressRowClick) {
+        suppressRowClick = false;
+        return;
+      }
       if (selectionModePerDate[date]) {
         const safeDateClass = date.replace(/-/g, '_');
         const checkbox = document.querySelector(`.checkbox-date-${safeDateClass}[value="${originalIndex}"]`);
@@ -1177,7 +1288,28 @@
         let entriesHTML = '';
         group.items.forEach(item => {
           entriesHTML += `
-            <div class="entry-item" 
+            <div class="entry-swipe-container"
+                 ontouchstart="startSwipe(event)"
+                 ontouchmove="moveSwipe(event)"
+                 ontouchend="endSwipe(event, this)"
+                 ontouchcancel="endSwipe(event, this)">
+              ${!isSelectMode ? `
+              <div class="swipe-actions">
+                <button class="swipe-action toggle-total ${item.excludeFromTotal ? 'excluded' : ''}" onclick="event.stopPropagation(); toggleExcludeFromTotal(${item.originalIndex})" aria-label="${item.excludeFromTotal ? 'SHOW IN CARD TOTAL' : 'HIDE FROM CARD TOTAL'}">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><line x1="7" y1="12" x2="17" y2="12"></line></svg>
+                  <span>${item.excludeFromTotal ? 'SHOW' : 'HIDE'}</span>
+                </button>
+                <button class="swipe-action edit-action" onclick="event.stopPropagation(); editEntry(${item.originalIndex})" aria-label="EDIT ENTRY">
+                  <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1-1 4 9.5-9.5z"></path></svg>
+                  <span>EDIT</span>
+                </button>
+                <button class="swipe-action delete-action" onclick="event.stopPropagation(); deleteSingleEntry(${item.originalIndex})" aria-label="DELETE ENTRY">
+                  <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  <span>DELETE</span>
+                </button>
+              </div>
+              ` : ''}
+              <div class="entry-item" 
                  onmousedown="startLongPress('${date}', ${item.originalIndex})"
                  onmouseup="cancelLongPress()"
                  mouseleave="cancelLongPress()"
@@ -1198,17 +1330,8 @@
 
               <div class="entry-right">
                 <div class="entry-amount">₹${item.amount.toFixed(2)}</div>
-                ${!isSelectMode ? `
-                  <div class="action-icons">
-                    <button class="icon-btn" onclick="event.stopPropagation(); editEntry(${item.originalIndex})" title="EDIT">
-                      <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                    </button>
-                    <button class="icon-btn delete-btn" onclick="event.stopPropagation(); deleteSingleEntry(${item.originalIndex})" title="DELETE">
-                      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
-                  </div>
-                ` : ''}
               </div>
+            </div>
             </div>
           `;
         });
